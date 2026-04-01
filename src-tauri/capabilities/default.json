@@ -13,6 +13,9 @@
     "window-state:default",
     "notification:default",
     "os:default",
+    "dialog:default",
+    "clipboard-manager:allow-read-image",
+    "deep-link:default",
     {
       "identifier": "http:default",
       "allow": [

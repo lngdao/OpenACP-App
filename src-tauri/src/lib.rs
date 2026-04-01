@@ -16,6 +16,47 @@ async fn get_server_info(state: tauri::State<'_, AppState>) -> Result<ServerInfo
         .ok_or_else(|| "Server not ready".to_string())
 }
 
+/// Read server info from a workspace's `.openacp/` directory
+#[tauri::command]
+async fn get_workspace_server_info(directory: String) -> Result<ServerInfo, String> {
+    let dir = std::path::PathBuf::from(&directory).join(".openacp");
+    if !dir.exists() {
+        return Err(format!("No .openacp directory found in {directory}"));
+    }
+
+    let token = std::fs::read_to_string(dir.join("api-secret"))
+        .map(|s| s.trim().to_string())
+        .unwrap_or_default();
+
+    // Read api.port
+    if let Ok(port_str) = std::fs::read_to_string(dir.join("api.port")) {
+        if let Ok(port) = port_str.trim().parse::<u16>() {
+            return Ok(ServerInfo {
+                url: format!("http://127.0.0.1:{port}"),
+                token,
+            });
+        }
+    }
+
+    // Fallback: config.json
+    if let Ok(config_str) = std::fs::read_to_string(dir.join("config.json")) {
+        if let Ok(config) = serde_json::from_str::<serde_json::Value>(&config_str) {
+            if let Some(port) = config.get("api").and_then(|a| a.get("port")).and_then(|p| p.as_u64()) {
+                let host = config.get("api")
+                    .and_then(|a| a.get("host"))
+                    .and_then(|h| h.as_str())
+                    .unwrap_or("127.0.0.1");
+                return Ok(ServerInfo {
+                    url: format!("http://{host}:{port}"),
+                    token,
+                });
+            }
+        }
+    }
+
+    Err(format!("Could not determine port from {}", dir.display()))
+}
+
 #[tauri::command]
 async fn start_server(state: tauri::State<'_, AppState>) -> Result<ServerInfo, String> {
     let mut mgr = state.sidecar.lock().await;
@@ -64,8 +105,12 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_deep_link::init())
         .invoke_handler(tauri::generate_handler![
             get_server_info,
+            get_workspace_server_info,
             start_server,
             stop_server,
         ])
