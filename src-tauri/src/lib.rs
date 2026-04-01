@@ -1,3 +1,4 @@
+mod onboarding;
 mod sidecar;
 
 use sidecar::SidecarManager;
@@ -113,6 +114,13 @@ pub fn run() {
             get_workspace_server_info,
             start_server,
             stop_server,
+            onboarding::check_openacp_installed,
+            onboarding::check_openacp_config,
+            onboarding::check_core_update,
+            onboarding::run_install_script,
+            onboarding::run_openacp_setup,
+            onboarding::run_openacp_agents_list,
+            onboarding::run_openacp_agent_install,
         ])
         .setup(move |app| {
             app.manage(AppState {
