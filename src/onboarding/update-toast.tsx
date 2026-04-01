@@ -13,6 +13,7 @@ export function UpdateToasts() {
   const [appUpdateAvailable, setAppUpdateAvailable] = createSignal(false);
   const [coreUpdating, setCoreUpdating] = createSignal(false);
   const [appUpdating, setAppUpdating] = createSignal(false);
+  const [coreUpdateError, setCoreUpdateError] = createSignal('');
 
   onMount(async () => {
     // Check core update
@@ -34,9 +35,12 @@ export function UpdateToasts() {
 
   const updateCore = async () => {
     setCoreUpdating(true);
+    setCoreUpdateError('');
     try {
       await invoke('run_install_script');
       setCoreUpdate(null);
+    } catch (err) {
+      setCoreUpdateError(String(err));
     } finally {
       setCoreUpdating(false);
     }
@@ -64,6 +68,7 @@ export function UpdateToasts() {
             loading={coreUpdating()}
             onUpdate={updateCore}
             onDismiss={() => setCoreUpdate(null)}
+            error={coreUpdateError()}
           />
         )}
       </Show>
@@ -84,10 +89,14 @@ function Toast(props: {
   loading: boolean;
   onUpdate: () => void;
   onDismiss: () => void;
+  error?: string;
 }) {
   return (
     <div class="pointer-events-auto flex items-center gap-3 rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 shadow-lg">
-      <span class="text-sm text-neutral-200">{props.message}</span>
+      <div class="flex flex-col gap-1">
+        <span class="text-sm text-neutral-200">{props.message}</span>
+        <Show when={props.error}><p class="text-xs text-red-400">{props.error}</p></Show>
+      </div>
       <button
         onClick={props.onUpdate}
         disabled={props.loading}

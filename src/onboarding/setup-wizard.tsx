@@ -38,9 +38,17 @@ export function SetupWizard(props: Props) {
     }
   };
 
+  const [agentInstallLog, setAgentInstallLog] = createSignal<string[]>([]);
+
   const installAgent = async (key: string) => {
     setInstallingAgent(key);
     setAgentInstallError('');
+    setAgentInstallLog([]);
+
+    const unlisten = await listen<string>('agent-install-output', (event) => {
+      setAgentInstallLog((prev) => [...prev, event.payload]);
+    });
+
     try {
       await invoke('run_openacp_agent_install', { agentKey: key });
       setSelectedAgent(key);
@@ -49,6 +57,7 @@ export function SetupWizard(props: Props) {
       setAgentInstallError(`Failed to install ${key}: ${String(err)}`);
     } finally {
       setInstallingAgent('');
+      unlisten();
     }
   };
 
@@ -159,6 +168,11 @@ export function SetupWizard(props: Props) {
                   )}
                 </For>
               </div>
+              <Show when={installingAgent() !== '' && agentInstallLog().length > 0}>
+                <div class="mt-2 h-20 overflow-y-auto rounded bg-neutral-800 p-2 font-mono text-xs text-neutral-400">
+                  <For each={agentInstallLog()}>{(line) => <div>{line}</div>}</For>
+                </div>
+              </Show>
             </Show>
           </div>
 

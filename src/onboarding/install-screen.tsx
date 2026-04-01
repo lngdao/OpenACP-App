@@ -1,4 +1,4 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createSignal, onMount, Show, For } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
@@ -66,9 +66,7 @@ export function InstallScreen(props: Props) {
           ref={logEl}
           class="mb-4 h-64 overflow-y-auto rounded-lg bg-neutral-900 p-4 font-mono text-xs text-neutral-300"
         >
-          {lines().map((line) => (
-            <div>{line}</div>
-          ))}
+          <For each={lines()}>{(line) => <div>{line}</div>}</For>
           <Show when={status() === 'running'}>
             <span class="animate-pulse text-neutral-500">▌</span>
           </Show>
