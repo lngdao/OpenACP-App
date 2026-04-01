@@ -35,6 +35,31 @@ export interface ServerInfo {
   token: string
 }
 
+export interface TokenInfo {
+  accessToken: string
+  tokenId: string
+  expiresAt: string
+  refreshDeadline: string
+}
+
+export interface StoredToken {
+  id: string
+  name: string
+  role: string
+  scopes?: string[]
+  createdAt: string
+  refreshDeadline: string
+  lastUsedAt?: string
+  revoked: boolean
+}
+
+export interface AuthInfo {
+  type: "secret" | "jwt"
+  tokenId?: string
+  role: string
+  scopes: string[]
+}
+
 /** SSE agent:event payload from OpenACP server */
 export interface AgentEvent {
   sessionId: string

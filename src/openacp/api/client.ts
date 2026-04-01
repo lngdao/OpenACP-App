@@ -1,7 +1,23 @@
-import type { Agent, ServerInfo, Session } from "../types"
+import type { Agent, AuthInfo, ServerInfo, Session, StoredToken, TokenInfo } from "../types"
 
 export function createApiClient(server: ServerInfo) {
-  const { url, token } = server
+  const { url } = server
+  let token = server.token
+
+  async function tryRefreshToken(): Promise<boolean> {
+    try {
+      const res = await fetch(`${url}/api/v1/auth/refresh`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return false
+      const data: TokenInfo = await res.json()
+      token = data.accessToken
+      return true
+    } catch {
+      return false
+    }
+  }
 
   async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const res = await fetch(`${url}/api/v1${path}`, {
@@ -12,6 +28,27 @@ export function createApiClient(server: ServerInfo) {
         ...(init?.headers as Record<string, string> | undefined),
       },
     })
+
+    // Auto-refresh expired JWT and retry once
+    if (res.status === 401 && token.startsWith("eyJ")) {
+      const refreshed = await tryRefreshToken()
+      if (refreshed) {
+        const retry = await fetch(`${url}/api/v1${path}`, {
+          ...init,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            ...(init?.headers as Record<string, string> | undefined),
+          },
+        })
+        if (!retry.ok) {
+          const body = await retry.text().catch(() => "")
+          throw new Error(`API ${retry.status} ${path}: ${body}`)
+        }
+        return retry.json()
+      }
+    }
+
     if (!res.ok) {
       const body = await res.text().catch(() => "")
       throw new Error(`API ${res.status} ${path}: ${body}`)
@@ -85,6 +122,37 @@ export function createApiClient(server: ServerInfo) {
         method: "PUT",
         body: JSON.stringify({ value }),
       })
+    },
+
+    /** Generate a new JWT token (requires secret token auth) */
+    async generateToken(opts: { role: string; name: string; expire?: string; scopes?: string[] }): Promise<TokenInfo> {
+      return api("/auth/tokens", {
+        method: "POST",
+        body: JSON.stringify(opts),
+      })
+    },
+
+    /** Refresh the current JWT (works even if expired, within refresh deadline) */
+    async refreshToken(): Promise<TokenInfo> {
+      const data = await api<TokenInfo>("/auth/refresh", { method: "POST" })
+      token = data.accessToken
+      return data
+    },
+
+    /** List active tokens (requires auth:manage scope) */
+    async listTokens(): Promise<StoredToken[]> {
+      const res = await api<{ tokens: StoredToken[] }>("/auth/tokens")
+      return res.tokens || []
+    },
+
+    /** Revoke a token by ID (requires auth:manage scope) */
+    async revokeToken(tokenId: string): Promise<void> {
+      await api(`/auth/tokens/${encodeURIComponent(tokenId)}`, { method: "DELETE" })
+    },
+
+    /** Get current auth info (role, scopes, expiry) */
+    async me(): Promise<AuthInfo> {
+      return api("/auth/me")
     },
 
     /** SSE events URL for EventSource */
