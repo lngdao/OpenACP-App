@@ -1,0 +1,105 @@
+/* OpenACP App — custom styles */
+
+/* Tool output — visible scrollbar, mono, bordered */
+.oac-tool-output {
+  width: 100%;
+  border: 1px solid var(--border-weak-base);
+  border-radius: 6px;
+  background: transparent;
+  overflow: hidden;
+}
+
+.oac-tool-output-pre {
+  margin: 0;
+  padding: 12px;
+  font-family: var(--font-family-mono);
+  font-feature-settings: var(--font-family-mono--font-feature-settings);
+  font-size: 13px;
+  line-height: var(--line-height-large);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 240px;
+  overflow-y: auto;
+  color: var(--text-base);
+}
+
+/* ── User message ────────────────────────────────────────────────────────── */
+
+[data-component="oac-user-message"] {
+  background-color: var(--surface-stronger-non-alpha, var(--background-stronger));
+}
+
+/* User message hover meta — time + copy */
+.oac-user-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 20px;
+  margin-top: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+[data-component="oac-user-message"]:hover .oac-user-meta,
+[data-component="oac-user-message"]:focus-within .oac-user-meta {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Assistant text part hover meta — copy ───────────────────────────────── */
+
+.oac-meta-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  margin-top: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.oac-text-part:hover .oac-meta-wrapper,
+.oac-text-part:focus-within .oac-meta-wrapper {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Copy button ─────────────────────────────────────────────────────────── */
+
+.oac-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--icon-weak);
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.oac-copy-btn:hover {
+  color: var(--icon-base);
+  background-color: var(--surface-raised-base-hover);
+}
+
+.oac-copy-btn:active {
+  color: var(--icon-strong);
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+
+@keyframes oac-spin {
+  to { transform: rotate(360deg); }
+}
+
+.oac-spinner {
+  animation: oac-spin 0.6s linear infinite;
+}

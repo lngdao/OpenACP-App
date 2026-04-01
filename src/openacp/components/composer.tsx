@@ -5,14 +5,15 @@ import { Button } from "@openacp/ui/button"
 import { Icon } from "@openacp/ui/icon"
 import { Tooltip } from "@openacp/ui/tooltip"
 import { useChat } from "../context/chat"
-import { ModelSelector } from "./model-selector"
+import { AgentSelector } from "./agent-selector"
 import { SlashCommandPopover } from "./slash-commands"
 import { ConfigSelector } from "./config-selector"
 
 export function Composer() {
   const chat = useChat()
   const [text, setText] = createSignal("")
-  const [model, setModel] = createSignal<string>()
+  const [agent, setAgent] = createSignal<string>()
+  const [isBypass, setIsBypass] = createSignal(false)
   const [slashQuery, setSlashQuery] = createSignal<string | null>(null)
 
   let editorRef: HTMLDivElement | undefined
@@ -83,6 +84,7 @@ export function Composer() {
         <DockShellForm
           onSubmit={handleSubmit}
           class="group/prompt-input focus-within:shadow-xs-border"
+          style={isBypass() ? { "border-color": "var(--surface-critical-strong)", "border-width": "1.5px" } : undefined}
         >
           <div
             class="relative"
@@ -155,9 +157,17 @@ export function Composer() {
 
         <DockTray attach="top">
           <div class="px-1.75 pt-5.5 pb-2 flex items-center gap-1.5 min-w-0">
-            <ModelSelector current={model()} onSelect={setModel} />
-            <ConfigSelector category="mode" sessionID={chat.activeSession()} />
+            <AgentSelector current={agent()} onSelect={setAgent} />
             <ConfigSelector category="model" sessionID={chat.activeSession()} />
+            <div class="flex-1" />
+            <ConfigSelector
+              category="mode"
+              sessionID={chat.activeSession()}
+              onValueChange={(v) => {
+                const val = v.toLowerCase()
+                setIsBypass(val.includes("bypass") || val.includes("dangerous"))
+              }}
+            />
           </div>
         </DockTray>
       </div>

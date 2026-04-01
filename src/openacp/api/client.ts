@@ -1,4 +1,4 @@
-import type { Agent, AuthInfo, ServerInfo, Session, StoredToken, TokenInfo } from "../types"
+import type { Agent, AuthInfo, ServerInfo, Session, SessionHistory, StoredToken, TokenInfo } from "../types"
 
 export function createApiClient(server: ServerInfo) {
   const { url } = server
@@ -153,6 +153,16 @@ export function createApiClient(server: ServerInfo) {
     /** Get current auth info (role, scopes, expiry) */
     async me(): Promise<AuthInfo> {
       return api("/auth/me")
+    },
+
+    /** Get full conversation history for a session */
+    async getSessionHistory(sessionID: string): Promise<SessionHistory | null> {
+      try {
+        const res = await api<{ history: SessionHistory }>(`/sessions/${encodeURIComponent(sessionID)}/history`)
+        return res.history
+      } catch {
+        return null
+      }
     },
 
     /** SSE events URL for EventSource */

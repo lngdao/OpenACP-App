@@ -57,6 +57,40 @@ async fn get_workspace_server_info(directory: String) -> Result<ServerInfo, Stri
     Err(format!("Could not determine port from {}", dir.display()))
 }
 
+/// Discover known workspaces from ~/.openacp/instances.json
+#[tauri::command]
+async fn discover_workspaces() -> Result<Vec<String>, String> {
+    let home = dirs::home_dir().ok_or_else(|| "Cannot determine home directory".to_string())?;
+    let path = home.join(".openacp").join("instances.json");
+    if !path.exists() {
+        return Ok(vec![]);
+    }
+    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    let value: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
+
+    let mut dirs = Vec::new();
+
+    // Format: { version: 1, instances: { "id": { root: "/path/.openacp" } } }
+    let instances = value.get("instances").and_then(|v| v.as_object());
+    if let Some(instances) = instances {
+        for (_id, entry) in instances {
+            if let Some(root) = entry.get("root").and_then(|r| r.as_str()) {
+                // root points to .openacp dir — get parent as workspace
+                let p = std::path::PathBuf::from(root);
+                let workspace = if p.file_name().map(|n| n == ".openacp").unwrap_or(false) {
+                    p.parent().map(|pp| pp.to_string_lossy().to_string())
+                } else {
+                    Some(root.to_string())
+                };
+                if let Some(dir) = workspace {
+                    dirs.push(dir);
+                }
+            }
+        }
+    }
+    Ok(dirs)
+}
+
 #[tauri::command]
 async fn start_server(state: tauri::State<'_, AppState>) -> Result<ServerInfo, String> {
     let mut mgr = state.sidecar.lock().await;
@@ -111,6 +145,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_server_info,
             get_workspace_server_info,
+            discover_workspaces,
             start_server,
             stop_server,
         ])
