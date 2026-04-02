@@ -29,7 +29,13 @@ export function SetupWizard(props: Props) {
   const [agents, { refetch }] = createResource<AgentEntry[]>(async () => {
     try {
       const result = await invoke<string>('run_openacp_agents_list');
-      const parsed = JSON.parse(result) as AgentEntry[];
+      const envelope = JSON.parse(result) as {
+        success: boolean;
+        data: { agents: AgentEntry[] };
+        error?: { code: string; message: string };
+      };
+      if (!envelope.success) throw new Error(envelope.error?.message ?? 'Failed to load agents');
+      const parsed = envelope.data.agents;
       console.log('[agents] loaded:', parsed);
       const claude = parsed.find((a) => a.key === 'claude' && a.installed);
       if (claude) setSelectedAgent('claude');

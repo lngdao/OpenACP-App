@@ -197,7 +197,14 @@ pub async fn run_openacp_setup(
 
     match exit_code {
         Some(0) | None => Ok(json_result),
-        Some(code) => Err(format!("openacp setup exited with code {code}: {json_result}")),
+        Some(code) => {
+            // Extract human-readable message from the JSON error envelope if available
+            let message = serde_json::from_str::<serde_json::Value>(&json_result)
+                .ok()
+                .and_then(|v| v["error"]["message"].as_str().map(|s| s.to_string()))
+                .unwrap_or_else(|| format!("openacp setup exited with code {code}"));
+            Err(message)
+        }
     }
 }
 
