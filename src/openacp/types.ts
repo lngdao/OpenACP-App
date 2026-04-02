@@ -83,6 +83,15 @@ export interface AuthInfo {
   scopes: string[]
 }
 
+// ── Server Commands ─────────────────────────────────────────────────────────
+
+export interface ServerCommand {
+  name: string
+  description: string
+  usage: string
+  category: string
+}
+
 // ── Session History (from server) ───────────────────────────────────────────
 
 export interface SessionHistory {
