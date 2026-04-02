@@ -55,16 +55,17 @@ export function LocalTab(props: LocalTabProps) {
     <div class="space-y-4">
       {/* Known instances */}
       <div>
-        <p class="text-12-regular text-text-weaker uppercase tracking-wide mb-2">Known Instances</p>
+        <p class="text-12-regular text-text-weaker uppercase tracking-wide mb-2">Known Workspaces</p>
         <Show when={instances.loading}>
           <p class="text-14-regular text-text-weak">Scanning...</p>
         </Show>
         <Show when={!instances.loading && (instances() ?? []).length === 0}>
-          <p class="text-14-regular text-text-weak">No instances found.</p>
+          <p class="text-14-regular text-text-weak">No workspaces found.</p>
         </Show>
         <For each={instances() ?? []}>
           {(inst) => {
             const alreadyAdded = () => props.existingIds?.includes(inst.id) ?? false
+            const localUrl = () => inst.port ? `http://localhost:${inst.port}` : null
             return (
               <button
                 type="button"
@@ -81,7 +82,10 @@ export function LocalTab(props: LocalTabProps) {
                 </span>
                 <span class="flex-1 min-w-0">
                   <span class="text-14-medium text-text-strong block truncate">{inst.name ?? inst.id}</span>
-                  <span class="text-12-regular text-text-weak block truncate">{inst.directory}{inst.port ? ` :${inst.port}` : ''}</span>
+                  <span class="text-12-regular text-text-weak block truncate">{inst.directory}</span>
+                  <Show when={localUrl()}>
+                    <span class="text-12-regular text-text-weaker block truncate">{localUrl()}</span>
+                  </Show>
                 </span>
                 <Show when={alreadyAdded()}>
                   <span class="text-12-regular text-text-weaker">&#10003; Added</span>
