@@ -150,15 +150,21 @@ export function RemoteTab(props: RemoteTabProps) {
   return (
     <div class="space-y-4">
       <Show when={!preview()}>
-        <div class="space-y-3">
+        <div class="space-y-4">
+          <div>
+            <p class="text-14-medium text-text-strong mb-1">Connect to a remote workspace</p>
+            <p class="text-13-regular text-text-weak">
+              Run <code class="font-mono bg-surface-raised-base px-1 py-0.5 rounded text-text-base">openacp remote</code> on the remote machine, then paste the invite link below.
+            </p>
+          </div>
           <label class="block">
-            <span class="text-12-regular text-text-weaker block mb-1">Paste openacp:// link or URL</span>
+            <span class="text-12-medium text-text-weaker uppercase tracking-wider block mb-2">Invite link</span>
             <textarea
               value={input()}
               onInput={(e) => setInput(e.currentTarget.value)}
-              placeholder="openacp://connect?host=abc-123.trycloudflare.com&code=..."
+              placeholder="openacp://connect?host=...&code=..."
               rows={3}
-              class="w-full px-3 py-2 rounded-lg border border-border-base bg-surface-raised-base text-14-regular text-text-base font-mono resize-none"
+              class="w-full px-3 py-2 rounded-xl border border-border-base bg-surface-raised-base text-13-regular text-text-base font-mono resize-none focus:outline-none focus:ring-1 focus:ring-accent-base"
             />
           </label>
           <Show when={error()}>
@@ -168,7 +174,7 @@ export function RemoteTab(props: RemoteTabProps) {
             type="button"
             onClick={handleConnect}
             disabled={loading() || !input().trim()}
-            class="w-full px-4 py-2 rounded-lg bg-accent-base text-white text-14-medium disabled:opacity-50 transition-colors"
+            class="w-full px-4 py-2.5 rounded-xl bg-accent-base text-white text-14-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
           >
             {loading() ? 'Connecting...' : 'Connect'}
           </button>
@@ -178,21 +184,25 @@ export function RemoteTab(props: RemoteTabProps) {
       <Show when={preview()}>
         {(p) => (
           <div class="space-y-4">
-            <div class="p-4 bg-surface-raised-base rounded-lg space-y-2">
-              <div class="flex justify-between items-center">
-                <span class="text-12-regular text-text-weak">Workspace</span>
+            <div>
+              <p class="text-14-medium text-text-strong mb-1">Connection successful</p>
+              <p class="text-13-regular text-text-weak">Review the details below before adding this workspace.</p>
+            </div>
+            <div class="rounded-xl border border-border-base divide-y divide-border-base overflow-hidden">
+              <div class="flex justify-between items-center px-4 py-3">
+                <span class="text-13-regular text-text-weak">Workspace</span>
                 <span class="text-14-medium text-text-strong">{p().workspaceName}</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-12-regular text-text-weak">Host</span>
-                <span class="text-12-regular text-text-base font-mono truncate max-w-48">{p().host.replace('https://', '')}</span>
+              <div class="flex justify-between items-center px-4 py-3">
+                <span class="text-13-regular text-text-weak">Server address</span>
+                <span class="text-12-regular text-text-base font-mono truncate max-w-48">{p().host.replace(/^https?:\/\//, '')}</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-12-regular text-text-weak">Role</span>
-                <span class="text-14-regular text-text-base">{p().role}</span>
+              <div class="flex justify-between items-center px-4 py-3">
+                <span class="text-13-regular text-text-weak">Access level</span>
+                <span class="text-13-regular text-text-base capitalize">{p().role}</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-12-regular text-text-weak">Expires</span>
+              <div class="flex justify-between items-center px-4 py-3">
+                <span class="text-13-regular text-text-weak">Session expires</span>
                 <span class="text-12-regular text-text-base">{new Date(p().expiresAt).toLocaleString()}</span>
               </div>
             </div>
@@ -203,7 +213,7 @@ export function RemoteTab(props: RemoteTabProps) {
               <button
                 type="button"
                 onClick={() => { setPreview(null); setError(null) }}
-                class="px-3 py-2 text-14-regular text-text-weak hover:text-text-base transition-colors"
+                class="px-4 py-2.5 rounded-xl border border-border-base text-14-regular text-text-weak hover:text-text-base hover:border-border-hover transition-colors"
               >
                 Back
               </button>
@@ -211,9 +221,9 @@ export function RemoteTab(props: RemoteTabProps) {
                 type="button"
                 onClick={handleConfirm}
                 disabled={saving()}
-                class="flex-1 px-4 py-2 rounded-lg bg-accent-base text-white text-14-medium disabled:opacity-50 transition-colors"
+                class="flex-1 px-4 py-2.5 rounded-xl bg-accent-base text-white text-14-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
               >
-                {saving() ? 'Saving...' : 'Add Workspace'}
+                {saving() ? 'Adding...' : 'Add workspace'}
               </button>
             </div>
           </div>
