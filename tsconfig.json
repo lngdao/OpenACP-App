@@ -13,7 +13,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@openacp/ui/*": ["./src/ui/src/components/*", "./src/ui/src/*"],
+      "@openacp/util/*": ["./src/util/src/*"]
     }
   },
   "include": ["src"],

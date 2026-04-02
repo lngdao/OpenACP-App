@@ -75,7 +75,15 @@ export function SidebarPanel() {
             <button
               class="flex items-center gap-1 min-w-0 w-full text-left focus:outline-none py-1"
               classList={{ active: !chat.activeSession() }}
-              onClick={() => chat.setActiveSession("")}
+              onClick={async () => {
+                const session = await sessions.create()
+                if (session) {
+                  chat.setActiveSession(session.id)
+                } else {
+                  const { showToast } = await import("../../ui/src/components/toast")
+                  showToast({ description: "Failed to create session. Max sessions may be reached.", variant: "error" })
+                }
+              }}
             >
               <div class="shrink-0 size-6 flex items-center justify-center">
                 <Icon name="new-session" size="small" class="text-icon-weak" />
