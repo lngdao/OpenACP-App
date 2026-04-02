@@ -30,7 +30,7 @@ export function SidebarRail(props: {
       class="w-14 shrink-0 bg-background-base flex flex-col items-center overflow-hidden"
     >
       <div class="flex-1 min-h-0 w-full">
-        <div class="h-full w-full flex flex-col items-center gap-2 px-2 pt-3 overflow-y-auto no-scrollbar">
+        <div class="h-full w-full flex flex-col items-center gap-2 px-2 overflow-y-auto no-scrollbar pt-5">
           <For each={props.workspaces}>
             {(dir) => {
               const isActive = () => dir === props.activeWorkspace
@@ -40,8 +40,8 @@ export function SidebarRail(props: {
                   <button
                     type="button"
                     classList={{
-                      "flex items-center justify-center size-9 rounded-lg overflow-hidden transition-all cursor-default": true,
-                      "ring-2 ring-text-weak ring-offset-1 ring-offset-background-base": isActive(),
+                      "flex items-center justify-center size-8 rounded-md overflow-hidden transition-all cursor-default": true,
+                      "ring-2 ring-text-base ring-offset-1 ring-offset-background-base": isActive(),
                       "opacity-60 hover:opacity-100": !isActive(),
                     }}
                     onClick={() => props.onSwitchWorkspace(dir)}
@@ -58,13 +58,16 @@ export function SidebarRail(props: {
             }}
           </For>
 
-          <Tooltip placement="right" value="Open folder">
-            <IconButton
-              icon="plus"
-              variant="ghost"
-              onClick={props.onOpenFolder}
-            />
-          </Tooltip>
+          <div class="mt-1">
+            <Tooltip placement="right" value="Open workspace">
+              <IconButton
+                icon="plus"
+                variant="ghost"
+                class="size-8 rounded-md"
+                onClick={props.onOpenFolder}
+              />
+            </Tooltip>
+          </div>
         </div>
       </div>
 

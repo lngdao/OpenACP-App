@@ -1,6 +1,7 @@
-import { For, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { For, Show, createMemo, createSignal } from "solid-js"
 import { useChat } from "../context/chat"
 import { useSessions } from "../context/sessions"
+import { createAutoScroll } from "../../ui/src/hooks/create-auto-scroll"
 import { MessageBubble } from "./message"
 
 function ChatHeader() {
@@ -22,7 +23,6 @@ function ChatHeader() {
           <span class="text-14-medium text-text-strong truncate block">{title()}</span>
         </div>
         <div class="flex items-center gap-1.5">
-          {/* Context circle — placeholder */}
           <button
             class="w-7 h-7 flex items-center justify-center rounded-md text-icon-weak hover:text-icon-base hover:bg-surface-raised-base-hover transition-colors"
             title="Context"
@@ -31,7 +31,6 @@ function ChatHeader() {
               <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.2" />
             </svg>
           </button>
-          {/* More options — placeholder */}
           <button
             class="w-7 h-7 flex items-center justify-center rounded-md text-icon-weak hover:text-icon-base hover:bg-surface-raised-base-hover transition-colors"
             title="More options"
@@ -53,7 +52,6 @@ function EmptyState() {
   const sessions = useSessions()
 
   const hasSession = () => !!chat.activeSession()
-
   const [creating, setCreating] = createSignal(false)
 
   async function handleNewSession() {
@@ -75,7 +73,6 @@ function EmptyState() {
   return (
     <div class="h-full flex flex-col items-center justify-center">
       <div class="flex flex-col items-center gap-5">
-        {/* Icon */}
         <div class="w-10 h-10 rounded-lg bg-surface-raised-base flex items-center justify-center border border-border-weaker-base">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M12.292 6.04167L16.2503 9.99998L12.292 13.9583M2.91699 9.99998H15.6253M17.0837 3.75V16.25" stroke="currentColor" stroke-linecap="square" class="text-text-weak" />
@@ -97,7 +94,7 @@ function EmptyState() {
 
         <Show when={!hasSession()}>
           <button
-            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-base text-13-medium text-text-strong hover:bg-surface-raised-base-hover transition-colors active:scale-[0.98] disabled:opacity-50"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-base text-12-medium text-text-strong hover:bg-surface-raised-base-hover transition-colors active:scale-[0.98] disabled:opacity-50"
             onClick={handleNewSession}
             disabled={creating()}
           >
@@ -118,18 +115,30 @@ function EmptyState() {
   )
 }
 
+function ScrollToBottomButton(props: { visible: boolean; onClick: () => void }) {
+  return (
+    <Show when={props.visible}>
+      <div class="absolute bottom-4 left-1/2 z-10" style={{ transform: "translateX(-50%)" }}>
+        <button
+          class="flex items-center justify-center w-8 h-8 rounded-full border border-border-base text-text-base hover:text-text-strong transition-colors active:scale-95"
+          style={{ background: "var(--surface-stronger-non-alpha, var(--background-stronger))", "box-shadow": "0 2px 8px rgba(0,0,0,0.15)" }}
+          onClick={props.onClick}
+        >
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+            <path d="M5.83301 8.33366L9.99967 12.5003L14.1663 8.33366" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </Show>
+  )
+}
+
 export function ChatView() {
   const chat = useChat()
-  let scrollRef: HTMLDivElement | undefined
 
-  createEffect(() => {
-    const msgs = chat.messages()
-    chat.streaming()
-    if (msgs.length && scrollRef) {
-      requestAnimationFrame(() => {
-        scrollRef!.scrollTop = scrollRef!.scrollHeight
-      })
-    }
+  const autoScroll = createAutoScroll({
+    working: () => chat.streaming(),
+    bottomThreshold: 20,
   })
 
   const hasMessages = () => chat.activeSession() && chat.messages().length > 0
@@ -137,16 +146,21 @@ export function ChatView() {
   return (
     <div class="flex-1 min-h-0 overflow-hidden flex flex-col">
       <ChatHeader />
-      <div class="flex-1 min-h-0 overflow-hidden">
+      <div class="flex-1 min-h-0 overflow-hidden relative">
         <Show
           when={hasMessages()}
           fallback={<EmptyState />}
         >
           <div
-            ref={scrollRef}
+            ref={autoScroll.scrollRef}
             class="h-full overflow-y-auto no-scrollbar pt-3"
+            onScroll={autoScroll.handleScroll}
           >
-            <div class="px-4 md:max-w-200 md:mx-auto 2xl:max-w-[1000px] pb-6 flex flex-col gap-5">
+            <div
+              ref={autoScroll.contentRef}
+              class="px-4 md:max-w-200 md:mx-auto 2xl:max-w-[1000px] pb-32 flex flex-col"
+              onClick={autoScroll.handleInteraction}
+            >
               <For each={chat.messages()}>
                 {(msg, index) => {
                   const isLast = () => index() === chat.messages().length - 1
@@ -154,12 +168,18 @@ export function ChatView() {
                     <MessageBubble
                       message={msg}
                       streaming={chat.streaming() && isLast() && msg.role === "assistant"}
+                      isFirst={index() === 0}
                     />
                   )
                 }}
               </For>
             </div>
           </div>
+
+          <ScrollToBottomButton
+            visible={autoScroll.userScrolled()}
+            onClick={() => autoScroll.resume()}
+          />
         </Show>
       </div>
     </div>

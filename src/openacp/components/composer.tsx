@@ -5,8 +5,11 @@ import { Button } from "@openacp/ui/button"
 import { Icon } from "@openacp/ui/icon"
 import { Tooltip } from "@openacp/ui/tooltip"
 import { useChat } from "../context/chat"
+import PhPlus from "phosphor-solid-js/dist/icons/Plus.esm"
+import PhCommand from "phosphor-solid-js/dist/icons/Command.esm"
 import { AgentSelector } from "./agent-selector"
 import { SlashCommandPopover } from "./slash-commands"
+import { CommandPalette } from "./command-palette"
 import { ConfigSelector } from "./config-selector"
 
 export function Composer() {
@@ -15,9 +18,10 @@ export function Composer() {
   const [agent, setAgent] = createSignal<string>()
   const [isBypass, setIsBypass] = createSignal(false)
   const [slashQuery, setSlashQuery] = createSignal<string | null>(null)
+  const [commandOpen, setCommandOpen] = createSignal(false)
 
   let editorRef: HTMLDivElement | undefined
-  const space = "44px"
+  const space = "52px"
 
   const handleSubmit = async (e?: Event) => {
     e?.preventDefault()
@@ -66,7 +70,7 @@ export function Composer() {
     <div class="shrink-0 w-full pb-3 flex flex-col justify-center items-center bg-background-stronger">
       <div class="w-full px-3 md:max-w-200 md:mx-auto 2xl:max-w-[1000px] relative">
         {/* Slash command popover — above input */}
-        <Show when={slashQuery() !== null}>
+        <Show when={slashQuery() !== null && !commandOpen()}>
           <div class="absolute bottom-full left-3 right-3 mb-1 z-50">
             <SlashCommandPopover
               query={slashQuery()!}
@@ -76,6 +80,22 @@ export function Composer() {
                 setSlashQuery(null)
                 if (editorRef) editorRef.textContent = ""
                 setText("")
+              }}
+            />
+          </div>
+        </Show>
+
+        {/* Command palette — above input */}
+        <Show when={commandOpen()}>
+          <div class="absolute bottom-full left-3 right-3 mb-1 z-50">
+            <CommandPalette
+              sessionID={chat.activeSession()}
+              onClose={() => setCommandOpen(false)}
+              onSlashCommand={(cmd) => {
+                if (editorRef) editorRef.textContent = cmd
+                setText(cmd)
+                setSlashQuery(cmd)
+                editorRef?.focus()
               }}
             />
           </div>
@@ -146,9 +166,18 @@ export function Composer() {
             </div>
 
             <div class="pointer-events-none absolute bottom-2 left-2">
-              <div class="pointer-events-auto">
+              <div class="pointer-events-auto flex items-center gap-0.5">
                 <Button data-action="prompt-attach" type="button" variant="ghost" class="size-8 p-0">
-                  <Icon name="plus" class="size-4.5" />
+                  <PhPlus size={18} weight="bold" class="text-icon-weak" />
+                </Button>
+                <Button
+                  data-action="prompt-command"
+                  type="button"
+                  variant="ghost"
+                  class="size-8 p-0"
+                  onClick={(e: MouseEvent) => { e.preventDefault(); e.stopPropagation(); setCommandOpen(!commandOpen()) }}
+                >
+                  <PhCommand size={18} weight="regular" class="text-icon-weak" />
                 </Button>
               </div>
             </div>
