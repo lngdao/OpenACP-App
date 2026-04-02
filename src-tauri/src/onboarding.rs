@@ -103,7 +103,7 @@ pub async fn run_install_script(app: tauri::AppHandle) -> Result<(), String> {
             .command("bash")
             .args([
                 "-c",
-                "curl -fsSL https://raw.githubusercontent.com/Open-ACP/OpenACP/main/scripts/install.sh | bash",
+                "curl -fsSL https://raw.githubusercontent.com/Open-ACP/OpenACP/main/scripts/install.sh | bash -s -- --no-onboard --no-prompt",
             ])
             .spawn()
             .map_err(|e| e.to_string())?,
@@ -112,7 +112,7 @@ pub async fn run_install_script(app: tauri::AppHandle) -> Result<(), String> {
             .command("powershell")
             .args([
                 "-Command",
-                "irm https://raw.githubusercontent.com/Open-ACP/OpenACP/main/scripts/install.ps1 | iex",
+                "& { $s = irm https://raw.githubusercontent.com/Open-ACP/OpenACP/main/scripts/install.ps1; $sb = [scriptblock]::Create($s); & $sb -NoOnboard }",
             ])
             .spawn()
             .map_err(|e| e.to_string())?,
