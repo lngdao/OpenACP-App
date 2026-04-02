@@ -1,5 +1,6 @@
 import { For, Show, createSignal, createMemo, createEffect, onCleanup } from "solid-js"
 import { FileDiff } from "@pierre/diffs"
+import { ResizeHandle } from "@openacp/ui/resize-handle"
 import { useChat } from "../context/chat"
 import type { Message, ToolCallPart, FileDiff as FileDiffData } from "../types"
 
@@ -15,7 +16,10 @@ function DiffViewer(props: { before: string; after: string; path: string }) {
     const path = props.path
 
     if (!instance) {
-      instance = new FileDiff({ themeType: "dark" })
+      instance = new FileDiff({
+        themeType: "dark",
+        disableFileHeader: false,
+      })
     }
 
     containerRef.innerHTML = ""
@@ -31,12 +35,17 @@ function DiffViewer(props: { before: string; after: string; path: string }) {
     instance = undefined
   })
 
-  return <div ref={containerRef} class="oac-diff-viewer" />
+  return <div ref={containerRef} />
 }
+
+const DEFAULT_WIDTH = 480
+const MIN_WIDTH = 320
+const MAX_WIDTH = 800
 
 export function ReviewPanel(props: { onClose: () => void }) {
   const chat = useChat()
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null)
+  const [panelWidth, setPanelWidth] = createSignal(DEFAULT_WIDTH)
 
   // Collect all file diffs from current session messages
   const fileDiffs = createMemo(() => {
@@ -67,7 +76,15 @@ export function ReviewPanel(props: { onClose: () => void }) {
   const fileName = (path: string) => path.split("/").pop() || path
 
   return (
-    <div class="flex flex-col h-full bg-background-base border-l border-border-weaker-base">
+    <div class="relative flex flex-col h-full bg-background-base border-l border-border-weaker-base" style={{ width: `${panelWidth()}px` }}>
+      <ResizeHandle
+        direction="horizontal"
+        edge="start"
+        size={panelWidth()}
+        min={MIN_WIDTH}
+        max={MAX_WIDTH}
+        onResize={setPanelWidth}
+      />
       {/* Header */}
       <div class="flex items-center justify-between px-3 h-11 border-b border-border-weaker-base flex-shrink-0">
         <div class="flex items-center gap-2">
