@@ -13,7 +13,7 @@ pub async fn check_openacp_installed(app: tauri::AppHandle) -> Result<Option<Str
         .await;
 
     match result {
-        Err(_) => Ok(None), // binary not found or spawn failed = not installed
+        Err(_) => Ok(None),
         Ok(output) if !output.status.success() => Ok(None),
         Ok(output) => {
             let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
