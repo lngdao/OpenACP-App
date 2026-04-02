@@ -2,6 +2,7 @@ import { createResource, createSignal, For, Show } from "solid-js"
 import { Switch } from "@openacp/ui/switch"
 import { Tooltip } from "@openacp/ui/tooltip"
 import { Spinner } from "@openacp/ui/spinner"
+import { showToast } from "@openacp/ui/toast"
 import { useWorkspace } from "../context/workspace"
 import type { InstalledPlugin } from "../types"
 
@@ -39,7 +40,7 @@ export function InstalledTab(props: Props) {
       }
       await refetch()
     } catch (err: any) {
-      alert(err?.message ?? "Action failed")
+      showToast({ description: err?.message ?? "Action failed", variant: "error" })
     } finally {
       setActionPending(plugin.name, false)
     }
@@ -52,7 +53,7 @@ export function InstalledTab(props: Props) {
       await client().uninstallPlugin(plugin.name)
       await refetch()
     } catch (err: any) {
-      alert(err?.message ?? "Uninstall failed")
+      showToast({ description: err?.message ?? "Uninstall failed", variant: "error" })
     } finally {
       setActionPending(plugin.name, false)
     }
@@ -75,7 +76,7 @@ export function InstalledTab(props: Props) {
       </Show>
 
       <Show when={plugins.error}>
-        <div class="text-red-500 text-sm text-center py-8">
+        <div class="text-red-500 text-14-regular text-center py-8">
           Failed to load plugins.
           <button class="underline ml-1" onClick={refetch}>Retry</button>
         </div>
@@ -87,29 +88,29 @@ export function InstalledTab(props: Props) {
             <div class="flex items-start justify-between gap-2">
               <div class="flex flex-col min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-sm font-medium text-text-strong truncate">{plugin.name}</span>
-                  <span class={`text-xs px-1.5 py-0.5 rounded ${plugin.source === 'builtin' ? 'bg-surface-base text-text-weak' : 'bg-blue-500/10 text-blue-500'}`}>
+                  <span class="text-14-medium text-text-strong truncate">{plugin.name}</span>
+                  <span class={`text-12-regular px-1.5 py-0.5 rounded ${plugin.source === 'builtin' ? 'bg-surface-base text-text-weak' : 'bg-blue-500/10 text-blue-500'}`}>
                     {plugin.source === 'builtin' ? 'Built-in' : plugin.source}
                   </span>
                   <Show when={plugin.failed}>
-                    <span class="text-xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-500">Failed</span>
+                    <span class="text-12-regular px-1.5 py-0.5 rounded bg-red-500/10 text-red-500">Failed</span>
                   </Show>
                   <Show when={!plugin.failed && plugin.loaded}>
-                    <span class="text-xs text-green-500">● Running</span>
+                    <span class="text-12-regular text-green-500">● Running</span>
                   </Show>
                   <Show when={!plugin.failed && !plugin.loaded}>
-                    <span class="text-xs text-text-weak">○ Disabled</span>
+                    <span class="text-12-regular text-text-weak">○ Disabled</span>
                   </Show>
                 </div>
                 <Show when={plugin.description}>
-                  <span class="text-xs text-text-weak mt-0.5">{plugin.description}</span>
+                  <span class="text-12-regular text-text-weak mt-0.5">{plugin.description}</span>
                 </Show>
               </div>
 
               <div class="flex items-center gap-2 shrink-0">
                 <Show when={plugin.hasConfigure}>
                   <button
-                    class="text-xs text-text-base hover:text-text-strong transition-colors"
+                    class="text-12-regular text-text-base hover:text-text-strong transition-colors"
                     onClick={() => setConfiguringPlugin(prev => prev === plugin.name ? null : plugin.name)}
                   >
                     Configure
@@ -123,14 +124,14 @@ export function InstalledTab(props: Props) {
                     onChange={() => handleToggle(plugin)}
                   />
                 }>
-                  <Tooltip value="Essential plugins cannot be disabled">
+                  <Tooltip value="Essential plugins cannot be disabled" placement="top">
                     <Switch checked={plugin.enabled} disabled={true} onChange={() => {}} />
                   </Tooltip>
                 </Show>
 
                 <Show when={plugin.source !== 'builtin'}>
                   <button
-                    class="text-xs text-red-500 hover:text-red-400 transition-colors disabled:opacity-40"
+                    class="text-12-regular text-red-500 hover:text-red-400 transition-colors disabled:opacity-40"
                     disabled={pendingActions().has(plugin.name)}
                     onClick={() => handleUninstall(plugin)}
                   >
@@ -145,7 +146,7 @@ export function InstalledTab(props: Props) {
                 <CommandBlock label="Run in your terminal:" command={getConfigureCommand(plugin.name)} />
                 <CommandBlock label="Restart the server to apply changes:" command={getRestartCommand()} />
                 <button
-                  class="text-xs text-text-weak hover:text-text-base self-start"
+                  class="text-12-regular text-text-weak hover:text-text-base self-start"
                   onClick={() => setConfiguringPlugin(null)}
                 >
                   Close
@@ -170,11 +171,11 @@ function CommandBlock(props: { label: string; command: string }) {
 
   return (
     <div class="flex flex-col gap-1">
-      <span class="text-xs text-text-weak">{props.label}</span>
+      <span class="text-12-regular text-text-weak">{props.label}</span>
       <div class="flex items-center gap-2 bg-background-stronger rounded px-3 py-2">
-        <code class="text-xs text-text-strong flex-1 font-mono">{props.command}</code>
+        <code class="text-12-regular text-text-strong flex-1 font-mono">{props.command}</code>
         <button
-          class="text-xs text-text-weak hover:text-text-base transition-colors shrink-0"
+          class="text-12-regular text-text-weak hover:text-text-base transition-colors shrink-0"
           onClick={copy}
         >
           {copied() ? "Copied!" : "Copy"}

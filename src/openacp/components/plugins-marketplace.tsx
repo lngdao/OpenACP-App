@@ -1,5 +1,6 @@
 import { createResource, createSignal, For, Show, onCleanup } from "solid-js"
 import { Spinner } from "@openacp/ui/spinner"
+import { showToast } from "@openacp/ui/toast"
 import { useWorkspace } from "../context/workspace"
 import type { MarketplacePlugin } from "../types"
 
@@ -22,7 +23,6 @@ export function MarketplaceTab(props: Props) {
   const [search, setSearch] = createSignal("")
   const [installingPlugin, setInstallingPlugin] = createSignal<MarketplacePlugin | null>(null)
   const [pollTimedOut, setPollTimedOut] = createSignal(false)
-  const [installMsg, setInstallMsg] = createSignal<string | null>(null)
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
   let pollTimeoutHandle: ReturnType<typeof setTimeout> | null = null
@@ -39,7 +39,6 @@ export function MarketplaceTab(props: Props) {
 
   function startPolling(pluginName: string) {
     setPollTimedOut(false)
-    setInstallMsg(null)
 
     pollInterval = setInterval(async () => {
       try {
@@ -47,7 +46,8 @@ export function MarketplaceTab(props: Props) {
         const found = result.plugins.some(p => p.name === pluginName)
         if (found) {
           stopPolling()
-          setInstallMsg(`Plugin installed! Please restart the server.`)
+          showToast({ description: 'Plugin installed! Please restart the server.', variant: 'success' })
+          setInstallingPlugin(null)
           await refetchMarketplace()
         }
       } catch {
@@ -63,7 +63,6 @@ export function MarketplaceTab(props: Props) {
 
   function handleInstall(plugin: MarketplacePlugin) {
     setInstallingPlugin(plugin)
-    setInstallMsg(null)
     startPolling(plugin.name)
   }
 
@@ -99,10 +98,10 @@ export function MarketplaceTab(props: Props) {
         {(plugin) => (
           <div class="border border-border-base rounded-lg p-4 flex flex-col gap-3 bg-surface-base">
             <div class="flex items-center justify-between">
-              <span class="text-sm font-medium text-text-strong">Installing {plugin().displayName ?? plugin().name}</span>
+              <span class="text-14-medium text-text-strong">Installing {plugin().displayName ?? plugin().name}</span>
               <button
-                class="text-xs text-text-weak hover:text-text-base"
-                onClick={() => { stopPolling(); setInstallingPlugin(null); setInstallMsg(null) }}
+                class="text-12-regular text-text-weak hover:text-text-base"
+                onClick={() => { stopPolling(); setInstallingPlugin(null) }}
               >
                 Close
               </button>
@@ -112,17 +111,13 @@ export function MarketplaceTab(props: Props) {
             <CommandBlock label="After install completes, restart the server:" command={getRestartCommand()} />
 
             <Show when={isRemote()}>
-              <p class="text-xs text-text-weak italic">
+              <p class="text-12-regular text-text-weak italic">
                 Run this on the machine hosting the server.
               </p>
             </Show>
 
-            <Show when={installMsg()}>
-              <p class="text-xs text-green-500">{installMsg()}</p>
-            </Show>
-
-            <div class="flex items-center gap-2 text-xs text-text-weak">
-              <Show when={!pollTimedOut() && !installMsg()} fallback={
+            <div class="flex items-center gap-2 text-12-regular text-text-weak">
+              <Show when={!pollTimedOut()} fallback={
                 <Show when={pollTimedOut()}>
                   <span>
                     Install not detected. Did the command complete successfully?{' '}
@@ -144,7 +139,7 @@ export function MarketplaceTab(props: Props) {
         placeholder="Search plugins…"
         value={search()}
         onInput={(e) => setSearch(e.currentTarget.value)}
-        class="w-full px-3 py-1.5 rounded-md border border-border-base bg-background-base text-sm text-text-strong placeholder:text-text-weak focus:outline-none focus:ring-2"
+        class="w-full px-3 py-1.5 rounded-md border border-border-base bg-background-base text-14-regular text-text-strong placeholder:text-text-weak focus:outline-none focus:ring-2"
       />
 
       <Show when={marketplace.loading}>
@@ -152,10 +147,10 @@ export function MarketplaceTab(props: Props) {
       </Show>
 
       <Show when={marketplace.error}>
-        <div class="text-red-500 text-sm text-center py-8 flex flex-col items-center gap-2">
+        <div class="text-red-500 text-14-regular text-center py-8 flex flex-col items-center gap-2">
           <span>Marketplace unavailable</span>
           <button
-            class="text-xs text-text-base border border-border-base rounded px-3 py-1 hover:bg-surface-raised-base-hover"
+            class="text-12-regular text-text-base border border-border-base rounded px-3 py-1 hover:bg-surface-raised-base-hover"
             onClick={refetchMarketplace}
           >
             Retry
@@ -170,32 +165,32 @@ export function MarketplaceTab(props: Props) {
               <span class="text-2xl shrink-0 mt-0.5">{plugin.icon}</span>
               <div class="flex flex-col min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="text-sm font-medium text-text-strong">{plugin.displayName ?? plugin.name}</span>
+                  <span class="text-14-medium text-text-strong">{plugin.displayName ?? plugin.name}</span>
                   <Show when={plugin.verified}>
-                    <span class="text-xs text-green-500">✓ Verified</span>
+                    <span class="text-12-regular text-green-500">✓ Verified</span>
                   </Show>
                   <Show when={!plugin.verified}>
-                    <span class="text-xs text-yellow-500">⚠ Unverified</span>
+                    <span class="text-12-regular text-yellow-500">⚠ Unverified</span>
                   </Show>
                   <Show when={plugin.minCliVersion}>
-                    <span class="text-xs text-text-weak">Requires OpenACP v{plugin.minCliVersion}</span>
+                    <span class="text-12-regular text-text-weak">Requires OpenACP v{plugin.minCliVersion}</span>
                   </Show>
                 </div>
-                <span class="text-xs text-text-weak mt-0.5">{plugin.description}</span>
-                <span class="text-xs text-text-weak mt-1">by {plugin.author} · {plugin.category}</span>
+                <span class="text-12-regular text-text-weak mt-0.5">{plugin.description}</span>
+                <span class="text-12-regular text-text-weak mt-1">by {plugin.author} · {plugin.category}</span>
               </div>
             </div>
 
             <div class="shrink-0">
               <Show when={plugin.installed} fallback={
                 <button
-                  class="text-xs px-3 py-1.5 rounded-md border border-border-base hover:bg-surface-raised-base-hover transition-colors"
+                  class="text-12-regular px-3 py-1.5 rounded-md border border-border-base hover:bg-surface-raised-base-hover transition-colors"
                   onClick={() => handleInstall(plugin)}
                 >
                   Install
                 </button>
               }>
-                <span class="text-xs text-green-500">Installed ✓</span>
+                <span class="text-12-regular text-green-500">Installed ✓</span>
               </Show>
             </div>
           </div>
@@ -216,11 +211,11 @@ function CommandBlock(props: { label: string; command: string }) {
 
   return (
     <div class="flex flex-col gap-1">
-      <span class="text-xs text-text-weak">{props.label}</span>
+      <span class="text-12-regular text-text-weak">{props.label}</span>
       <div class="flex items-center gap-2 bg-background-stronger rounded px-3 py-2">
-        <code class="text-xs text-text-strong flex-1 font-mono">{props.command}</code>
+        <code class="text-12-regular text-text-strong flex-1 font-mono">{props.command}</code>
         <button
-          class="text-xs text-text-weak hover:text-text-base transition-colors shrink-0"
+          class="text-12-regular text-text-weak hover:text-text-base transition-colors shrink-0"
           onClick={copy}
         >
           {copied() ? "Copied!" : "Copy"}
