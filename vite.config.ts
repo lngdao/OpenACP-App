@@ -1,4 +1,4 @@
-import { defineConfig } from "vite"
+import { defineConfig } from "vitest/config"
 import solid from "vite-plugin-solid"
 import tailwindcss from "@tailwindcss/vite"
 import path from "node:path"
@@ -84,7 +84,20 @@ function openacpResolver() {
     },
     load(id: string) {
       if (id === "\0virtual:pierre-stub" || id === "\0virtual:ghostty-stub") {
-        return "export default {}; export const Virtualizer = class {}; export const WorkerPoolManager = class {}; export const getSharedHighlighter = () => ({}); export const registerCustomTheme = () => {}; export const DEFAULT_VIRTUAL_FILE_METRICS = {}; export const File = () => null; export const FileDiff = () => null; export const VirtualizedFile = () => null; export const VirtualizedFileDiff = () => null; export const Terminal = class {}; export const Ghostty = class {};"
+        return `function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+const mock = { getLoadedLanguages: () => [], getLoadedThemes: () => ['OpenACP'], loadLanguage: async () => {}, loadTheme: async () => {}, codeToHtml: (code, opts) => '<pre class="shiki"><code>' + esc(code) + '</code></pre>' };
+export const getSharedHighlighter = async () => mock;
+export const registerCustomTheme = () => {};
+export default {};
+export const Virtualizer = class {};
+export const WorkerPoolManager = class {};
+export const DEFAULT_VIRTUAL_FILE_METRICS = {};
+export const File = () => null;
+export const FileDiff = () => null;
+export const VirtualizedFile = () => null;
+export const VirtualizedFileDiff = () => null;
+export const Terminal = class {};
+export const Ghostty = class {};`
       }
       return null
     },
@@ -105,6 +118,9 @@ export default defineConfig({
         "ghostty-web",
       ],
     },
+  },
+  test: {
+    environment: "node",
   },
   clearScreen: false,
   server: {

@@ -61,8 +61,10 @@ export function SessionsProvider(props: ParentProps) {
   async function remove(id: string) {
     try {
       await workspace.client.deleteSession(id)
-      setStore("sessions", (prev) => prev.filter((s) => s.id !== id))
-    } catch { /* silent */ }
+    } catch {
+      // Server may fail (500) but still remove locally
+    }
+    setStore("sessions", (prev) => prev.filter((s) => s.id !== id))
   }
 
   function upsert(session: Session) {

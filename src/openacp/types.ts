@@ -8,21 +8,44 @@ export interface Session {
   lastActiveAt?: string | null
 }
 
+// ── Message Parts ───────────────────────────────────────────────────────────
+
+export interface TextPart {
+  id: string
+  type: "text"
+  content: string
+}
+
+export interface ThinkingPart {
+  id: string
+  type: "thinking"
+  content: string
+}
+
+export interface ToolCallPart {
+  id: string
+  type: "tool_call"
+  toolCallId: string
+  name: string
+  status: "pending" | "running" | "completed" | "error"
+  input?: Record<string, unknown>
+  output?: string
+}
+
+export type MessagePart = TextPart | ThinkingPart | ToolCallPart
+
+// ── Messages ────────────────────────────────────────────────────────────────
+
 export interface Message {
   id: string
   role: "user" | "assistant"
   sessionID: string
   parentID?: string
-  content: string
+  parts: MessagePart[]
   createdAt: number
 }
 
-export interface Part {
-  id: string
-  type: "text" | "tool-invocation" | "thought"
-  messageID: string
-  content: string
-}
+// ── Agents ──────────────────────────────────────────────────────────────────
 
 export interface Agent {
   name: string
@@ -60,14 +83,76 @@ export interface AuthInfo {
   scopes: string[]
 }
 
-/** SSE agent:event payload from OpenACP server */
+// ── Server Commands ─────────────────────────────────────────────────────────
+
+export interface ServerCommand {
+  name: string
+  description: string
+  usage: string
+  category: string
+}
+
+// ── Session History (from server) ───────────────────────────────────────────
+
+export interface SessionHistory {
+  version: number
+  sessionId: string
+  turns: HistoryTurn[]
+}
+
+export interface HistoryTurn {
+  index: number
+  role: "user" | "assistant"
+  timestamp: string
+  content?: string
+  steps?: HistoryStep[]
+  usage?: { tokensUsed?: number; contextSize?: number; cost?: unknown }
+  stopReason?: string
+}
+
+export type HistoryStep =
+  | { type: "thinking"; content: string }
+  | { type: "text"; content: string }
+  | { type: "tool_call"; id: string; name: string; status: string; input?: unknown; output?: unknown; kind?: string }
+  | { type: "plan"; entries: unknown[] }
+  | { type: "mode_change"; modeId: string }
+  | { type: "config_change"; configId: string; value: string }
+  | { type: string; [key: string]: unknown }
+
+// ── SSE Events ──────────────────────────────────────────────────────────────
+
 export interface AgentEvent {
   sessionId: string
-  event: {
-    type: "text" | "usage" | "error" | "tool_call" | "thought" | "commands_update"
-    content?: string
-    messageId?: string
-    partId?: string
-    [key: string]: unknown
-  }
+  event: AgentEventPayload
 }
+
+export type AgentEventPayload =
+  | { type: "text"; content: string; messageId?: string; partId?: string }
+  | { type: "thought"; content: string; messageId?: string; partId?: string }
+  | {
+      type: "tool_call"
+      id: string
+      name: string
+      kind?: string
+      status: string
+      content?: unknown
+      rawInput?: Record<string, unknown>
+      rawOutput?: string
+      meta?: Record<string, unknown>
+    }
+  | {
+      type: "tool_update"
+      id: string
+      name?: string
+      kind?: string
+      status: string
+      content?: unknown
+      rawInput?: Record<string, unknown>
+      rawOutput?: string
+      meta?: Record<string, unknown>
+    }
+  | { type: "usage"; tokensUsed?: number; contextSize?: number; cost?: number }
+  | { type: "error"; content: string; messageId?: string }
+  | { type: "commands_update"; [key: string]: unknown }
+  | { type: "plan"; entries?: unknown[] }
+  | { type: "resource_link"; uri: string; name?: string; [key: string]: unknown }

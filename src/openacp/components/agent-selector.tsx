@@ -5,7 +5,7 @@ import { Icon } from "@openacp/ui/icon"
 import { List } from "@openacp/ui/list"
 import { useWorkspace } from "../context/workspace"
 
-export function ModelSelector(props: {
+export function AgentSelector(props: {
   current?: string
   onSelect: (agent: string) => void
 }) {
@@ -31,7 +31,7 @@ export function ModelSelector(props: {
 
   const currentName = () => {
     const name = props.current
-    if (!name) return "Select Model"
+    if (!name) return "Select Agent"
     const agent = agents()?.find((a) => a.name === name)
     return agent?.displayName || agent?.name || name
   }
@@ -59,11 +59,11 @@ export function ModelSelector(props: {
           onPointerDownOutside={() => setOpen(false)}
           onFocusOutside={() => setOpen(false)}
         >
-          <Popover.Title class="sr-only">Select model</Popover.Title>
+          <Popover.Title class="sr-only">Select agent</Popover.Title>
           <List
             class="flex-1 min-h-0 [&_[data-slot=list-scroll]]:flex-1 [&_[data-slot=list-scroll]]:min-h-0 p-1"
-            search={{ placeholder: "Search models...", autofocus: true }}
-            emptyMessage="No models available"
+            search={{ placeholder: "Search agents...", autofocus: true }}
+            emptyMessage="No agents available"
             key={(x: any) => x.name}
             items={() => agents() || []}
             current={props.current}

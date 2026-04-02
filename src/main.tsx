@@ -26,9 +26,14 @@ import { relaunch } from "@tauri-apps/plugin-process"
 import { open as shellOpen } from "@tauri-apps/plugin-shell"
 import { Store } from "@tauri-apps/plugin-store"
 import { check, type Update } from "@tauri-apps/plugin-updater"
-import { createResource, onCleanup, onMount, Show } from "solid-js"
+import { createResource, createSignal, onCleanup, onMount, Show } from "solid-js"
 import { render } from "solid-js/web"
 import pkg from "../package.json"
+import { SplashScreen } from "./onboarding/splash-screen"
+import { InstallScreen } from "./onboarding/install-screen"
+import { SetupWizard } from "./onboarding/setup-wizard"
+import { UpdateToasts } from "./onboarding/update-toast"
+import { determineStartupScreen, type StartupScreen } from "./onboarding/startup"
 import { initI18n, t } from "./platform/i18n"
 import { UPDATER_ENABLED } from "./platform/updater"
 import { webviewZoom } from "./platform/webview-zoom"
@@ -425,6 +430,22 @@ let menuTrigger = null as null | ((id: string) => void)
 void listenForDeepLinks()
 
 render(() => {
+  const [screen, setScreen] = createSignal<StartupScreen>('splash')
+
+  // Run startup checks on mount — must use onMount, not async IIFE,
+  // to stay within the SolidJS reactive context
+  onMount(async () => {
+    const { invoke } = await import("@tauri-apps/api/core")
+    const [installedResult, configResult] = await Promise.all([
+      invoke<string | null>('check_openacp_installed').catch(() => null),
+      invoke<boolean>('check_openacp_config').catch(() => false),
+    ])
+    setScreen(determineStartupScreen({
+      installed: installedResult !== null,
+      configExists: Boolean(configResult),
+    }))
+  })
+
   const platform = createPlatform()
   const loadLocale = async () => {
     const current = await platform.storage?.("openacp.global.dat").getItem("language")
@@ -495,21 +516,38 @@ render(() => {
   })
 
   return (
-    <PlatformProvider value={platform}>
-      <AppBaseProviders locale={locale.latest}>
-        <Show when={!defaultServer.loading && !sidecar.loading && !locale.loading}>
-          {(_) => {
-            return (
-              <AppInterface
-                defaultServer={defaultServer.latest ?? ServerConnection.Key.make("sidecar")}
-                servers={servers()}
-              >
-                <Inner />
-              </AppInterface>
-            )
-          }}
-        </Show>
-      </AppBaseProviders>
-    </PlatformProvider>
+    <>
+      <Show when={screen() === 'splash'}>
+        <SplashScreen />
+      </Show>
+
+      <Show when={screen() === 'install'}>
+        <InstallScreen
+          onSuccess={(configExists) => setScreen(configExists ? 'ready' : 'setup')}
+        />
+      </Show>
+
+      <Show when={screen() === 'setup'}>
+        <SetupWizard onSuccess={(_workspace) => setScreen('ready')} />
+      </Show>
+
+      <Show when={screen() === 'ready'}>
+        <PlatformProvider value={platform}>
+          <AppBaseProviders locale={locale.latest}>
+            <Show when={!defaultServer.loading && !sidecar.loading && !locale.loading}>
+              {(_) => (
+                <AppInterface
+                  defaultServer={defaultServer.latest ?? ServerConnection.Key.make("sidecar")}
+                  servers={servers()}
+                >
+                  <Inner />
+                </AppInterface>
+              )}
+            </Show>
+          </AppBaseProviders>
+        </PlatformProvider>
+        <UpdateToasts />
+      </Show>
+    </>
   )
 }, root!)

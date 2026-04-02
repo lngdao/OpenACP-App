@@ -1,21 +1,72 @@
 /**
  * OpenACP App — Entry Point
- *
- * This is a standalone entry for the new OpenACP logic layer.
- * To test: update index.html to point to this file, or use as a route.
- *
- * For now, it can be mounted alongside the existing app for development.
  */
+import { createSignal, onMount, Show } from "solid-js"
 import { render } from "solid-js/web"
 import "../ui/src/styles/tailwind/index.css"
+import "./styles.css"
+import { MarkedProvider } from "../ui/src/context/marked"
 import { OpenACPApp } from "./app"
-
-// Default workspace directory — will be replaced by Tauri workspace selection
-const DEFAULT_DIRECTORY = "/Users/liam/Data/Projects/OpenACP"
+import { SplashScreen } from "../onboarding/splash-screen"
+import { InstallScreen } from "../onboarding/install-screen"
+import { SetupWizard } from "../onboarding/setup-wizard"
+import { UpdateToasts } from "../onboarding/update-toast"
+import { determineStartupScreen, type StartupScreen } from "../onboarding/startup"
+import { saveWorkspaceData, discoverWorkspaces } from "./api/workspace-store"
 
 const root = document.getElementById("root")
 if (root) {
-  render(() => <OpenACPApp directory={DEFAULT_DIRECTORY} />, root)
+  render(() => {
+    const [screen, setScreen] = createSignal<StartupScreen>('splash')
+
+    onMount(async () => {
+      const { invoke } = await import("@tauri-apps/api/core")
+      const [, [installedResult, configResult]] = await Promise.all([
+        new Promise(r => setTimeout(r, 500)),
+        Promise.all([
+          invoke<string | null>('check_openacp_installed').catch(() => null),
+          invoke<boolean>('check_openacp_config').catch(() => false),
+        ]),
+      ])
+      setScreen(determineStartupScreen({
+        installed: installedResult !== null,
+        configExists: Boolean(configResult),
+      }))
+    })
+
+    return (
+      <>
+        <Show when={screen() === 'splash'}>
+          <SplashScreen />
+        </Show>
+
+        <Show when={screen() === 'install'}>
+          <InstallScreen
+            onSuccess={(configExists) => setScreen(configExists ? 'ready' : 'setup')}
+          />
+        </Show>
+
+        <Show when={screen() === 'setup'}>
+          <SetupWizard onSuccess={async (_workspace) => {
+            // Discover instances to find the newly registered instance ID
+            const instances = await discoverWorkspaces()
+            const instance = instances[0] ?? null
+            if (instance) {
+              await saveWorkspaceData({ instances: [instance.id], lastActive: instance.id })
+            }
+            setScreen('ready')
+          }} />
+        </Show>
+
+        <Show when={screen() === 'ready'}>
+          <MarkedProvider>
+            <OpenACPApp />
+          </MarkedProvider>
+          <UpdateToasts />
+        </Show>
+      </>
+    )
+  }, root)
 }
 
 export { OpenACPApp }

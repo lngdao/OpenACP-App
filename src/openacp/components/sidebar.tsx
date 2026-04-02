@@ -71,18 +71,39 @@ export function SidebarPanel() {
       <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         <nav class="flex flex-col gap-1">
           {/* New session */}
-          <div class="group/session relative w-full min-w-0 rounded-md cursor-default transition-colors pl-2 pr-3 hover:bg-surface-raised-base-hover [&:has(:focus-visible)]:bg-surface-raised-base-hover has-[.active]:bg-surface-base-active">
-            <button
-              class="flex items-center gap-1 min-w-0 w-full text-left focus:outline-none py-1"
-              classList={{ active: !chat.activeSession() }}
-              onClick={() => chat.setActiveSession("")}
-            >
-              <div class="shrink-0 size-6 flex items-center justify-center">
-                <Icon name="new-session" size="small" class="text-icon-weak" />
-              </div>
-              <span class="text-14-regular text-text-strong min-w-0 flex-1 truncate">New session</span>
-            </button>
-          </div>
+          {(() => {
+            const [creating, setCreating] = createSignal(false)
+            return (
+              <button
+                class="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md border border-border-base text-12-medium text-text-base hover:bg-surface-raised-base-hover transition-colors active:scale-[0.98] disabled:opacity-50"
+                disabled={creating()}
+                onClick={async () => {
+                  if (creating()) return
+                  setCreating(true)
+                  try {
+                    const session = await sessions.create()
+                    if (session) {
+                      chat.setActiveSession(session.id)
+                    } else {
+                      const { showToast } = await import("../../ui/src/components/toast")
+                      showToast({ description: "Failed to create session. Max sessions may be reached.", variant: "error" })
+                    }
+                  } finally {
+                    setCreating(false)
+                  }
+                }}
+              >
+                <Show when={creating()} fallback={
+                  <Icon name="plus" size="small" class="text-icon-weak" />
+                }>
+                  <div class="w-3.5 h-3.5 border-2 rounded-full oac-spinner" style={{ "border-color": "var(--text-weak)", "border-top-color": "transparent" }} />
+                </Show>
+                <Show when={creating()} fallback="New session">
+                  Creating...
+                </Show>
+              </button>
+            )
+          })()}
 
           <div class="h-2" />
 
