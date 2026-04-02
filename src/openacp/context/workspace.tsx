@@ -36,10 +36,14 @@ export function WorkspaceProvider(props: ParentProps<{
   workspace: WorkspaceEntry
   server: ServerInfo
   onReconnectNeeded?: () => void
+  onTokenRefreshed?: (update: { expiresAt: string; refreshDeadline: string }) => void
 }>) {
   const client = createApiClient(props.server, props.workspace.id)
   if (props.onReconnectNeeded) {
     client.setOnReconnectNeeded(props.onReconnectNeeded)
+  }
+  if (props.onTokenRefreshed) {
+    client.setOnTokenRefreshed(props.onTokenRefreshed)
   }
 
   const value: WorkspaceContext = {

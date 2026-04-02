@@ -7,10 +7,11 @@ interface AddWorkspaceModalProps {
   onAdd: (entry: WorkspaceEntry) => void
   onClose: () => void
   existingIds: string[]
+  defaultTab?: 'local' | 'remote'
 }
 
 export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
-  const [tab, setTab] = createSignal<'local' | 'remote'>('local')
+  const [tab, setTab] = createSignal<'local' | 'remote'>(props.defaultTab ?? 'local')
 
   return (
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60">

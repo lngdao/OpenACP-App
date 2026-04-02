@@ -108,8 +108,16 @@ export function OpenACPApp() {
   }
 
   function addWorkspace(entry: WorkspaceEntry) {
-    const exists = store.workspaces.some((w) => w.id === entry.id)
-    if (exists) {
+    const existing = store.workspaces.find((w) => w.id === entry.id)
+    if (existing) {
+      // Reconnect: merge mutable fields into the existing entry
+      setStore("workspaces", (prev) =>
+        prev.map((w) =>
+          w.id === entry.id
+            ? { ...w, host: entry.host, tokenId: entry.tokenId, expiresAt: entry.expiresAt, refreshDeadline: entry.refreshDeadline }
+            : w
+        )
+      )
       setStore("active", entry.id)
     } else {
       setStore("workspaces", (prev) => [...prev, entry])
@@ -153,10 +161,16 @@ export function OpenACPApp() {
   // ── Add workspace modal ─────────────────────────────────────────────────
 
   const [showAddWorkspace, setShowAddWorkspace] = createSignal(false)
+  const [addWorkspaceDefaultTab, setAddWorkspaceDefaultTab] = createSignal<'local' | 'remote'>('local')
 
   function handleAddWorkspace(entry: WorkspaceEntry) {
     addWorkspace(entry)
     setShowAddWorkspace(false)
+  }
+
+  function openAddWorkspaceModal(defaultTab: 'local' | 'remote' = 'local') {
+    setAddWorkspaceDefaultTab(defaultTab)
+    setShowAddWorkspace(true)
   }
 
   // Open folder picker — find matching workspace by directory
@@ -315,6 +329,7 @@ export function OpenACPApp() {
           onAdd={handleAddWorkspace}
           onClose={() => setShowAddWorkspace(false)}
           existingIds={store.workspaces.map((w) => w.id)}
+          defaultTab={addWorkspaceDefaultTab()}
         />
       </Show>
       <SidebarRail
@@ -329,7 +344,12 @@ export function OpenACPApp() {
           const match = store.workspaces.find((w) => w.directory === dir || w.id === dir)
           if (match) switchInstance(match.id)
         }}
-        onOpenFolder={() => setShowAddWorkspace(true)}
+        onReconnect={(dir) => {
+          const match = store.workspaces.find((w) => w.directory === dir || w.id === dir)
+          if (match) switchInstance(match.id)
+          openAddWorkspaceModal('remote')
+        }}
+        onOpenFolder={() => openAddWorkspaceModal('local')}
       />
 
       <Show
@@ -375,6 +395,14 @@ export function OpenACPApp() {
               if (store.active) {
                 setErrorWorkspaceIds(prev => new Set([...prev, store.active!]))
               }
+            }}
+            onTokenRefreshed={({ expiresAt, refreshDeadline }) => {
+              const id = store.active
+              if (!id) return
+              setStore("workspaces", (prev) =>
+                prev.map((w) => w.id === id ? { ...w, expiresAt, refreshDeadline } : w)
+              )
+              void saveWorkspaces(store.workspaces)
             }}
           >
             <SessionsProvider>

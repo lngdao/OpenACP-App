@@ -21,6 +21,7 @@ export function SidebarRail(props: {
   activeWorkspace: string
   errorWorkspaces?: Set<string>
   onSwitchWorkspace: (dir: string) => void
+  onReconnect?: (dir: string) => void
   onOpenFolder: () => void
 }) {
   const dirName = (dir: string) => dir.split("/").pop() || "Workspace"
@@ -47,7 +48,7 @@ export function SidebarRail(props: {
                         "ring-2 ring-text-base ring-offset-1 ring-offset-background-base": isActive(),
                         "opacity-60 hover:opacity-100": !isActive(),
                       }}
-                      onClick={() => props.onSwitchWorkspace(dir)}
+                      onClick={() => hasError() && props.onReconnect ? props.onReconnect!(dir) : props.onSwitchWorkspace(dir)}
                     >
                       <Avatar
                         fallback={dirName(dir)}
