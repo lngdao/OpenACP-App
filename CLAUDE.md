@@ -71,6 +71,21 @@ PlatformProvider > AppBaseProviders > AppInterface > OpenACPApp
 
 `src/app/` and `src/openacp-sdk/` are legacy modules being phased out. New work should go in `src/openacp/`.
 
+## Git Workflow
+
+Fork-based workflow on `lngdao/OpenACP-App`. Upstream: `Open-ACP/OpenACP-App`.
+
+- **Branch naming**: `hiru/<feature>` (slash separator, e.g. `hiru/onboarding-redesign`)
+- **Base branch**: `develop` (not `main`)
+- **Commits**: conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`). **No `Co-Authored-By` lines.**
+- **Sync**: use `git rebase develop` (not merge) to keep branch up to date
+- **PR target**: always PR into **fork's `develop`** (`lngdao/OpenACP-App`)
+- **Upstream PR**: only maintainer (lngdao) creates PRs to `Open-ACP/OpenACP-App` — never do this yourself
+- **Build check**: use `npx vite build` for quick frontend-only verification
+- **`src/ui/`**: shared design system — can modify freely
+- **Working directory**: write code anywhere in project root (not limited to `src/openacp/`)
+- **`_ignore/`**: legacy reference only — **DO NOT IMPORT** from it
+
 ## Key Conventions
 
 - **SolidJS, not React** — uses signals/stores, `createContext`, `createResource`. No hooks like `useState`/`useEffect`.
