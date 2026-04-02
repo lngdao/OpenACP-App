@@ -1,12 +1,16 @@
-import { createSignal } from "solid-js"
+import { createSignal, onCleanup } from "solid-js"
 
 export function CommandBlock(props: { label: string; command: string }) {
   const [copied, setCopied] = createSignal(false)
+  let resetTimer: ReturnType<typeof setTimeout> | null = null
+
+  onCleanup(() => { if (resetTimer) clearTimeout(resetTimer) })
 
   async function copy() {
     await navigator.clipboard.writeText(props.command)
     setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    if (resetTimer) clearTimeout(resetTimer)
+    resetTimer = setTimeout(() => setCopied(false), 2000)
   }
 
   return (

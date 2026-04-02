@@ -82,6 +82,12 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
       }
     },
 
+    /** Get the server version string (e.g. "2026.327.1") */
+    async getServerVersion(): Promise<string> {
+      const res = await api<{ version: string }>("/system/health")
+      return res.version
+    },
+
     /** List agents (models) available on this workspace server */
     async agents(): Promise<{ agents: Agent[]; default: string }> {
       const res = await api<{ agents: any[]; default: string }>("/agents")

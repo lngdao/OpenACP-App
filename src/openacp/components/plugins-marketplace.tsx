@@ -21,6 +21,7 @@ export function MarketplaceTab(props: Props) {
   const [marketplace, { refetch: refetchMarketplace }] = createResource(
     () => client().getMarketplace()
   )
+  const [serverVersion] = createResource(() => client().getServerVersion())
   const [search, setSearch] = createSignal("")
   const [installingPlugin, setInstallingPlugin] = createSignal<MarketplacePlugin | null>(null)
   const [pollTimedOut, setPollTimedOut] = createSignal(false)
@@ -71,6 +72,18 @@ export function MarketplaceTab(props: Props) {
   function handleManualRefresh() {
     setPollTimedOut(false)
     refetchMarketplace()
+  }
+
+  function isVersionTooLow(minRequired: string): boolean {
+    const current = serverVersion()
+    if (!current || !minRequired) return false
+    const r = minRequired.split('.').map(Number)
+    const c = current.split('.').map(Number)
+    for (let i = 0; i < 3; i++) {
+      if ((r[i] ?? 0) > (c[i] ?? 0)) return true
+      if ((r[i] ?? 0) < (c[i] ?? 0)) return false
+    }
+    return false
   }
 
   function getInstallCommand(plugin: MarketplacePlugin): string {
@@ -172,8 +185,8 @@ export function MarketplaceTab(props: Props) {
                   <Show when={!plugin.verified}>
                     <span class="text-12-regular text-yellow-500">⚠ Unverified</span>
                   </Show>
-                  <Show when={plugin.minCliVersion}>
-                    <span class="text-12-regular text-text-weak">Requires OpenACP v{plugin.minCliVersion}</span>
+                  <Show when={plugin.minCliVersion && isVersionTooLow(plugin.minCliVersion)}>
+                    <span class="text-12-regular text-yellow-500">Requires OpenACP v{plugin.minCliVersion}</span>
                   </Show>
                 </div>
                 <span class="text-12-regular text-text-weak mt-0.5">{plugin.description}</span>
@@ -184,7 +197,8 @@ export function MarketplaceTab(props: Props) {
             <div class="shrink-0">
               <Show when={plugin.installed} fallback={
                 <button
-                  class="text-12-regular px-3 py-1.5 rounded-md border border-border-base hover:bg-surface-raised-base-hover transition-colors"
+                  class="text-12-regular px-3 py-1.5 rounded-md border border-border-base hover:bg-surface-raised-base-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  disabled={isVersionTooLow(plugin.minCliVersion)}
                   onClick={() => handleInstall(plugin)}
                 >
                   Install
