@@ -16,6 +16,14 @@ function ChatHeader() {
 
   const title = createMemo(() => session()?.name || "Untitled")
 
+  const sseLabel = () => {
+    switch (chat.sseStatus()) {
+      case 'connected': return { text: 'Connected', color: 'bg-green-500' }
+      case 'reconnecting': return { text: 'Reconnecting...', color: 'bg-yellow-500 animate-pulse' }
+      default: return { text: 'Disconnected', color: 'bg-red-500' }
+    }
+  }
+
   return (
     <Show when={chat.activeSession()}>
       <div class="flex items-center h-11 px-4 border-b border-border-weaker-base flex-shrink-0">
@@ -23,6 +31,10 @@ function ChatHeader() {
           <span class="text-14-medium text-text-strong truncate block">{title()}</span>
         </div>
         <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 px-2 py-1 rounded-md" title={`SSE: ${chat.sseStatus()}`}>
+            <span class={`w-1.5 h-1.5 rounded-full ${sseLabel().color}`} />
+            <span class="text-11-regular text-text-weaker">{sseLabel().text}</span>
+          </div>
           <button
             class="w-7 h-7 flex items-center justify-center rounded-md text-icon-weak hover:text-icon-base hover:bg-surface-raised-base-hover transition-colors"
             title="Context"

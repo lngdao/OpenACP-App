@@ -7,6 +7,7 @@ export interface SSECallbacks {
   onSessionDeleted: (sessionId: string) => void
   onConnected: () => void
   onDisconnected: () => void
+  onReconnecting?: () => void
 }
 
 /**
@@ -51,8 +52,20 @@ export function createSSEManager() {
       } catch { /* skip */ }
     })
 
-    es.onopen = () => callbacks.onConnected()
-    es.onerror = () => callbacks.onDisconnected()
+    es.onopen = () => {
+      console.log('[sse] connected:', eventsUrl)
+      callbacks.onConnected()
+    }
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        console.warn('[sse] disconnected (closed):', eventsUrl)
+        callbacks.onDisconnected()
+      } else {
+        // readyState === CONNECTING — browser is auto-retrying
+        console.warn('[sse] reconnecting:', eventsUrl)
+        callbacks.onReconnecting?.()
+      }
+    }
 
     connections.set(directory, es)
   }

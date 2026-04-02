@@ -16,6 +16,8 @@ interface ChatContext {
   streaming: () => boolean
   /** Is history loading */
   loadingHistory: () => boolean
+  /** SSE connection state */
+  sseStatus: () => 'connected' | 'reconnecting' | 'disconnected'
   /** Active session ID */
   activeSession: () => string | undefined
   /** Set active session */
@@ -108,6 +110,7 @@ export function ChatProvider(props: ParentProps) {
     activeSession: undefined as string | undefined,
     streaming: false,
     loadingHistory: false,
+    sseStatus: 'disconnected' as 'connected' | 'reconnecting' | 'disconnected',
   })
 
   const abortedSessions = new Set<string>()
@@ -337,8 +340,9 @@ export function ChatProvider(props: ParentProps) {
       onSessionCreated: (s) => sessions.upsert(s),
       onSessionUpdated: (s) => sessions.upsert(s),
       onSessionDeleted: (id) => sessions.delete(id),
-      onConnected: () => {},
-      onDisconnected: () => {},
+      onConnected: () => setStore('sseStatus', 'connected'),
+      onReconnecting: () => setStore('sseStatus', 'reconnecting'),
+      onDisconnected: () => setStore('sseStatus', 'disconnected'),
     })
   }
 
@@ -424,6 +428,7 @@ export function ChatProvider(props: ParentProps) {
     messages: () => store.messagesBySession[store.activeSession || ""] || [],
     streaming: () => store.streaming,
     loadingHistory: () => store.loadingHistory,
+    sseStatus: () => store.sseStatus,
     activeSession: () => store.activeSession,
     setActiveSession,
     sendPrompt,
