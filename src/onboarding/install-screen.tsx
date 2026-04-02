@@ -3,6 +3,17 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { platform } from '@tauri-apps/plugin-os';
+import AnsiToHtml from 'ansi-to-html';
+
+const ansiConverter = new AnsiToHtml({ escapeXML: true, newline: false });
+
+function ansiToHtml(line: string): string {
+  try {
+    return ansiConverter.toHtml(line);
+  } catch {
+    return line.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
+  }
+}
 
 interface Props {
   // Called after install succeeds AND config check passes.
@@ -66,7 +77,12 @@ export function InstallScreen(props: Props) {
           ref={logEl}
           class="mb-4 h-64 overflow-y-auto rounded-lg bg-neutral-900 p-4 font-mono text-xs text-neutral-300"
         >
-          <For each={lines()}>{(line) => <div>{line}</div>}</For>
+          <For each={lines()}>
+            {(line) => (
+              // eslint-disable-next-line solid/no-innerhtml
+              <div innerHTML={ansiToHtml(line)} />
+            )}
+          </For>
           <Show when={status() === 'running'}>
             <span class="animate-pulse text-neutral-500">▌</span>
           </Show>
