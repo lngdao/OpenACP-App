@@ -17,19 +17,63 @@ async fn get_server_info(state: tauri::State<'_, AppState>) -> Result<ServerInfo
         .ok_or_else(|| "Server not ready".to_string())
 }
 
-/// Read server info from a workspace's `.openacp/` directory
-#[tauri::command]
-async fn get_workspace_server_info(directory: String) -> Result<ServerInfo, String> {
-    let dir = std::path::PathBuf::from(&directory).join(".openacp");
-    if !dir.exists() {
-        return Err(format!("No .openacp directory found in {directory}"));
+#[derive(Clone, serde::Serialize)]
+struct InstanceInfo {
+    id: String,
+    root: String,      // path to .openacp dir
+    workspace: String, // parent of root (workspace root dir)
+}
+
+fn read_instances_json() -> Result<serde_json::Value, String> {
+    let home = dirs::home_dir().ok_or_else(|| "Cannot determine home directory".to_string())?;
+    let path = home.join(".openacp").join("instances.json");
+    if !path.exists() {
+        return Ok(serde_json::json!({ "instances": {} }));
     }
+    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+    serde_json::from_str(&content).map_err(|e| e.to_string())
+}
+
+fn parse_instances(value: &serde_json::Value) -> Vec<InstanceInfo> {
+    let mut result = Vec::new();
+    let Some(instances) = value.get("instances").and_then(|v| v.as_object()) else {
+        return result;
+    };
+    for (id, entry) in instances {
+        let Some(root) = entry.get("root").and_then(|r| r.as_str()) else { continue };
+        let p = std::path::PathBuf::from(root);
+        let workspace = if p.file_name().map(|n| n == ".openacp").unwrap_or(false) {
+            p.parent().map(|pp| pp.to_string_lossy().to_string())
+        } else {
+            Some(root.to_string())
+        };
+        if let Some(workspace) = workspace {
+            result.push(InstanceInfo {
+                id: id.clone(),
+                root: root.to_string(),
+                workspace,
+            });
+        }
+    }
+    result
+}
+
+/// Read server info for an instance by ID, using its root from instances.json
+#[tauri::command]
+async fn get_workspace_server_info(instance_id: String) -> Result<ServerInfo, String> {
+    let value = read_instances_json()?;
+    let instances = parse_instances(&value);
+    let instance = instances
+        .into_iter()
+        .find(|i| i.id == instance_id)
+        .ok_or_else(|| format!("Instance '{instance_id}' not found in instances.json"))?;
+
+    let dir = std::path::PathBuf::from(&instance.root);
 
     let token = std::fs::read_to_string(dir.join("api-secret"))
         .map(|s| s.trim().to_string())
         .unwrap_or_default();
 
-    // Read api.port
     if let Ok(port_str) = std::fs::read_to_string(dir.join("api.port")) {
         if let Ok(port) = port_str.trim().parse::<u16>() {
             return Ok(ServerInfo {
@@ -58,38 +102,11 @@ async fn get_workspace_server_info(directory: String) -> Result<ServerInfo, Stri
     Err(format!("Could not determine port from {}", dir.display()))
 }
 
-/// Discover known workspaces from ~/.openacp/instances.json
+/// Discover all registered instances from ~/.openacp/instances.json
 #[tauri::command]
-async fn discover_workspaces() -> Result<Vec<String>, String> {
-    let home = dirs::home_dir().ok_or_else(|| "Cannot determine home directory".to_string())?;
-    let path = home.join(".openacp").join("instances.json");
-    if !path.exists() {
-        return Ok(vec![]);
-    }
-    let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
-    let value: serde_json::Value = serde_json::from_str(&content).map_err(|e| e.to_string())?;
-
-    let mut dirs = Vec::new();
-
-    // Format: { version: 1, instances: { "id": { root: "/path/.openacp" } } }
-    let instances = value.get("instances").and_then(|v| v.as_object());
-    if let Some(instances) = instances {
-        for (_id, entry) in instances {
-            if let Some(root) = entry.get("root").and_then(|r| r.as_str()) {
-                // root points to .openacp dir — get parent as workspace
-                let p = std::path::PathBuf::from(root);
-                let workspace = if p.file_name().map(|n| n == ".openacp").unwrap_or(false) {
-                    p.parent().map(|pp| pp.to_string_lossy().to_string())
-                } else {
-                    Some(root.to_string())
-                };
-                if let Some(dir) = workspace {
-                    dirs.push(dir);
-                }
-            }
-        }
-    }
-    Ok(dirs)
+async fn discover_workspaces() -> Result<Vec<InstanceInfo>, String> {
+    let value = read_instances_json()?;
+    Ok(parse_instances(&value))
 }
 
 #[tauri::command]
@@ -122,7 +139,7 @@ pub fn run() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "openacp_lib=info".parse().unwrap()),
+                .unwrap_or_else(|_| "openacp_lib=debug".parse().unwrap()),
         )
         .init();
 

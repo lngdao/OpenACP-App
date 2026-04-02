@@ -1,4 +1,4 @@
-import { createSignal, createResource, For, Show } from 'solid-js';
+import { createSignal, createResource, createMemo, For, Show } from 'solid-js';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
@@ -13,22 +13,31 @@ interface AgentEntry {
 }
 
 interface Props {
-  onSuccess: () => void;
+  onSuccess: (workspace: string) => void;
 }
 
 export function SetupWizard(props: Props) {
   const [step, setStep] = createSignal<1 | 2>(1);
-  const [workspace, setWorkspace] = createSignal('');
+  const [workspace, setWorkspace] = createSignal('~/openacp-workspace');
   const [selectedAgent, setSelectedAgent] = createSignal('');
   const [installingAgent, setInstallingAgent] = createSignal('');
   const [agentInstallError, setAgentInstallError] = createSignal('');
   const [setupLog, setSetupLog] = createSignal<string[]>([]);
-  const [setupStatus, setSetupStatus] = createSignal<'idle' | 'running' | 'success' | 'error'>('idle');
+  const [setupStatus, setSetupStatus] = createSignal<'idle' | 'running' | 'starting' | 'success' | 'error'>('idle');
   const [setupError, setSetupError] = createSignal('');
 
   const [agents, { refetch }] = createResource<AgentEntry[]>(async () => {
-    const result = await invoke<string>('run_openacp_agents_list');
-    return JSON.parse(result) as AgentEntry[];
+    try {
+      const result = await invoke<string>('run_openacp_agents_list');
+      const parsed = JSON.parse(result) as AgentEntry[];
+      console.log('[agents] loaded:', parsed);
+      const claude = parsed.find((a) => a.key === 'claude' && a.installed);
+      if (claude) setSelectedAgent('claude');
+      return parsed;
+    } catch (err) {
+      console.error('[agents] failed to load:', err);
+      throw err;
+    }
   });
 
   const browseWorkspace = async () => {
@@ -37,6 +46,17 @@ export function SetupWizard(props: Props) {
       setWorkspace(selected);
     }
   };
+
+  const [agentSearch, setAgentSearch] = createSignal('');
+
+  const filteredAgents = createMemo(() => {
+    const list = agents() ?? [];
+    const q = agentSearch().toLowerCase().trim();
+    const filtered = q
+      ? list.filter((a) => a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q))
+      : list;
+    return [...filtered].sort((a, b) => Number(b.installed) - Number(a.installed));
+  });
 
   const [agentInstallLog, setAgentInstallLog] = createSignal<string[]>([]);
 
@@ -72,8 +92,10 @@ export function SetupWizard(props: Props) {
 
     try {
       await invoke('run_openacp_setup', { workspace: workspace(), agent: selectedAgent() });
+      setSetupStatus('starting');
+      await invoke('start_server');
       setSetupStatus('success');
-      setTimeout(() => props.onSuccess(), 800);
+      setTimeout(() => props.onSuccess(workspace()), 800);
     } catch (err) {
       setSetupStatus('error');
       setSetupError(String(err));
@@ -132,8 +154,15 @@ export function SetupWizard(props: Props) {
               <button onClick={refetch} class="text-sm text-blue-400 underline">Retry</button>
             </Show>
             <Show when={!agents.loading && !agents.error}>
-              <div class="space-y-2">
-                <For each={agents()}>
+              <input
+                type="text"
+                value={agentSearch()}
+                onInput={(e) => setAgentSearch(e.currentTarget.value)}
+                placeholder="Search agents..."
+                class="mb-2 w-full rounded-md bg-neutral-800 px-3 py-2 text-sm text-white placeholder-neutral-500 outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <div class="max-h-64 space-y-2 overflow-y-auto pr-1">
+                <For each={filteredAgents()}>
                   {(agent) => (
                     <div
                       class={`flex cursor-pointer items-center justify-between rounded-lg border px-4 py-3 transition ${
@@ -143,7 +172,7 @@ export function SetupWizard(props: Props) {
                       }`}
                       onClick={() => agent.installed && setSelectedAgent(agent.key)}
                     >
-                      <div>
+                      <div class="min-w-0 flex-1">
                         <p class="text-sm font-medium text-white">{agent.name}</p>
                         <p class="text-xs text-neutral-500">{agent.description}</p>
                       </div>
@@ -152,14 +181,14 @@ export function SetupWizard(props: Props) {
                           type="radio"
                           checked={selectedAgent() === agent.key}
                           onChange={() => setSelectedAgent(agent.key)}
-                          class="accent-blue-500"
+                          class="ml-3 accent-blue-500"
                         />
                       </Show>
                       <Show when={!agent.installed && agent.available}>
                         <button
                           onClick={(e) => { e.stopPropagation(); installAgent(agent.key); }}
                           disabled={installingAgent() === agent.key}
-                          class="rounded bg-neutral-700 px-3 py-1 text-xs text-white hover:bg-neutral-600 disabled:opacity-50"
+                          class="ml-3 shrink-0 rounded bg-neutral-700 px-3 py-1 text-xs text-white hover:bg-neutral-600 disabled:opacity-50"
                         >
                           {installingAgent() === agent.key ? 'Installing...' : 'Install'}
                         </button>
@@ -167,6 +196,9 @@ export function SetupWizard(props: Props) {
                     </div>
                   )}
                 </For>
+                <Show when={filteredAgents().length === 0}>
+                  <p class="py-4 text-center text-sm text-neutral-500">No agents match "{agentSearch()}"</p>
+                </Show>
               </div>
               <Show when={installingAgent() !== '' && agentInstallLog().length > 0}>
                 <div class="mt-2 h-20 overflow-y-auto rounded bg-neutral-800 p-2 font-mono text-xs text-neutral-400">
@@ -217,17 +249,17 @@ export function SetupWizard(props: Props) {
           <div class="flex gap-3">
             <button
               onClick={() => setStep(1)}
-              disabled={setupStatus() === 'running'}
+              disabled={setupStatus() === 'running' || setupStatus() === 'starting'}
               class="rounded-md bg-neutral-800 px-4 py-2.5 text-sm text-white hover:bg-neutral-700 disabled:opacity-40"
             >
               Back
             </button>
             <button
               onClick={runSetup}
-              disabled={setupStatus() === 'running' || setupStatus() === 'success'}
+              disabled={setupStatus() === 'running' || setupStatus() === 'starting' || setupStatus() === 'success'}
               class="flex-1 rounded-md bg-blue-600 py-2.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-40"
             >
-              {setupStatus() === 'running' ? 'Setting up...' : setupStatus() === 'success' ? '✓ Done' : 'Complete Setup'}
+              {setupStatus() === 'running' ? 'Setting up...' : setupStatus() === 'starting' ? 'Starting server...' : setupStatus() === 'success' ? '✓ Done' : 'Complete Setup'}
             </button>
           </div>
         </Show>

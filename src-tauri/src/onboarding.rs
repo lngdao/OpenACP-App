@@ -202,20 +202,34 @@ pub async fn run_openacp_setup(
 }
 
 /// Runs `openacp agents list --json` and returns the raw JSON string.
+#[allow(dead_code)]
 #[tauri::command]
 pub async fn run_openacp_agents_list(app: tauri::AppHandle) -> Result<String, String> {
+    tracing::info!("run_openacp_agents_list: running `openacp agents list --json`");
+
     let output = app
         .shell()
         .command("openacp")
         .args(["agents", "list", "--json"])
         .output()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            tracing::error!("run_openacp_agents_list: failed to spawn command: {e}");
+            e.to_string()
+        })?;
 
     if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        tracing::info!("run_openacp_agents_list: success, stdout len={}", stdout.len());
+        Ok(stdout)
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        tracing::error!(
+            "run_openacp_agents_list: command failed\n  exit={:?}\n  stderr={stderr}\n  stdout={stdout}",
+            output.status.code()
+        );
+        Err(stderr)
     }
 }
 
@@ -258,6 +272,7 @@ pub async fn run_openacp_agent_install(
 
 /// Dev-only: removes ~/.openacp config dir and the openacp binary.
 /// Used to reset onboarding state during development.
+#[allow(dead_code)]
 #[tauri::command]
 pub async fn dev_reset_openacp(app: tauri::AppHandle) -> Result<(), String> {
     // Remove ~/.openacp

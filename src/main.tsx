@@ -528,7 +528,7 @@ render(() => {
       </Show>
 
       <Show when={screen() === 'setup'}>
-        <SetupWizard onSuccess={() => setScreen('ready')} />
+        <SetupWizard onSuccess={(_workspace) => setScreen('ready')} />
       </Show>
 
       <Show when={screen() === 'ready'}>

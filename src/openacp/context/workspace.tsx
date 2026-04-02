@@ -1,9 +1,10 @@
-import { createContext, useContext, type ParentProps, type Accessor } from "solid-js"
+import { createContext, useContext, type ParentProps } from "solid-js"
 import { createApiClient, type ApiClient } from "../api/client"
 import type { ServerInfo } from "../types"
 
 interface WorkspaceContext {
-  directory: string
+  instanceId: string
+  directory: string  // workspace root dir (for display/file ops)
   server: ServerInfo
   client: ApiClient
 }
@@ -17,22 +18,27 @@ export function useWorkspace() {
 }
 
 /**
- * Resolve workspace server info from .openacp/ directory.
- * Uses Tauri command to read api.port + api-secret files.
+ * Resolve workspace server info by instance ID.
+ * Looks up the instance root from instances.json, then reads api.port + api-secret.
  */
-export async function resolveWorkspaceServer(directory: string): Promise<ServerInfo | null> {
+export async function resolveWorkspaceServer(instanceId: string): Promise<ServerInfo | null> {
   try {
     const { invoke } = await import("@tauri-apps/api/core")
-    return await invoke<ServerInfo>("get_workspace_server_info", { directory })
+    return await invoke<ServerInfo>("get_workspace_server_info", { instanceId })
   } catch {
     return null
   }
 }
 
-export function WorkspaceProvider(props: ParentProps<{ directory: string; server: ServerInfo }>) {
+export function WorkspaceProvider(props: ParentProps<{
+  instanceId: string
+  directory: string
+  server: ServerInfo
+}>) {
   const client = createApiClient(props.server)
 
   const value: WorkspaceContext = {
+    get instanceId() { return props.instanceId },
     get directory() { return props.directory },
     server: props.server,
     client,

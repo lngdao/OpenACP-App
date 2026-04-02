@@ -12,6 +12,7 @@ import { InstallScreen } from "../onboarding/install-screen"
 import { SetupWizard } from "../onboarding/setup-wizard"
 import { UpdateToasts } from "../onboarding/update-toast"
 import { determineStartupScreen, type StartupScreen } from "../onboarding/startup"
+import { saveWorkspaceData, discoverWorkspaces } from "./api/workspace-store"
 
 const root = document.getElementById("root")
 if (root) {
@@ -46,7 +47,15 @@ if (root) {
         </Show>
 
         <Show when={screen() === 'setup'}>
-          <SetupWizard onSuccess={() => setScreen('ready')} />
+          <SetupWizard onSuccess={async (_workspace) => {
+            // Discover instances to find the newly registered instance ID
+            const instances = await discoverWorkspaces()
+            const instance = instances[0] ?? null
+            if (instance) {
+              await saveWorkspaceData({ instances: [instance.id], lastActive: instance.id })
+            }
+            setScreen('ready')
+          }} />
         </Show>
 
         <Show when={screen() === 'ready'}>

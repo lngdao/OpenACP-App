@@ -3,24 +3,20 @@ import { discoverWorkspaces } from "../api/workspace-store"
 
 export function WelcomeScreen(props: {
   onOpenFolder: () => void
-  onSelectWorkspace: (dir: string) => void
+  onSelectWorkspace: (instanceId: string) => void
 }) {
-  const [discovered] = createResource(async () => {
-    const dirs = await discoverWorkspaces()
-    return dirs
-  })
+  const [discovered] = createResource(() => discoverWorkspaces())
 
-  const dirName = (dir: string) => dir.split("/").pop() || "Workspace"
-  const shortPath = (dir: string) => {
-    const parts = dir.split("/")
+  const dirName = (workspace: string) => workspace.split("/").pop() || "Workspace"
+  const shortPath = (workspace: string) => {
+    const parts = workspace.split("/")
     if (parts.length > 3) return "~/" + parts.slice(3).join("/")
-    return dir
+    return workspace
   }
 
   return (
     <div class="flex-1 flex items-center justify-center bg-background-stronger">
       <div class="flex flex-col items-center gap-8 max-w-md w-full px-6">
-        {/* Logo / branding */}
         <div class="flex flex-col items-center gap-3">
           <div class="w-12 h-12 rounded-xl bg-surface-raised-base flex items-center justify-center border border-border-weaker-base">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -33,7 +29,6 @@ export function WelcomeScreen(props: {
           </div>
         </div>
 
-        {/* Known workspaces */}
         <Show when={discovered() && discovered()!.length > 0}>
           <div class="w-full">
             <div class="text-text-weaker mb-2" style={{ "font-size": "11px", "font-weight": "500", "letter-spacing": "0.03em" }}>
@@ -41,13 +36,13 @@ export function WelcomeScreen(props: {
             </div>
             <div class="flex flex-col gap-1">
               <For each={discovered()}>
-                {(dir) => (
+                {(instance) => (
                   <button
                     class="w-full flex flex-col gap-0.5 px-3 py-2.5 rounded-lg text-left hover:bg-surface-raised-base-hover transition-colors"
-                    onClick={() => props.onSelectWorkspace(dir)}
+                    onClick={() => props.onSelectWorkspace(instance.id)}
                   >
-                    <span class="text-14-medium text-text-strong">{dirName(dir)}</span>
-                    <span class="text-12-regular text-text-weak truncate">{shortPath(dir)}</span>
+                    <span class="text-14-medium text-text-strong">{dirName(instance.workspace)}</span>
+                    <span class="text-12-regular text-text-weak truncate">{shortPath(instance.workspace)}</span>
                   </button>
                 )}
               </For>
@@ -55,7 +50,6 @@ export function WelcomeScreen(props: {
           </div>
         </Show>
 
-        {/* Open folder button */}
         <button
           class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border-base text-14-medium text-text-strong hover:bg-surface-raised-base-hover transition-colors"
           onClick={props.onOpenFolder}

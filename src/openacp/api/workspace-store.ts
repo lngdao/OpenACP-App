@@ -1,12 +1,18 @@
 /**
  * Workspace persistence using Tauri Store plugin.
- * Stores: list of workspace directories + last active workspace.
+ * Primary key is instance ID (from ~/.openacp/instances.json), not workspace path.
  * Falls back to localStorage when Tauri is unavailable (dev/browser).
  */
 
+export interface InstanceInfo {
+  id: string
+  root: string      // path to .openacp dir
+  workspace: string // parent of root (workspace root dir)
+}
+
 interface WorkspaceData {
-  workspaces: string[]
-  lastActive: string | null
+  instances: string[]     // instance IDs
+  lastActive: string | null // instance ID
 }
 
 const STORE_KEY = "data"
@@ -28,9 +34,15 @@ async function getStore() {
 function readLS(): WorkspaceData {
   try {
     const raw = localStorage.getItem(LS_KEY)
-    return raw ? JSON.parse(raw) : { workspaces: [], lastActive: null }
+    if (!raw) return { instances: [], lastActive: null }
+    const parsed = JSON.parse(raw)
+    // Migrate old format: { workspaces: string[] } → { instances: string[] }
+    if (Array.isArray(parsed.workspaces) && !parsed.instances) {
+      return { instances: [], lastActive: null }
+    }
+    return parsed
   } catch {
-    return { workspaces: [], lastActive: null }
+    return { instances: [], lastActive: null }
   }
 }
 
@@ -45,7 +57,13 @@ export async function loadWorkspaceData(): Promise<WorkspaceData> {
   if (store) {
     try {
       const data = await store.get(STORE_KEY) as WorkspaceData | undefined
-      if (data) return data
+      if (data) {
+        // Migrate old format: { workspaces: string[] } → { instances: string[] }
+        if ((data as any).workspaces && !data.instances) {
+          return { instances: [], lastActive: null }
+        }
+        return data
+      }
     } catch { /* fall through */ }
   }
   return readLS()
@@ -64,15 +82,13 @@ export async function saveWorkspaceData(data: WorkspaceData): Promise<void> {
 }
 
 /**
- * Discover known workspaces from ~/.openacp/instances.json
- * This file is maintained by the OpenACP server.
+ * Discover all registered instances from ~/.openacp/instances.json via Tauri.
  */
-export async function discoverWorkspaces(): Promise<string[]> {
+export async function discoverWorkspaces(): Promise<InstanceInfo[]> {
   try {
     const { invoke } = await import("@tauri-apps/api/core")
-    const dirs = await invoke<string[]>("discover_workspaces")
-    return dirs
-  } catch (e) {
+    return await invoke<InstanceInfo[]>("discover_workspaces")
+  } catch {
     return []
   }
 }
