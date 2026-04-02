@@ -7,6 +7,8 @@ use std::sync::Arc;
 use tauri::Manager;
 use tokio::sync::Mutex;
 
+// TODO: Replace with OS credential store (e.g., `keyring` crate) for production.
+// Currently stores tokens as plaintext JSON in app data dir — acceptable for MVP only.
 static KEYCHAIN: std::sync::Mutex<Option<HashMap<String, String>>> = std::sync::Mutex::new(None);
 
 struct AppState {

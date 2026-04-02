@@ -129,18 +129,23 @@ function BrowseResultView(props: {
     return (
       <div class="p-3 bg-surface-raised-base rounded-lg text-14-regular text-text-base">
         <p>This folder is already registered as <strong>{inst.name ?? inst.id}</strong>.</p>
-        <button
-          type="button"
-          onClick={() => props.onAdd({
-            id: inst.id,
-            name: inst.name ?? inst.id,
-            directory: inst.directory,
-            type: 'local',
-          })}
-          class="mt-2 px-3 py-1 rounded-lg bg-surface-raised-base-hover border border-border-base text-12-medium text-text-strong hover:bg-surface-raised-base-hover transition-colors"
-        >
-          Add workspace
-        </button>
+        <div class="mt-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => props.onAdd({
+              id: inst.id,
+              name: inst.name ?? inst.id,
+              directory: inst.directory,
+              type: 'local',
+            })}
+            class="px-3 py-1 rounded-lg bg-surface-raised-base-hover border border-border-base text-12-medium text-text-strong hover:bg-surface-raised-base-hover transition-colors"
+          >
+            Add workspace
+          </button>
+          <button type="button" onClick={props.onClose} class="text-sm text-text-weak hover:underline">
+            Back
+          </button>
+        </div>
       </div>
     )
   }
@@ -149,7 +154,12 @@ function BrowseResultView(props: {
     return (
       <div class="p-3 bg-surface-raised-base rounded-lg text-14-regular text-text-base">
         <p>Found an existing OpenACP instance at this path.</p>
-        <RegisterExistingButton path={result.path} onAdd={props.onAdd} />
+        <div class="flex items-center gap-2">
+          <RegisterExistingButton path={result.path} onAdd={props.onAdd} />
+          <button type="button" onClick={props.onClose} class="text-sm text-text-weak hover:underline">
+            Back
+          </button>
+        </div>
       </div>
     )
   }
