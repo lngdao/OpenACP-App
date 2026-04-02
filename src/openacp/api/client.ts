@@ -1,4 +1,4 @@
-import type { Agent, AuthInfo, ServerInfo, Session, SessionHistory, StoredToken, TokenInfo } from "../types"
+import type { Agent, AuthInfo, ServerCommand, ServerInfo, Session, SessionHistory, StoredToken, TokenInfo } from "../types"
 
 export function createApiClient(server: ServerInfo) {
   const { url } = server
@@ -153,6 +153,43 @@ export function createApiClient(server: ServerInfo) {
     /** Get current auth info (role, scopes, expiry) */
     async me(): Promise<AuthInfo> {
       return api("/auth/me")
+    },
+
+    /** List registered commands from server */
+    async getCommands(): Promise<ServerCommand[]> {
+      try {
+        const res = await api<{ commands: any[] }>("/commands")
+        return (res.commands || []).map((c: any) => ({
+          name: c.name,
+          description: c.description || "",
+          usage: c.usage || "",
+          category: c.category || "system",
+        }))
+      } catch {
+        return []
+      }
+    },
+
+    /** Execute a server command */
+    async executeCommand(command: string, sessionID?: string): Promise<{ result?: any; error?: string }> {
+      try {
+        const body: Record<string, string> = { command }
+        if (sessionID) body.sessionId = sessionID
+        return await api("/commands/execute", {
+          method: "POST",
+          body: JSON.stringify(body),
+        })
+      } catch (e: any) {
+        return { error: e?.message || "Command failed" }
+      }
+    },
+
+    /** Set client overrides (bypass permissions, etc.) */
+    async setClientOverrides(sessionID: string, overrides: { bypassPermissions?: boolean }): Promise<void> {
+      await api(`/sessions/${encodeURIComponent(sessionID)}/config/overrides`, {
+        method: "PUT",
+        body: JSON.stringify(overrides),
+      })
     },
 
     /** Get full conversation history for a session */

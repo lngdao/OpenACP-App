@@ -88,14 +88,14 @@ function CopyButton(props: { text: string }) {
 
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp)
-  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toUpperCase()
 }
 
 // ── Part Renderers ──────────────────────────────────────────────────────────
 
 function TextPartView(props: { part: TextPart; streaming?: boolean }) {
   return (
-    <div class="oac-text-part flex gap-2.5 items-start group/text">
+    <div class="flex gap-2.5 items-start">
       <div class="mt-[9px] flex-shrink-0">
         <StatusDot variant="normal" />
       </div>
@@ -105,8 +105,7 @@ function TextPartView(props: { part: TextPart; streaming?: boolean }) {
           cacheKey={props.part.id}
           streaming={props.streaming}
         />
-        {/* Hover meta — copy + info */}
-        <div class="oac-meta-wrapper">
+        <div class="mt-1">
           <CopyButton text={props.part.content} />
         </div>
       </div>
@@ -173,14 +172,14 @@ function UserMessage(props: { message: Message }) {
   return (
     <div
       data-component="oac-user-message"
-      class="sticky top-0 z-10 rounded-lg border border-border-base bg-background-stronger px-4 py-2.5 shadow-sm group/user"
+      class="sticky top-0 z-10 rounded-md border border-border-base bg-background-stronger shadow-sm"
+      style={{ padding: "8px 12px" }}
     >
       <div class="text-14-regular text-text-strong whitespace-pre-wrap break-words leading-relaxed">
         {getUserText(props.message)}
       </div>
 
-      {/* Hover: time + copy */}
-      <div class="oac-user-meta">
+      <div class="flex items-center justify-content gap-2 mt-1" style={{ "justify-content": "flex-end" }}>
         <span class="text-12-regular text-text-weak select-none">{timeStr()}</span>
         <CopyButton text={getUserText(props.message)} />
       </div>
@@ -203,7 +202,7 @@ function AssistantMessage(props: { message: Message; streaming?: boolean }) {
           </div>
         </Show>
       }>
-        <div class="flex flex-col gap-3">
+        <div class="flex flex-col" style={{ gap: "16px" }}>
           <For each={props.message.parts}>
             {(part, index) => (
               <PartRenderer
@@ -220,13 +219,20 @@ function AssistantMessage(props: { message: Message; streaming?: boolean }) {
 
 // ── Entry ───────────────────────────────────────────────────────────────────
 
-export function MessageBubble(props: { message: Message; streaming?: boolean }) {
+export function MessageBubble(props: { message: Message; streaming?: boolean; isFirst?: boolean }) {
+  const isUser = () => props.message.role === "user"
+
   return (
-    <Show when={props.message.role === "user"} fallback={
-      <AssistantMessage message={props.message} streaming={props.streaming} />
-    }>
-      <UserMessage message={props.message} />
-    </Show>
+    <>
+      <Show when={!props.isFirst}>
+        <div style={{ height: isUser() ? "28px" : "14px" }} />
+      </Show>
+      <Show when={isUser()} fallback={
+        <AssistantMessage message={props.message} streaming={props.streaming} />
+      }>
+        <UserMessage message={props.message} />
+      </Show>
+    </>
   )
 }
 

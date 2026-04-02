@@ -1,6 +1,7 @@
 /* OpenACP App — custom styles */
 
-/* Tool output — visible scrollbar, mono, bordered */
+/* ── Tool output ─────────────────────────────────────────────────────────── */
+
 .oac-tool-output {
   width: 100%;
   border: 1px solid var(--border-weak-base);
@@ -29,44 +30,6 @@
   background-color: var(--surface-stronger-non-alpha, var(--background-stronger));
 }
 
-/* User message hover meta — time + copy */
-.oac-user-meta {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  min-height: 20px;
-  margin-top: 4px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-[data-component="oac-user-message"]:hover .oac-user-meta,
-[data-component="oac-user-message"]:focus-within .oac-user-meta {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* ── Assistant text part hover meta — copy ───────────────────────────────── */
-
-.oac-meta-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 20px;
-  margin-top: 4px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-.oac-text-part:hover .oac-meta-wrapper,
-.oac-text-part:focus-within .oac-meta-wrapper {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 /* ── Copy button ─────────────────────────────────────────────────────────── */
 
 .oac-copy-btn {
@@ -92,6 +55,11 @@
 
 .oac-copy-btn:active {
   color: var(--icon-strong);
+}
+
+/* Remove focus outline that could trigger focus-within */
+.oac-copy-btn:focus {
+  outline: none;
 }
 
 /* ── Spinner ─────────────────────────────────────────────────────────────── */

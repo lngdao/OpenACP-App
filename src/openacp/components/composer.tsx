@@ -1,12 +1,13 @@
-import { createSignal, Show } from "solid-js"
+import { createSignal, onMount, onCleanup, Show } from "solid-js"
 import { DockShellForm, DockTray } from "@openacp/ui/dock-surface"
 import { IconButton } from "@openacp/ui/icon-button"
 import { Button } from "@openacp/ui/button"
-import { Icon } from "@openacp/ui/icon"
 import { Tooltip } from "@openacp/ui/tooltip"
 import { useChat } from "../context/chat"
+import PhPlus from "phosphor-solid-js/dist/icons/Plus.esm"
+import PhCommand from "phosphor-solid-js/dist/icons/Command.esm"
 import { AgentSelector } from "./agent-selector"
-import { SlashCommandPopover } from "./slash-commands"
+import { CommandPalette } from "./command-palette"
 import { ConfigSelector } from "./config-selector"
 
 export function Composer() {
@@ -14,14 +15,31 @@ export function Composer() {
   const [text, setText] = createSignal("")
   const [agent, setAgent] = createSignal<string>()
   const [isBypass, setIsBypass] = createSignal(false)
-  const [slashQuery, setSlashQuery] = createSignal<string | null>(null)
+  const [paletteOpen, setPaletteOpen] = createSignal(false)
+  const [paletteFilter, setPaletteFilter] = createSignal<string | undefined>()
+  const [configVersion, setConfigVersion] = createSignal(0)
 
   let editorRef: HTMLDivElement | undefined
-  const space = "44px"
+  const space = "52px"
+
+  // ── Cmd+/ global shortcut ─────────────────────────────────────────────
+
+  function handleGlobalKeyDown(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+      e.preventDefault()
+      setPaletteFilter(undefined)
+      setPaletteOpen((v) => !v)
+    }
+  }
+
+  onMount(() => document.addEventListener("keydown", handleGlobalKeyDown))
+  onCleanup(() => document.removeEventListener("keydown", handleGlobalKeyDown))
+
+  // ── Input handlers ────────────────────────────────────────────────────
 
   const handleSubmit = async (e?: Event) => {
     e?.preventDefault()
-    if (slashQuery() !== null) return // Don't submit while slash popover open
+    if (paletteOpen()) return
     const value = text().trim()
     if (!value) return
     setText("")
@@ -30,8 +48,8 @@ export function Composer() {
   }
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && slashQuery() !== null) {
-      setSlashQuery(null)
+    if (e.key === "Escape" && paletteOpen()) {
+      setPaletteOpen(false)
       e.preventDefault()
       return
     }
@@ -47,36 +65,49 @@ export function Composer() {
     const value = editorRef?.textContent ?? ""
     setText(value)
 
-    // Detect slash command
-    if (value.startsWith("/") && !value.includes(" ")) {
-      setSlashQuery(value)
-    } else {
-      setSlashQuery(null)
+    // Type "/" opens command palette with Commands filter
+    if (value === "/") {
+      setPaletteFilter("/")
+      setPaletteOpen(true)
+      return
+    }
+
+    // Continue filtering while palette is open and starts with /
+    if (paletteOpen() && value.startsWith("/")) {
+      setPaletteFilter(value)
+      return
+    }
+
+    // Close palette if user deletes the /
+    if (paletteOpen() && !value.startsWith("/")) {
+      setPaletteOpen(false)
+      setPaletteFilter(undefined)
     }
   }
 
-  const handleSlashSelect = (replacement: string) => {
-    if (editorRef) editorRef.textContent = replacement
-    setText(replacement)
-    setSlashQuery(null)
+  function closePalette() {
+    setPaletteOpen(false)
+    setPaletteFilter(undefined)
+    // Clear "/" from input if that's all there is
+    const value = text().trim()
+    if (value.startsWith("/")) {
+      setText("")
+      if (editorRef) editorRef.textContent = ""
+    }
     editorRef?.focus()
   }
 
   return (
     <div class="shrink-0 w-full pb-3 flex flex-col justify-center items-center bg-background-stronger">
       <div class="w-full px-3 md:max-w-200 md:mx-auto 2xl:max-w-[1000px] relative">
-        {/* Slash command popover — above input */}
-        <Show when={slashQuery() !== null}>
+        {/* Command palette — above input */}
+        <Show when={paletteOpen()}>
           <div class="absolute bottom-full left-3 right-3 mb-1 z-50">
-            <SlashCommandPopover
-              query={slashQuery()!}
+            <CommandPalette
               sessionID={chat.activeSession()}
-              onSelect={handleSlashSelect}
-              onClose={() => {
-                setSlashQuery(null)
-                if (editorRef) editorRef.textContent = ""
-                setText("")
-              }}
+              onClose={closePalette}
+              onConfigChanged={() => setConfigVersion((v) => v + 1)}
+              initialFilter={paletteFilter()?.replace("/", "")}
             />
           </div>
         </Show>
@@ -146,9 +177,23 @@ export function Composer() {
             </div>
 
             <div class="pointer-events-none absolute bottom-2 left-2">
-              <div class="pointer-events-auto">
+              <div class="pointer-events-auto flex items-center gap-0.5">
                 <Button data-action="prompt-attach" type="button" variant="ghost" class="size-8 p-0">
-                  <Icon name="plus" class="size-4.5" />
+                  <PhPlus size={18} weight="bold" class="text-icon-weak" />
+                </Button>
+                <Button
+                  data-action="prompt-command"
+                  type="button"
+                  variant="ghost"
+                  class="size-8 p-0"
+                  onClick={(e: MouseEvent) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setPaletteFilter(undefined)
+                    setPaletteOpen(!paletteOpen())
+                  }}
+                >
+                  <PhCommand size={18} weight="regular" class="text-icon-weak" />
                 </Button>
               </div>
             </div>
@@ -158,11 +203,12 @@ export function Composer() {
         <DockTray attach="top">
           <div class="px-1.75 pt-5.5 pb-2 flex items-center gap-1.5 min-w-0">
             <AgentSelector current={agent()} onSelect={setAgent} />
-            <ConfigSelector category="model" sessionID={chat.activeSession()} />
+            <ConfigSelector category="model" sessionID={chat.activeSession()} refreshKey={configVersion()} />
             <div class="flex-1" />
             <ConfigSelector
               category="mode"
               sessionID={chat.activeSession()}
+              refreshKey={configVersion()}
               onValueChange={(v) => {
                 const val = v.toLowerCase()
                 setIsBypass(val.includes("bypass") || val.includes("dangerous"))
