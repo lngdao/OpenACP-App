@@ -403,17 +403,14 @@ export function ChatProvider(props: ParentProps) {
   }
 
   function connect() {
-    const eventsUrl = workspace.client.eventsUrl
-    const logUrl = eventsUrl.replace(/token=[^&]+/, 'token=***')
-    console.log('[chat] connecting SSE — directory:', workspace.directory, 'url:', logUrl)
-    sse.connect(workspace.directory, eventsUrl, {
+    sse.connect(workspace.directory, workspace.client.eventsUrl, {
       onAgentEvent: handleAgentEvent,
       onSessionCreated: (s) => sessions.upsert(s),
       onSessionUpdated: (s) => sessions.upsert(s),
       onSessionDeleted: (id) => sessions.delete(id),
-      onConnected: () => { console.log('[chat] SSE connected'); setStore('sseStatus', 'connected') },
-      onReconnecting: () => { console.warn('[chat] SSE reconnecting'); setStore('sseStatus', 'reconnecting') },
-      onDisconnected: () => { console.error('[chat] SSE disconnected'); setStore('sseStatus', 'disconnected') },
+      onConnected: () => setStore('sseStatus', 'connected'),
+      onReconnecting: () => setStore('sseStatus', 'reconnecting'),
+      onDisconnected: () => setStore('sseStatus', 'disconnected'),
     })
   }
 

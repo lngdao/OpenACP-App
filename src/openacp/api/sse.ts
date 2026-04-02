@@ -18,16 +18,10 @@ export function createSSEManager() {
   const connections = new Map<string, EventSource>()
 
   function connect(directory: string, eventsUrl: string, callbacks: SSECallbacks) {
-    // Already connected
-    if (connections.has(directory)) {
-      const existing = connections.get(directory)!
-      console.log('[sse] already have connection for', directory, 'readyState:', existing.readyState)
-      return
-    }
+    if (connections.has(directory)) return
 
-    // Mask token in log
     const logUrl = eventsUrl.replace(/token=[^&]+/, 'token=***')
-    console.log('[sse] connecting to:', logUrl)
+    console.log('[sse] connecting:', logUrl)
     const es = new EventSource(eventsUrl)
 
     es.addEventListener("agent:event", (e) => {
@@ -47,7 +41,6 @@ export function createSSEManager() {
     es.addEventListener("session:updated", (e) => {
       try {
         const data = JSON.parse((e as MessageEvent).data)
-        console.log("[sse] session:updated", data)
         callbacks.onSessionUpdated(mapSessionFromSSE(data))
       } catch { /* skip */ }
     })
@@ -60,26 +53,17 @@ export function createSSEManager() {
     })
 
     es.onopen = () => {
-      console.log('[sse] connected:', eventsUrl)
+      console.log('[sse] connected')
       callbacks.onConnected()
     }
-    es.onerror = (e) => {
-      console.warn('[sse] error event, readyState:', es.readyState, e)
+    es.onerror = () => {
       if (es.readyState === EventSource.CLOSED) {
-        console.warn('[sse] permanently closed — removing from map so reconnect is possible')
         connections.delete(directory)
         callbacks.onDisconnected()
       } else {
-        // readyState === CONNECTING — browser is auto-retrying
-        console.warn('[sse] reconnecting (auto-retry):', logUrl)
         callbacks.onReconnecting?.()
       }
     }
-
-    // Listen to health heartbeat to confirm data is flowing
-    es.addEventListener('health', (e) => {
-      console.log('[sse] health heartbeat received')
-    })
 
     connections.set(directory, es)
   }
