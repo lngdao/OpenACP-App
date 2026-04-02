@@ -102,11 +102,25 @@ async fn get_workspace_server_info(instance_id: String) -> Result<ServerInfo, St
     Err(format!("Could not determine port from {}", dir.display()))
 }
 
-/// Discover all registered instances from ~/.openacp/instances.json
 #[tauri::command]
-async fn discover_workspaces() -> Result<Vec<InstanceInfo>, String> {
-    let value = read_instances_json()?;
-    Ok(parse_instances(&value))
+async fn invoke_cli(args: Vec<String>, _app: tauri::AppHandle) -> Result<String, String> {
+    use sidecar::find_openacp_binary_pub;
+    let bin = find_openacp_binary_pub().ok_or_else(|| "Could not find openacp binary".to_string())?;
+    let output = tokio::process::Command::new(&bin)
+        .args(&args)
+        .output()
+        .await
+        .map_err(|e| e.to_string())?;
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        Err(if stderr.is_empty() {
+            format!("CLI exited with status: {}", output.status)
+        } else {
+            stderr
+        })
+    }
 }
 
 #[tauri::command]
@@ -163,7 +177,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_server_info,
             get_workspace_server_info,
-            discover_workspaces,
+            invoke_cli,
             start_server,
             stop_server,
             onboarding::check_openacp_installed,
