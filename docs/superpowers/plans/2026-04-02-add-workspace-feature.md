@@ -359,6 +359,7 @@ import type { WorkspaceEntry } from '../../api/workspace-store.js'
 interface AddWorkspaceModalProps {
   onAdd: (entry: WorkspaceEntry) => void
   onClose: () => void
+  existingIds: string[]  // ids of already-added workspaces, passed down to LocalTab
 }
 
 export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
@@ -392,7 +393,7 @@ export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
         {/* Tab content */}
         <div class="p-6">
           <Show when={tab() === 'local'}>
-            <LocalTab onAdd={props.onAdd} />
+            <LocalTab onAdd={props.onAdd} existingIds={props.existingIds} />
           </Show>
           <Show when={tab() === 'remote'}>
             <RemoteTab onAdd={props.onAdd} />
@@ -452,6 +453,7 @@ In the JSX, inside the sidebar rail area, add a "+" button:
   <AddWorkspaceModal
     onAdd={handleAddWorkspace}
     onClose={() => setShowAddWorkspace(false)}
+    existingIds={store.workspaces.map(w => w.id)}
   />
 </Show>
 ```
@@ -479,7 +481,32 @@ git commit -m "feat: add workspace modal shell with local/remote tabs"
 **Files:**
 - Modify: `src/openacp/components/add-workspace/local-tab.tsx`
 
-- [ ] **Step 1: Implement local instances list**
+- [ ] **Step 1: Add `path_exists` Tauri command to lib.rs**
+
+In `src-tauri/src/lib.rs`, add this command after `invoke_cli`:
+
+```rust
+#[tauri::command]
+fn path_exists(path: String) -> bool {
+    std::path::Path::new(&path).exists()
+}
+```
+
+In the `tauri::generate_handler![]` macro, add `path_exists`:
+
+```rust
+// Before: tauri::generate_handler![..., invoke_cli]
+// After:  tauri::generate_handler![..., invoke_cli, path_exists]
+```
+
+Build to verify:
+```bash
+cd /Users/lucas/code/openacp-workspace/OpenACP-App
+npx tauri build --debug 2>&1 | grep -E "error|warning\[" | head -20
+```
+Expected: No new errors.
+
+- [ ] **Step 2: Implement local instances list**
 
 Replace local-tab.tsx stub:
 
@@ -576,7 +603,7 @@ export function LocalTab(props: LocalTabProps) {
 }
 ```
 
-- [ ] **Step 2: Implement `checkBrowsedPath` utility**
+- [ ] **Step 3: Implement `checkBrowsedPath` utility**
 
 Add at the bottom of `local-tab.tsx`:
 
@@ -605,16 +632,7 @@ async function checkBrowsedPath(selectedPath: string, knownInstances: InstanceLi
 }
 ```
 
-> **Note:** `path_exists` Tauri command may not exist. Check `lib.rs` for existing path utilities or add a simple one:
-> ```rust
-> #[tauri::command]
-> fn path_exists(path: String) -> bool {
->     std::path::Path::new(&path).exists()
-> }
-> ```
-> Register it in `generate_handler![]`. Alternatively, use `invoke_cli` with a shell command.
-
-- [ ] **Step 3: Implement `BrowseResultView`**
+- [ ] **Step 4: Implement `BrowseResultView`**
 
 ```tsx
 function BrowseResultView(props: {
@@ -704,17 +722,17 @@ function RegisterExistingButton(props: { path: string; onAdd: (e: WorkspaceEntry
 }
 ```
 
-- [ ] **Step 4: Verify local tab shows instances**
+- [ ] **Step 5: Verify local tab shows instances**
 
 ```bash
 npx tauri dev
 ```
 Click "+" → Local tab → instances appear with status indicators → clicking one calls `onAdd`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/openacp/components/add-workspace/local-tab.tsx
+git add src/openacp/components/add-workspace/local-tab.tsx src-tauri/src/lib.rs
 git commit -m "feat: local tab with instances list and folder browse"
 ```
 
@@ -1135,11 +1153,84 @@ git commit -m "feat: remote tab with code exchange connection flow"
 - Create: `src/openacp/api/keychain.ts`
 - Modify: `src/openacp/api/client.ts`
 
-- [ ] **Step 1: Create keychain abstraction**
+- [ ] **Step 1: Add keychain Rust commands to lib.rs**
+
+First, check `src-tauri/Cargo.toml` for `tauri-plugin-stronghold` or `keyring`. If neither is present, use a simple encrypted-file approach via `tauri-plugin-store` OR the in-memory+file implementation below.
+
+In `src-tauri/src/lib.rs`, add at the top (after existing `use` statements):
+
+```rust
+use std::collections::HashMap;
+use std::sync::Mutex;
+
+static KEYCHAIN: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
+```
+
+Add the three commands after `path_exists`:
+
+```rust
+#[tauri::command]
+fn keychain_set(key: String, value: String, app: tauri::AppHandle) -> Result<(), String> {
+    let mut lock = KEYCHAIN.lock().map_err(|e| e.to_string())?;
+    let map = lock.get_or_insert_with(HashMap::new);
+    map.insert(key.clone(), value.clone());
+    // Persist to app data dir
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let keychain_path = data_dir.join("keychain.json");
+    let json = serde_json::to_string(map).map_err(|e| e.to_string())?;
+    std::fs::write(&keychain_path, json).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn keychain_get(key: String, app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let mut lock = KEYCHAIN.lock().map_err(|e| e.to_string())?;
+    if lock.is_none() {
+        // Load from disk on first access
+        let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let keychain_path = data_dir.join("keychain.json");
+        if keychain_path.exists() {
+            let raw = std::fs::read_to_string(&keychain_path).map_err(|e| e.to_string())?;
+            let map: HashMap<String, String> = serde_json::from_str(&raw).unwrap_or_default();
+            *lock = Some(map);
+        } else {
+            *lock = Some(HashMap::new());
+        }
+    }
+    Ok(lock.as_ref().and_then(|m| m.get(&key).cloned()))
+}
+
+#[tauri::command]
+fn keychain_delete(key: String, app: tauri::AppHandle) -> Result<(), String> {
+    let mut lock = KEYCHAIN.lock().map_err(|e| e.to_string())?;
+    if let Some(map) = lock.as_mut() {
+        map.remove(&key);
+        let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+        let keychain_path = data_dir.join("keychain.json");
+        let json = serde_json::to_string(map).map_err(|e| e.to_string())?;
+        std::fs::write(&keychain_path, json).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+```
+
+In `tauri::generate_handler![]`, add `keychain_set, keychain_get, keychain_delete`.
+
+Add `serde_json` to `src-tauri/Cargo.toml` if not present:
+```toml
+serde_json = "1"
+```
+
+Build to verify:
+```bash
+npx tauri build --debug 2>&1 | grep -E "^error" | head -20
+```
+Expected: No errors.
+
+- [ ] **Step 2: Create keychain.ts abstraction**
 
 ```typescript
 // src/openacp/api/keychain.ts
-// Keychain abstraction using Tauri Stronghold or credential store.
+// Keychain abstraction over Tauri keychain_set/get/delete commands.
 // Key format: "workspace:<id>"
 // Falls back to sessionStorage in dev/browser (tokens are NOT persisted to disk in fallback).
 
@@ -1162,7 +1253,7 @@ export async function setKeychainToken(workspaceId: string, token: string): Prom
 export async function getKeychainToken(workspaceId: string): Promise<string | null> {
   const key = keychainKey(workspaceId)
   try {
-    const token = await invoke<string>('keychain_get', { key })
+    const token = await invoke<string | null>('keychain_get', { key })
     if (token) return token
   } catch {}
   try { return sessionStorage.getItem(key) } catch { return null }
@@ -1175,42 +1266,7 @@ export async function deleteKeychainToken(workspaceId: string): Promise<void> {
 }
 ```
 
-> **Note:** `keychain_set`, `keychain_get`, `keychain_delete` Tauri commands need to be added in `lib.rs`. Use `tauri-plugin-stronghold` or the OS credential store. The simplest approach is an encrypted file-based store via Stronghold. Check if Stronghold is already a dependency in `Cargo.toml`. If not, use `tauri-plugin-store` with a separate encrypted store file, or implement using the platform's credential manager via `keyring` crate.
->
-> Minimal Rust implementation using in-memory + file store (adapt if Stronghold is available):
->
-> ```rust
-> use std::collections::HashMap;
-> use std::sync::Mutex;
->
-> static KEYCHAIN: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
->
-> #[tauri::command]
-> fn keychain_set(key: String, value: String, app: tauri::AppHandle) -> Result<(), String> {
->     let mut lock = KEYCHAIN.lock().unwrap();
->     let map = lock.get_or_insert_with(HashMap::new);
->     map.insert(key, value);
->     // Persist to encrypted file (implement as needed)
->     Ok(())
-> }
->
-> #[tauri::command]
-> fn keychain_get(key: String) -> Result<Option<String>, String> {
->     let lock = KEYCHAIN.lock().unwrap();
->     Ok(lock.as_ref().and_then(|m| m.get(&key).cloned()))
-> }
->
-> #[tauri::command]
-> fn keychain_delete(key: String) -> Result<(), String> {
->     let mut lock = KEYCHAIN.lock().unwrap();
->     if let Some(map) = lock.as_mut() { map.remove(&key); }
->     Ok(())
-> }
-> ```
->
-> Register `keychain_set`, `keychain_get`, `keychain_delete` in `generate_handler![]`.
-
-- [ ] **Step 2: Update `client.ts` to write refreshed token back to keychain**
+- [ ] **Step 3: Update `client.ts` to write refreshed token back to keychain**
 
 In `src/openacp/api/client.ts`, find `tryRefreshToken()`. It currently updates an in-memory token. Add keychain update after success:
 
@@ -1241,7 +1297,7 @@ async function tryRefreshToken(): Promise<boolean> {
 
 `createApiClient` needs to accept `workspaceId` and an `onTokenRefreshed` callback. Update its signature and the call in `workspace.tsx`.
 
-- [ ] **Step 3: Add reconnect-needed state to API client**
+- [ ] **Step 4: Add reconnect-needed state to API client**
 
 In `client.ts`, add a signal/callback for reconnect needed:
 
@@ -1271,13 +1327,13 @@ client.setOnReconnectNeeded(() => {
 
 In the UI, when `store.error === 'reconnect-needed'`, show reconnect badge on the workspace in the sidebar and open the Add Workspace modal (Remote tab) when clicked.
 
-- [ ] **Step 4: Verify remote workspace connect + reconnect flow**
+- [ ] **Step 5: Verify remote workspace connect + reconnect flow**
 
 1. Run `openacp remote` on core to generate a link
 2. Open app → "+" → Remote tab → paste link → connect → confirm → workspace added
 3. Verify JWT is retrieved from keychain on next app restart
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/openacp/api/keychain.ts src/openacp/api/client.ts src-tauri/src/lib.rs
