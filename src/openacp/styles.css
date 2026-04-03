@@ -158,30 +158,24 @@
 
 .oac-timeline {
   position: relative;
-  padding-left: 28px;
+  padding-left: 30px;
 }
 
-.oac-timeline-line {
-  position: absolute;
-  left: 12px;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--border-weak-base);
-}
-
-/* ── Step dots ──────────────────────────────────────────────────────────── */
+/* ── Step dots + per-step connecting line (matches Claude Code ext) ───── */
 
 .oac-step {
   position: relative;
-  margin-bottom: 12px;
+  padding-bottom: 12px;
+  user-select: text;
+  align-items: flex-start;
 }
 
+/* Dot — 7×7 circle, positioned at left:9px top:15px from timeline edge */
 .oac-step::before {
   content: "";
   position: absolute;
-  left: -19px;
-  top: 7px;
+  left: -21px;
+  top: 8px;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -189,10 +183,41 @@
   z-index: 1;
 }
 
+/* Line — full height, centered under dot at left:12px from timeline edge */
+.oac-step::after {
+  content: "";
+  position: absolute;
+  left: -18px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-weak-base);
+}
+
+/* First step: line starts below dot, runs to bottom */
+.oac-step--first::after {
+  top: 12px;
+}
+
+/* Last step: line from top to dot center only */
+.oac-step--last::after {
+  bottom: auto;
+  height: 12px;
+}
+
+/* Single step (first AND last): no line */
+.oac-step--no-line::after {
+  display: none;
+}
+
 .oac-step--success::before { background: #a6e3a1; }
 .oac-step--failure::before { background: #f38ba8; }
 .oac-step--progress::before { animation: oac-blink 1s linear infinite; }
-.oac-step:last-child { margin-bottom: 0; }
+.oac-step:last-child { padding-bottom: 0; }
+
+/* Prevent markdown paragraph margins from misaligning with dot */
+.oac-step [data-component="markdown"] > p:first-child { margin-top: 0; }
+.oac-step [data-component="markdown"] > p:last-child { margin-bottom: 0; }
 
 @keyframes oac-blink {
   0%, 100% { opacity: 1; }
@@ -249,12 +274,27 @@
 
 .oac-tool-card-title:hover { opacity: 0.8; }
 
-.oac-tool-card-body {
-  border: 0.5px solid var(--border-weak-base);
+.oac-tool-card-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.15s ease;
+  margin-top: 6px;
+  border: 0.5px solid transparent;
   border-radius: 5px;
+  transition: grid-template-rows 0.15s ease, border-color 0.15s ease;
+}
+
+.oac-tool-card-collapse--open {
+  grid-template-rows: 1fr;
+  border-color: var(--border-weak-base);
+}
+
+.oac-tool-card-collapse > .oac-tool-card-body {
   overflow: hidden;
+}
+
+.oac-tool-card-body {
   font-size: 12px;
-  margin-top: 4px;
 }
 
 .oac-tool-card-grid {

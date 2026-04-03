@@ -38,21 +38,23 @@ export function ToolBlockView({ block }: ToolBlockProps) {
         {isPending && <TextShimmer text="" active className="" />}
       </div>
 
-      {expanded && hasBody && (
-        <div className="oac-tool-card-body">
-          <div className="oac-tool-card-grid">
-            {inputText && (
-              <div className="oac-tool-card-row">
-                <div className="oac-tool-card-row-label">IN</div>
-                <div className="oac-tool-card-row-content">{inputText}</div>
-              </div>
-            )}
-            {block.output && (
-              <div className="oac-tool-card-row">
-                <div className="oac-tool-card-row-label">OUT</div>
-                <div className="oac-tool-card-row-content">{block.output}</div>
-              </div>
-            )}
+      {hasBody && (
+        <div className={`oac-tool-card-collapse ${expanded ? "oac-tool-card-collapse--open" : ""}`}>
+          <div className="oac-tool-card-body">
+            <div className="oac-tool-card-grid">
+              {inputText && (
+                <div className="oac-tool-card-row">
+                  <div className="oac-tool-card-row-label">IN</div>
+                  <div className="oac-tool-card-row-content">{inputText}</div>
+                </div>
+              )}
+              {block.output && (
+                <div className="oac-tool-card-row">
+                  <div className="oac-tool-card-row-label">OUT</div>
+                  <div className="oac-tool-card-row-content">{block.output}</div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

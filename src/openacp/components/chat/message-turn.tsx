@@ -18,6 +18,12 @@ type RenderItem =
   | { kind: "block"; block: MessageBlock; index: number }
   | { kind: "noise-group"; tools: ToolBlock[] }
 
+/** Filter out empty text blocks (whitespace-only) */
+function isBlockVisible(block: MessageBlock): boolean {
+  if (block.type === "text" && !block.content.trim()) return false
+  return true
+}
+
 function groupBlocks(blocks: MessageBlock[]): RenderItem[] {
   const items: RenderItem[] = []
   let noiseBuffer: ToolBlock[] = []
@@ -34,6 +40,7 @@ function groupBlocks(blocks: MessageBlock[]): RenderItem[] {
 
   for (let i = 0; i < blocks.length; i++) {
     const block = blocks[i]
+    if (!isBlockVisible(block)) continue
     if (block.type === "tool" && block.isNoise) {
       noiseBuffer.push(block)
     } else {
@@ -90,16 +97,17 @@ export function MessageTurn({ message, streaming }: MessageTurnProps) {
         ) : null
       ) : (
         <div className="oac-timeline">
-          <div className="oac-timeline-line" />
           {renderItems.map((item, idx) => {
+            const isFirst = idx === 0
+            const isLast = idx === renderItems.length - 1
             if (item.kind === "noise-group") {
-              return <ToolGroup key={`ng-${idx}`} tools={item.tools} />
+              return <ToolGroup key={`ng-${idx}`} tools={item.tools} isFirst={isFirst} isLast={isLast} />
             }
             const blockItem = item as { kind: "block"; block: MessageBlock; index: number }
             const block = blockItem.block
             const isLastBlock = blockItem.index === blocks.length - 1
             return (
-              <TimelineStep key={`b-${idx}`} status={blockStatus(block)}>
+              <TimelineStep key={`b-${idx}`} status={blockStatus(block)} isFirst={isFirst} isLast={isLast}>
                 {renderBlock(block, streaming, isLastBlock)}
               </TimelineStep>
             )

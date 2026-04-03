@@ -9,11 +9,13 @@ interface TextBlockProps {
 
 export function TextBlockView({ block, streaming }: TextBlockProps) {
   const pacedText = usePacedValue(block.content, streaming ?? false)
+  // Trim leading newlines to prevent empty <br> gaps at start of text blocks
+  const trimmedText = pacedText.replace(/^\n+/, "")
 
   return (
     <div className="min-w-0">
       <Markdown
-        text={pacedText}
+        text={trimmedText}
         cacheKey={block.id}
         streaming={streaming}
       />
