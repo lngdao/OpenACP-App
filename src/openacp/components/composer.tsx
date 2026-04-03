@@ -265,7 +265,7 @@ export function Composer() {
                   className="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 text-14-regular text-text-weak pointer-events-none whitespace-nowrap truncate"
                   style={{ paddingBottom: space }}
                 >
-                  Ask anything... "Explain how authentication works"
+                  Ask anything...
                 </div>
               )}
             </div>
