@@ -1,13 +1,18 @@
 use tauri::Emitter;
 use tauri_plugin_shell::ShellExt;
 
+use crate::sidecar::find_openacp_binary_pub;
+
 /// Runs `openacp --version` and returns the version string, or None if not installed.
-/// Returns Ok(None) both when the binary doesn't exist and when it exits non-zero.
+/// Uses find_openacp_binary to locate the binary (handles release builds where PATH is limited).
 #[tauri::command]
-pub async fn check_openacp_installed(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    let result = app
-        .shell()
-        .command("openacp")
+pub async fn check_openacp_installed(_app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let bin = match find_openacp_binary_pub() {
+        Some(b) => b,
+        None => return Ok(None),
+    };
+
+    let result = tokio::process::Command::new(&bin)
         .args(["--version"])
         .output()
         .await;
@@ -39,11 +44,10 @@ pub struct CoreUpdateInfo {
 }
 
 #[tauri::command]
-pub async fn check_core_update(app: tauri::AppHandle) -> Result<Option<CoreUpdateInfo>, String> {
+pub async fn check_core_update(_app: tauri::AppHandle) -> Result<Option<CoreUpdateInfo>, String> {
     // Get current version
-    let output = app
-        .shell()
-        .command("openacp")
+    let bin = find_openacp_binary_pub().ok_or("openacp not found")?;
+    let output = tokio::process::Command::new(&bin)
         .args(["--version"])
         .output()
         .await
@@ -156,9 +160,11 @@ pub async fn run_openacp_setup(
 ) -> Result<String, String> {
     use tauri_plugin_shell::process::CommandEvent;
 
+    let bin = find_openacp_binary_pub()
+        .ok_or("openacp not found — please install it first")?;
     let (mut rx, _child) = app
         .shell()
-        .command("openacp")
+        .command(bin.to_string_lossy().to_string())
         .args([
             "setup",
             "--global",
@@ -211,12 +217,12 @@ pub async fn run_openacp_setup(
 /// Runs `openacp agents list --json` and returns the raw JSON string.
 #[allow(dead_code)]
 #[tauri::command]
-pub async fn run_openacp_agents_list(app: tauri::AppHandle) -> Result<String, String> {
+pub async fn run_openacp_agents_list(_app: tauri::AppHandle) -> Result<String, String> {
     tracing::info!("run_openacp_agents_list: running `openacp agents list --json`");
 
-    let output = app
-        .shell()
-        .command("openacp")
+    let bin = find_openacp_binary_pub()
+        .ok_or_else(|| "openacp not found".to_string())?;
+    let output = tokio::process::Command::new(&bin)
         .args(["agents", "list", "--json"])
         .output()
         .await
@@ -248,9 +254,11 @@ pub async fn run_openacp_agent_install(
 ) -> Result<(), String> {
     use tauri_plugin_shell::process::CommandEvent;
 
+    let bin = find_openacp_binary_pub()
+        .ok_or("openacp not found — please install it first")?;
     let (mut rx, _child) = app
         .shell()
-        .command("openacp")
+        .command(bin.to_string_lossy().to_string())
         .args(["agents", "install", &agent_key])
         .spawn()
         .map_err(|e| e.to_string())?;

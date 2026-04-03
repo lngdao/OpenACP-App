@@ -133,7 +133,7 @@ fn read_server_files() -> Option<ServerInfo> {
     })
 }
 
-async fn check_health(url: &str, token: &str) -> bool {
+async fn check_health(url: &str, _token: &str) -> bool {
     let client = match reqwest::Client::builder()
         .timeout(Duration::from_secs(5))
         .no_proxy()
@@ -165,26 +165,79 @@ pub fn find_openacp_binary_pub() -> Option<PathBuf> {
 }
 
 fn find_openacp_binary() -> Option<PathBuf> {
-    // Check PATH via `which`
-    if let Ok(output) = std::process::Command::new("which")
-        .arg("openacp")
+    // 1. Try login shell to resolve full user PATH (works in release builds on macOS)
+    if let Ok(output) = std::process::Command::new("bash")
+        .args(["-l", "-c", "which openacp"])
         .output()
     {
         if output.status.success() {
             let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !path.is_empty() {
+                tracing::debug!("find_openacp_binary: found via login shell: {path}");
                 return Some(PathBuf::from(path));
             }
         }
     }
 
-    // Check npm global install location
-    if let Some(home) = dirs::home_dir() {
-        let npm_global = home.join(".npm-global/bin/openacp");
-        if npm_global.exists() {
-            return Some(npm_global);
+    // 2. Try zsh login shell (default on macOS)
+    if let Ok(output) = std::process::Command::new("zsh")
+        .args(["-l", "-c", "which openacp"])
+        .output()
+    {
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() {
+                tracing::debug!("find_openacp_binary: found via zsh login: {path}");
+                return Some(PathBuf::from(path));
+            }
         }
     }
 
+    // 3. Check common install locations
+    if let Some(home) = dirs::home_dir() {
+        let candidates = [
+            home.join(".npm-global/bin/openacp"),
+            home.join(".local/bin/openacp"),
+            home.join("bin/openacp"),
+        ];
+        // Also check nvm paths
+        let nvm_dir = home.join(".nvm/versions/node");
+        let mut all_candidates: Vec<PathBuf> = candidates.to_vec();
+        if nvm_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
+                for entry in entries.flatten() {
+                    all_candidates.push(entry.path().join("bin/openacp"));
+                }
+            }
+        }
+        // fnm paths
+        let fnm_dir = home.join("Library/Application Support/fnm/node-versions");
+        if fnm_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&fnm_dir) {
+                for entry in entries.flatten() {
+                    all_candidates.push(entry.path().join("installation/bin/openacp"));
+                }
+            }
+        }
+
+        for candidate in &all_candidates {
+            if candidate.exists() {
+                tracing::debug!("find_openacp_binary: found at {}", candidate.display());
+                return Some(candidate.clone());
+            }
+        }
+    }
+
+    // 4. System-wide paths
+    let system_paths = ["/usr/local/bin/openacp", "/opt/homebrew/bin/openacp"];
+    for p in &system_paths {
+        let path = PathBuf::from(p);
+        if path.exists() {
+            tracing::debug!("find_openacp_binary: found at {p}");
+            return Some(path);
+        }
+    }
+
+    tracing::warn!("find_openacp_binary: openacp not found anywhere");
     None
 }
