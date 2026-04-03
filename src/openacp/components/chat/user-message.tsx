@@ -63,7 +63,7 @@ export function UserMessage({ message }: { message: Message }) {
         <div className="flex flex-wrap gap-1.5 mb-1.5">
           {message.attachments.map(att => (
             <div key={att.id} className="flex items-center gap-1.5 h-7 pl-1.5 pr-2 rounded-md border border-border-weak-base bg-surface-inset-base">
-              {isImageMime(att.mimeType) ? (
+              {isImageMime(att.mimeType) && att.dataUrl ? (
                 <img src={att.dataUrl} alt="" className="size-4 rounded-sm object-cover flex-shrink-0" />
               ) : (
                 <FileIcon size={14} className="text-icon-weak flex-shrink-0" />
