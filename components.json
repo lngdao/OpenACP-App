@@ -1,0 +1,21 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/openacp/styles/tailwind/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "phosphor",
+  "aliases": {
+    "components": "src/openacp/components",
+    "utils": "src/lib/utils",
+    "ui": "src/openacp/components/ui",
+    "lib": "src/lib",
+    "hooks": "src/openacp/hooks"
+  }
+}
