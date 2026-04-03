@@ -1,17 +1,15 @@
-import { createContext, useContext, type ParentProps } from "solid-js"
+import { createContext, useContext, type ReactNode } from "react"
 import { createApiClient, type ApiClient } from "../api/client"
 import type { ServerInfo } from "../types"
-import type { WorkspaceEntry } from "../api/workspace-store"
 
 interface WorkspaceContext {
   instanceId: string
   directory: string  // workspace root dir (for display/file ops)
-  workspace: WorkspaceEntry
   server: ServerInfo
   client: ApiClient
 }
 
-const Ctx = createContext<WorkspaceContext>()
+const Ctx = createContext<WorkspaceContext | undefined>(undefined)
 
 export function useWorkspace() {
   const ctx = useContext(Ctx)
@@ -32,24 +30,17 @@ export async function resolveWorkspaceServer(instanceId: string): Promise<Server
   }
 }
 
-export function WorkspaceProvider(props: ParentProps<{
-  workspace: WorkspaceEntry
+export function WorkspaceProvider(props: {
+  instanceId: string
+  directory: string
   server: ServerInfo
-  onReconnectNeeded?: () => void
-  onTokenRefreshed?: (update: { expiresAt: string; refreshDeadline: string }) => void
-}>) {
-  const client = createApiClient(props.server, props.workspace.id)
-  if (props.onReconnectNeeded) {
-    client.setOnReconnectNeeded(props.onReconnectNeeded)
-  }
-  if (props.onTokenRefreshed) {
-    client.setOnTokenRefreshed(props.onTokenRefreshed)
-  }
+  children: ReactNode
+}) {
+  const client = createApiClient(props.server)
 
   const value: WorkspaceContext = {
-    get instanceId() { return props.workspace.id },
-    get directory() { return props.workspace.directory },
-    get workspace() { return props.workspace },
+    instanceId: props.instanceId,
+    directory: props.directory,
     server: props.server,
     client,
   }
