@@ -1,4 +1,5 @@
 import React from "react"
+import { cn } from "../../../lib/utils"
 
 const outerIndices = new Set([1, 2, 4, 7, 8, 11, 13, 14])
 const cornerIndices = new Set([0, 3, 12, 15])
@@ -12,12 +13,17 @@ const squares = Array.from({ length: 16 }, (_, i) => ({
   corner: cornerIndices.has(i),
 }))
 
-export function Spinner({ className, style }: { className?: string; style?: React.CSSProperties }) {
+interface SpinnerProps {
+  className?: string
+  style?: React.CSSProperties
+}
+
+export function Spinner({ className, style }: SpinnerProps) {
   return (
     <svg
       viewBox="0 0 15 15"
       data-component="spinner"
-      className={className}
+      className={cn("shrink-0", className)}
       style={style}
       fill="currentColor"
     >

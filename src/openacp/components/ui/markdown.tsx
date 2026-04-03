@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useMemo } from "react"
+import { cn } from "../../../lib/utils"
 import DOMPurify from "dompurify"
 import morphdom from "morphdom"
 import { marked } from "marked"
@@ -162,7 +163,7 @@ export function Markdown({ text, cacheKey, streaming, className }: MarkdownProps
     <div
       ref={elRef}
       data-component="markdown"
-      className={className}
+      className={cn("prose prose-sm max-w-none", className)}
     />
   )
 }
