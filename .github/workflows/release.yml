@@ -83,25 +83,45 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync version
+        shell: bash
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
+          # Convert date-based version (2026.0403.1) to valid semver
+          # YYYY.MMDD.N → YYYY.MMDD.N (keep as-is, but ensure MMDD has no leading zero for semver)
+          # Semver doesn't allow leading zeros, so 0403 → 403
+          # To preserve the full date, encode as: YYYY.(M*100+DD).N
+          # e.g. 2026.0403.2 → 2026.403.2
+          SEMVER=$(node -e "
+            const v = '$VERSION';
+            const parts = v.split('.');
+            const year = parts[0];
+            const mmdd = String(parseInt(parts[1]));
+            const n = parts[2] || '0';
+            console.log(year + '.' + mmdd + '.' + n);
+          ")
+          echo "SEMVER=$SEMVER"
+          echo "VERSION=$VERSION"
           # Update package.json
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            pkg.version = '$VERSION';
+            pkg.version = '$SEMVER';
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
           # Update tauri.conf.json
           node -e "
             const fs = require('fs');
             const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
-            conf.version = '$VERSION';
+            conf.version = '$SEMVER';
             fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
           "
           # Update Cargo.toml
-          sed -i.bak "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
-          rm -f src-tauri/Cargo.toml.bak
+          node -e "
+            const fs = require('fs');
+            let cargo = fs.readFileSync('src-tauri/Cargo.toml', 'utf8');
+            cargo = cargo.replace(/^version = \".*\"/m, 'version = \"$SEMVER\"');
+            fs.writeFileSync('src-tauri/Cargo.toml', cargo);
+          "
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
