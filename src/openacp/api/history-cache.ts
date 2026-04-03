@@ -32,9 +32,23 @@ async function getStore(sessionId: string) {
   }
 }
 
+/** Strip large dataUrl from attachments before caching (keep metadata for display) */
+function stripAttachmentData(messages: Message[]): Message[] {
+  return messages.map(msg => {
+    if (!msg.attachments?.length) return msg
+    return {
+      ...msg,
+      attachments: msg.attachments.map(att => ({
+        ...att,
+        dataUrl: "", // strip base64 data, too large to persist
+      })),
+    }
+  })
+}
+
 /** Save messages for a session to cache */
 export async function cacheMessages(sessionId: string, messages: Message[]): Promise<void> {
-  const entry: CacheEntry = { sessionId, messages, updatedAt: Date.now() }
+  const entry: CacheEntry = { sessionId, messages: stripAttachmentData(messages), updatedAt: Date.now() }
 
   const store = await getStore(sessionId)
   if (store) {

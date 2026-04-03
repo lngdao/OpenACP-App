@@ -89,7 +89,7 @@ export function ConfigSelector(props: {
   return (
     <div ref={rootRef} className="relative">
       <button
-        className="min-w-0 max-w-[160px] text-13-regular text-text-base capitalize flex items-center gap-1 px-2 py-1 rounded-md hover:bg-surface-raised-base-hover"
+        className="min-w-0 max-w-[160px] text-12-regular text-text-base capitalize flex items-center gap-1 px-2 py-1 rounded-md hover:bg-surface-raised-base-hover"
         onClick={() => { setOpen(!open); if (!open) void fetchConfig() }}
       >
         <span className="truncate">{currentLabel}</span>

@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react"
+import { File as FileIcon } from "@phosphor-icons/react"
 import type { Message, TextBlock, TextPart } from "../../types"
+import { isImageMime } from "../../lib/file-utils"
 
 function formatTime(timestamp: number): string {
   return new Date(timestamp)
@@ -57,6 +59,20 @@ export function UserMessage({ message }: { message: Message }) {
       className="rounded-md border border-border-base shadow-sm"
       style={{ padding: "8px 12px", backgroundColor: "var(--surface-raised-stronger-non-alpha, var(--background-stronger))" }}
     >
+      {message.attachments?.length ? (
+        <div className="flex flex-wrap gap-1.5 mb-1.5">
+          {message.attachments.map(att => (
+            <div key={att.id} className="flex items-center gap-1.5 h-7 pl-1.5 pr-2 rounded-md border border-border-weak-base bg-surface-inset-base">
+              {isImageMime(att.mimeType) && att.dataUrl ? (
+                <img src={att.dataUrl} alt="" className="size-4 rounded-sm object-cover flex-shrink-0" />
+              ) : (
+                <FileIcon size={14} className="text-icon-weak flex-shrink-0" />
+              )}
+              <span className="text-[12px] text-text-base truncate max-w-[200px] leading-none">{att.fileName}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
       <div className="text-14-regular text-text-strong whitespace-pre-wrap break-words leading-relaxed">
         {text}
       </div>

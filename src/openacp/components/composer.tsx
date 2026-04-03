@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
-import { Plus, Command } from "@phosphor-icons/react"
+import { Plus, Command, X, File as FileIcon, Image as ImageIcon } from "@phosphor-icons/react"
 import { DockShellForm, DockTray } from "./ui/dock-surface"
 import { useChat } from "../context/chat"
 import { AgentSelector } from "./agent-selector"
 import { CommandPalette } from "./command-palette"
 import { ConfigSelector } from "./config-selector"
+import { showToast } from "../lib/toast"
+import type { FileAttachment } from "../types"
+import {
+  validateFileMime, fileToDataUrl, isImageMime,
+  MAX_FILE_SIZE, MAX_ATTACHMENTS, ACCEPTED_FILE_TYPES,
+} from "../lib/file-utils"
+
+let attachIdCounter = 0
+function nextAttachId() { return `att-${++attachIdCounter}` }
 
 export function Composer() {
   const chat = useChat()
@@ -14,11 +23,107 @@ export function Composer() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [paletteFilter, setPaletteFilter] = useState<string | undefined>()
   const [configVersion, setConfigVersion] = useState(0)
+  const [attachments, setAttachments] = useState<FileAttachment[]>([])
+  const [dragging, setDragging] = useState(false)
 
   const editorRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const dragCounter = useRef(0)
   const space = "52px"
 
-  // Cmd+/ global shortcut
+  // ── Attachment helpers ──────────────────────────────────────────────────
+
+  const addFiles = useCallback(async (files: File[]) => {
+    for (const file of files) {
+      if (attachments.length >= MAX_ATTACHMENTS) {
+        showToast({ title: "Attachment limit", description: `Maximum ${MAX_ATTACHMENTS} files` })
+        break
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        showToast({ title: "File too large", description: `${file.name} exceeds 10 MB limit` })
+        continue
+      }
+      const mime = await validateFileMime(file)
+      if (!mime) {
+        showToast({ title: "Unsupported file", description: `${file.name} is not a supported format` })
+        continue
+      }
+      const dataUrl = await fileToDataUrl(file, mime)
+      if (!dataUrl) continue
+
+      const att: FileAttachment = {
+        id: nextAttachId(),
+        fileName: file.name,
+        mimeType: mime,
+        dataUrl,
+        size: file.size,
+      }
+      setAttachments(prev => [...prev, att])
+    }
+  }, [attachments.length])
+
+  const removeAttachment = useCallback((id: string) => {
+    setAttachments(prev => prev.filter(a => a.id !== id))
+  }, [])
+
+  // ── Drag & drop ────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    function onDragEnter(e: DragEvent) {
+      e.preventDefault()
+      dragCounter.current++
+      if (e.dataTransfer?.types.includes("Files")) setDragging(true)
+    }
+    function onDragLeave(e: DragEvent) {
+      e.preventDefault()
+      dragCounter.current--
+      if (dragCounter.current <= 0) { dragCounter.current = 0; setDragging(false) }
+    }
+    function onDragOver(e: DragEvent) { e.preventDefault() }
+    function onDrop(e: DragEvent) {
+      e.preventDefault()
+      dragCounter.current = 0
+      setDragging(false)
+      const files = e.dataTransfer?.files
+      if (files?.length) void addFiles(Array.from(files))
+    }
+
+    document.addEventListener("dragenter", onDragEnter)
+    document.addEventListener("dragleave", onDragLeave)
+    document.addEventListener("dragover", onDragOver)
+    document.addEventListener("drop", onDrop)
+    return () => {
+      document.removeEventListener("dragenter", onDragEnter)
+      document.removeEventListener("dragleave", onDragLeave)
+      document.removeEventListener("dragover", onDragOver)
+      document.removeEventListener("drop", onDrop)
+    }
+  }, [addFiles])
+
+  // ── Clipboard paste ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    function onPaste(e: ClipboardEvent) {
+      const items = e.clipboardData?.items
+      if (!items) return
+      const files: File[] = []
+      for (const item of Array.from(items)) {
+        if (item.kind === "file") {
+          const f = item.getAsFile()
+          if (f) files.push(f)
+        }
+      }
+      if (files.length) {
+        e.preventDefault()
+        void addFiles(files)
+      }
+    }
+    document.addEventListener("paste", onPaste)
+    return () => document.removeEventListener("paste", onPaste)
+  }, [addFiles])
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────
+
   useEffect(() => {
     function handleGlobalKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "/") {
@@ -31,15 +136,19 @@ export function Composer() {
     return () => document.removeEventListener("keydown", handleGlobalKeyDown)
   }, [])
 
+  // ── Submit ─────────────────────────────────────────────────────────────
+
   const handleSubmit = useCallback(async (e?: React.FormEvent) => {
     e?.preventDefault()
     if (paletteOpen) return
     const value = text.trim()
-    if (!value) return
+    if (!value && !attachments.length) return
     setText("")
     if (editorRef.current) editorRef.current.textContent = ""
-    await chat.sendPrompt(value)
-  }, [text, paletteOpen, chat])
+    const atts = attachments.length ? [...attachments] : undefined
+    setAttachments([])
+    await chat.sendPrompt(value || "See attached files", atts)
+  }, [text, paletteOpen, chat, attachments])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Escape" && paletteOpen) {
@@ -113,6 +222,32 @@ export function Composer() {
               editorRef.current?.focus()
             }}
           >
+            {/* Attachment chips (Claude Code style) */}
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 px-3 pt-2.5">
+                {attachments.map(att => (
+                  <div
+                    key={att.id}
+                    className="group flex items-center gap-1.5 h-7 pl-1.5 pr-1 rounded-md border border-border-weak-base bg-surface-inset-base hover:bg-surface-inset-base-hover transition-colors"
+                  >
+                    {isImageMime(att.mimeType) ? (
+                      <img src={att.dataUrl} alt="" className="size-4 rounded-sm object-cover flex-shrink-0" />
+                    ) : (
+                      <FileIcon size={14} className="text-icon-weak flex-shrink-0" />
+                    )}
+                    <span className="text-[12px] text-text-base truncate max-w-[160px] leading-none">{att.fileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAttachment(att.id)}
+                      className="size-4 flex items-center justify-center rounded-sm text-icon-weak hover:text-icon-strong hover:bg-surface-raised-base-hover transition-colors flex-shrink-0"
+                    >
+                      <X size={10} weight="bold" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="relative max-h-[240px] overflow-y-auto no-scrollbar" style={{ scrollPaddingBottom: space }}>
               <div
                 ref={editorRef}
@@ -125,12 +260,12 @@ export function Composer() {
                 className="select-text w-full pl-3 pr-2 pt-2 text-14-regular text-text-strong focus:outline-none whitespace-pre-wrap"
                 style={{ paddingBottom: space }}
               />
-              {!text.trim() && (
+              {!text.trim() && !attachments.length && (
                 <div
                   className="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 text-14-regular text-text-weak pointer-events-none whitespace-nowrap truncate"
                   style={{ paddingBottom: space }}
                 >
-                  Ask anything... "Explain how authentication works"
+                  Ask anything...
                 </div>
               )}
             </div>
@@ -149,7 +284,7 @@ export function Composer() {
                 <button
                   data-action="prompt-submit"
                   type="submit"
-                  disabled={!text.trim() && !chat.streaming()}
+                  disabled={!text.trim() && !attachments.length && !chat.streaming()}
                   className="size-8 flex items-center justify-center rounded-md bg-text-strong text-background-stronger disabled:opacity-40"
                   onClick={chat.streaming() ? (e: React.MouseEvent) => { e.preventDefault(); chat.abort() } : undefined}
                 >
@@ -164,7 +299,12 @@ export function Composer() {
 
             <div className="pointer-events-none absolute bottom-2 left-2">
               <div className="pointer-events-auto flex items-center gap-0.5">
-                <button data-action="prompt-attach" type="button" className="size-8 p-0 flex items-center justify-center rounded-md hover:bg-surface-raised-base-hover transition-colors">
+                <button
+                  data-action="prompt-attach"
+                  type="button"
+                  className="size-8 p-0 flex items-center justify-center rounded-md hover:bg-surface-raised-base-hover transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   <Plus size={18} weight="bold" className="text-icon-weak" />
                 </button>
                 <button
@@ -183,6 +323,20 @@ export function Composer() {
               </div>
             </div>
           </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={ACCEPTED_FILE_TYPES}
+            className="hidden"
+            onChange={(e) => {
+              const list = e.target.files
+              if (list) void addFiles(Array.from(list))
+              e.target.value = ""
+            }}
+          />
         </DockShellForm>
 
         <DockTray attach="top">
@@ -202,6 +356,16 @@ export function Composer() {
           </div>
         </DockTray>
       </div>
+
+      {/* Drag overlay */}
+      {dragging && (
+        <div className="fixed inset-0 z-50 bg-background-base/80 flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-3 p-8 rounded-xl border-2 border-dashed border-border-selected">
+            <ImageIcon size={40} className="text-text-interactive-base" />
+            <span className="text-14-medium text-text-strong">Drop files to attach</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
