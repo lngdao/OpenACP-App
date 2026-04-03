@@ -133,7 +133,7 @@ fn read_server_files() -> Option<ServerInfo> {
     })
 }
 
-async fn check_health(url: &str, token: &str) -> bool {
+async fn check_health(url: &str, _token: &str) -> bool {
     let client = match reqwest::Client::builder()
         .timeout(Duration::from_secs(5))
         .no_proxy()
