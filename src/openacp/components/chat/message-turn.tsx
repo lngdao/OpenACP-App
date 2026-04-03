@@ -101,7 +101,7 @@ function blockStatus(block: MessageBlock): StepStatus {
   return "default"
 }
 
-export function MessageTurn({ message, streaming }: MessageTurnProps) {
+export const MessageTurn = React.memo(function MessageTurn({ message, streaming }: MessageTurnProps) {
   const blocks = useMemo(() => message.blocks ?? [], [message.blocks])
   const isEmpty = blocks.length === 0
   const renderItems = useMemo(() => groupBlocks(blocks), [blocks])
@@ -152,4 +152,4 @@ export function MessageTurn({ message, streaming }: MessageTurnProps) {
       </div>
     </div>
   )
-}
+})

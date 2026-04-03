@@ -1,10 +1,10 @@
 /**
  * Paced text rendering for smooth streaming.
- * Throttles text updates at 48ms intervals, snapping to word boundaries.
+ * Throttles text updates at intervals, snapping to word boundaries.
  */
 import { useState, useEffect, useRef, useCallback } from "react"
 
-const PACE_MS = 48
+const PACE_MS = 30
 const SNAP = /[\s.,!?;:)\]]/
 
 function step(size: number) {
@@ -27,45 +27,70 @@ function next(text: string, start: number) {
 export function usePacedValue(value: string, live?: boolean): string {
   const [shown, setShown] = useState(value)
   const shownRef = useRef(value)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const rafRef = useRef(0)
+  const lastTimeRef = useRef(0)
   const valueRef = useRef(value)
+  const liveRef = useRef(live)
 
-  // Keep valueRef in sync
   valueRef.current = value
-
-  const clear = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = undefined
-    }
-  }, [])
+  liveRef.current = live
 
   const sync = useCallback((text: string) => {
     shownRef.current = text
     setShown(text)
   }, [])
 
-  const run = useCallback(() => {
-    timeoutRef.current = undefined
-    const text = valueRef.current
-    if (!live) { sync(text); return }
-    if (!text.startsWith(shownRef.current) || text.length <= shownRef.current.length) { sync(text); return }
-    const end = next(text, shownRef.current.length)
-    sync(text.slice(0, end))
-    if (end < text.length) timeoutRef.current = setTimeout(run, PACE_MS)
-  }, [live, sync])
+  useEffect(() => {
+    if (!live) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      sync(value)
+      return
+    }
+
+    // Text was replaced (not appended)
+    if (!value.startsWith(shownRef.current) || value.length < shownRef.current.length) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = 0
+      sync(value)
+      return
+    }
+
+    // Already caught up or animation running
+    if (value.length === shownRef.current.length || rafRef.current) return
+
+    function tick(now: number) {
+      if (!liveRef.current) {
+        sync(valueRef.current)
+        rafRef.current = 0
+        return
+      }
+
+      const text = valueRef.current
+      if (shownRef.current.length >= text.length) {
+        rafRef.current = 0
+        return
+      }
+
+      if (now - lastTimeRef.current >= PACE_MS) {
+        lastTimeRef.current = now
+        const end = next(text, shownRef.current.length)
+        sync(text.slice(0, end))
+      }
+
+      if (shownRef.current.length < valueRef.current.length) {
+        rafRef.current = requestAnimationFrame(tick)
+      } else {
+        rafRef.current = 0
+      }
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+  }, [value, live, sync])
 
   useEffect(() => {
-    const text = value
-    if (!live) { clear(); sync(text); return }
-    if (!text.startsWith(shownRef.current) || text.length < shownRef.current.length) { clear(); sync(text); return }
-    if (text.length === shownRef.current.length || timeoutRef.current) return
-    timeoutRef.current = setTimeout(run, PACE_MS)
-  }, [value, live, clear, sync, run])
-
-  useEffect(() => {
-    return clear
-  }, [clear])
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
 
   return shown
 }
