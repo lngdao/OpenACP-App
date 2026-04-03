@@ -37,6 +37,6 @@
       "icons/icon.ico"
     ],
     "active": true,
-    "targets": ["dmg", "app"]
+    "targets": "all"
   }
 }
