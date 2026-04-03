@@ -5,9 +5,11 @@ import type { ToolBlock } from "../../../types"
 
 interface ToolGroupProps {
   tools: ToolBlock[]
+  isFirst?: boolean
+  isLast?: boolean
 }
 
-export function ToolGroup({ tools }: ToolGroupProps) {
+export function ToolGroup({ tools, isFirst, isLast }: ToolGroupProps) {
   const [expanded, setExpanded] = useState(false)
 
   const groupStatus = useMemo((): StepStatus => {
@@ -20,7 +22,7 @@ export function ToolGroup({ tools }: ToolGroupProps) {
   const label = `${tools.length} tool call${tools.length !== 1 ? "s" : ""}`
 
   return (
-    <TimelineStep status={groupStatus}>
+    <TimelineStep status={groupStatus} isFirst={isFirst} isLast={isLast}>
       <div className={expanded ? "oac-tool-group--open" : ""}>
         <div className="oac-tool-group-header" onClick={() => setExpanded(!expanded)}>
           <span className="oac-tool-group-chevron">&#9654;</span>

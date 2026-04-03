@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { useWorkspace } from "../context/workspace"
 
 export function AgentSelector(props: {
@@ -51,8 +52,15 @@ export function AgentSelector(props: {
         <span className="truncate">{currentName}</span>
         <svg width="12" height="12" viewBox="0 0 20 20" fill="none" className="shrink-0"><path d="M5.83 8.33L10 12.5l4.17-4.17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
-      {open && (
-        <div className="absolute bottom-full mb-1 left-0 w-72 max-h-80 flex flex-col p-2 rounded-md border border-border-base bg-surface-raised-stronger-non-alpha shadow-md z-50 overflow-hidden">
+      {open && createPortal(
+        <div
+          className="fixed w-72 max-h-80 flex flex-col p-2 rounded-md border border-border-base bg-surface-raised-stronger-non-alpha shadow-md z-50 overflow-hidden"
+          style={(() => {
+            const rect = rootRef.current?.getBoundingClientRect()
+            if (!rect) return {}
+            return { bottom: window.innerHeight - rect.top + 4, left: rect.left }
+          })()}
+        >
           <input
             type="text"
             placeholder="Search agents..."
@@ -75,7 +83,8 @@ export function AgentSelector(props: {
               </button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

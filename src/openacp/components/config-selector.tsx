@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
+import { createPortal } from "react-dom"
 import { useWorkspace } from "../context/workspace"
 
 interface ConfigChoice {
@@ -90,8 +91,21 @@ export function ConfigSelector(props: {
         <span className="truncate">{currentLabel}</span>
         <svg width="12" height="12" viewBox="0 0 20 20" fill="none" className="shrink-0"><path d="M5.83 8.33L10 12.5l4.17-4.17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
-      {open && (
-        <div className={`absolute ${props.category === "mode" ? "right-0" : "left-0"} bottom-full mb-1 w-72 flex flex-col p-1 rounded-md border border-border-base bg-surface-raised-stronger-non-alpha shadow-md z-50 overflow-y-auto`}>
+      {open && createPortal(
+        <div
+          className="fixed w-72 flex flex-col p-1 rounded-md border border-border-base bg-surface-raised-stronger-non-alpha shadow-md z-50 overflow-y-auto"
+          style={(() => {
+            const rect = rootRef.current?.getBoundingClientRect()
+            if (!rect) return {}
+            const pos: React.CSSProperties = { bottom: window.innerHeight - rect.top + 4 }
+            if (props.category === "mode") {
+              (pos as any).right = window.innerWidth - rect.right
+            } else {
+              pos.left = rect.left
+            }
+            return pos
+          })()}
+        >
           <span className="block px-3 py-1 text-text-weaker" style={{ fontSize: "10px", lineHeight: "1.4", letterSpacing: "0.02em" }}>
             {props.category === "mode" ? "Modes" : (config?.name || props.category)}
           </span>
@@ -120,7 +134,8 @@ export function ConfigSelector(props: {
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
