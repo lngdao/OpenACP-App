@@ -124,11 +124,19 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
       await api(`/sessions/${encodeURIComponent(sessionID)}`, { method: "DELETE" })
     },
 
-    /** Send a prompt to a session */
-    async sendPrompt(sessionID: string, text: string): Promise<void> {
+    /** Send a prompt to a session, optionally with file attachments */
+    async sendPrompt(sessionID: string, text: string, attachments?: import("../types").FileAttachment[]): Promise<void> {
+      const body: Record<string, unknown> = { prompt: text }
+      if (attachments?.length) {
+        body.attachments = attachments.map(a => ({
+          fileName: a.fileName,
+          mimeType: a.mimeType,
+          data: a.dataUrl.split(",")[1] ?? "", // strip data URL prefix, send raw base64
+        }))
+      }
       await api(`/sessions/${encodeURIComponent(sessionID)}/prompt`, {
         method: "POST",
-        body: JSON.stringify({ prompt: text }),
+        body: JSON.stringify(body),
       })
     },
 
