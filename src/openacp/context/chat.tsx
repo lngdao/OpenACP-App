@@ -71,6 +71,7 @@ function turnToMessage(turn: HistoryTurn, sessionId: string): Message {
     role: turn.role,
     sessionID: sessionId,
     parts,
+    blocks: [],
     createdAt: new Date(turn.timestamp).getTime(),
   }
 }
@@ -157,6 +158,7 @@ export function ChatProvider(props: ParentProps) {
       role: "assistant",
       sessionID,
       parts: [],
+      blocks: [],
       createdAt: Date.now(),
       parentID: parentId,
     })
@@ -436,6 +438,7 @@ export function ChatProvider(props: ParentProps) {
       role: "user",
       sessionID,
       parts: [{ id: nextPartId(), type: "text", content: text }],
+      blocks: [],
       createdAt: Date.now(),
     })
 
@@ -446,6 +449,7 @@ export function ChatProvider(props: ParentProps) {
       role: "assistant",
       sessionID,
       parts: [],
+      blocks: [],
       createdAt: Date.now(),
       parentID: userMsgId,
     })
@@ -467,6 +471,7 @@ export function ChatProvider(props: ParentProps) {
       role,
       sessionID,
       parts: [{ id: nextPartId(), type: "text", content: text }],
+      blocks: [],
       createdAt: Date.now(),
     })
   }
