@@ -1,12 +1,15 @@
-import type { AgentEvent, Session } from "../types"
+import type { AgentEvent, MessageProcessingEvent, MessageQueuedEvent, Session } from "../types"
 
 export interface SSECallbacks {
   onAgentEvent: (event: AgentEvent) => void
   onSessionCreated: (session: Session) => void
   onSessionUpdated: (session: Session) => void
   onSessionDeleted: (sessionId: string) => void
+  onMessageQueued?: (event: MessageQueuedEvent) => void
+  onMessageProcessing?: (event: MessageProcessingEvent) => void
   onConnected: () => void
   onDisconnected: () => void
+  onReconnecting?: () => void
 }
 
 /**
@@ -17,9 +20,10 @@ export function createSSEManager() {
   const connections = new Map<string, EventSource>()
 
   function connect(directory: string, eventsUrl: string, callbacks: SSECallbacks) {
-    // Already connected
     if (connections.has(directory)) return
 
+    const logUrl = eventsUrl.replace(/token=[^&]+/, 'token=***')
+    console.log('[sse] connecting:', logUrl)
     const es = new EventSource(eventsUrl)
 
     es.addEventListener("agent:event", (e) => {
@@ -39,7 +43,6 @@ export function createSSEManager() {
     es.addEventListener("session:updated", (e) => {
       try {
         const data = JSON.parse((e as MessageEvent).data)
-        console.log("[sse] session:updated", data)
         callbacks.onSessionUpdated(mapSessionFromSSE(data))
       } catch { /* skip */ }
     })
@@ -51,8 +54,32 @@ export function createSSEManager() {
       } catch { /* skip */ }
     })
 
-    es.onopen = () => callbacks.onConnected()
-    es.onerror = () => callbacks.onDisconnected()
+    es.addEventListener("message:queued", (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data)
+        callbacks.onMessageQueued?.(data)
+      } catch { /* skip */ }
+    })
+
+    es.addEventListener("message:processing", (e) => {
+      try {
+        const data = JSON.parse((e as MessageEvent).data)
+        callbacks.onMessageProcessing?.(data)
+      } catch { /* skip */ }
+    })
+
+    es.onopen = () => {
+      console.log('[sse] connected')
+      callbacks.onConnected()
+    }
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        connections.delete(directory)
+        callbacks.onDisconnected()
+      } else {
+        callbacks.onReconnecting?.()
+      }
+    }
 
     connections.set(directory, es)
   }

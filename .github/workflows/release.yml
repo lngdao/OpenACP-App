@@ -83,25 +83,35 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Sync version
+        shell: bash
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
-          # Update package.json
+          echo "Version: $VERSION"
+          # Version format is YYYY.MDD.N (e.g. 2026.403.1) — already semver-compatible
           node -e "
             const fs = require('fs');
+            const v = '$VERSION';
+            // WiX3 MSI requires major ≤ 255. Convert YYYY.MDD.N → YY.MDD.N for WiX.
+            const parts = v.split('.');
+            const wixVersion = (parseInt(parts[0]) % 100) + '.' + parts.slice(1).join('.');
+            // package.json
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-            pkg.version = '$VERSION';
+            pkg.version = v;
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          "
-          # Update tauri.conf.json
-          node -e "
-            const fs = require('fs');
+            // tauri.conf.json — set WiX version override for Windows MSI
             const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
-            conf.version = '$VERSION';
+            conf.version = v;
+            if (!conf.bundle) conf.bundle = {};
+            if (!conf.bundle.windows) conf.bundle.windows = {};
+            if (!conf.bundle.windows.wix) conf.bundle.windows.wix = {};
+            conf.bundle.windows.wix.version = wixVersion;
             fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
+            // Cargo.toml
+            let cargo = fs.readFileSync('src-tauri/Cargo.toml', 'utf8');
+            cargo = cargo.replace(/^version = \".*\"/m, 'version = \"' + v + '\"');
+            fs.writeFileSync('src-tauri/Cargo.toml', cargo);
+            console.log('Version:', v, '| WiX:', wixVersion);
           "
-          # Update Cargo.toml
-          sed -i.bak "s/^version = \".*\"/version = \"$VERSION\"/" src-tauri/Cargo.toml
-          rm -f src-tauri/Cargo.toml.bak
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0

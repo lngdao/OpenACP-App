@@ -3,8 +3,8 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,9 +13,11 @@
     "isolatedModules": true,
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@openacp/util/*": ["./src/util/src/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src/openacp", "src/onboarding", "src/platform", "src/lib"],
+  "exclude": ["src/ui", "src/util", "src/app", "src/openacp-sdk"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
