@@ -14,6 +14,8 @@ import type {
 import {
   resolveKind, buildTitle, extractDescription, extractCommand, isNoiseTool, validatePlanEntries,
 } from "../components/chat/block-utils"
+import * as charStream from "../lib/char-stream"
+import { startTransition } from "react"
 
 interface ChatContext {
   messages: () => Message[]
@@ -387,6 +389,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     }
 
     // Single setStore call for ALL text and thought buffer updates
+    startTransition(() => {
     setStore((draft) => {
       // Apply text buffer updates
       for (const [sessionID, text] of pendingText) {
@@ -457,6 +460,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         syncRef(sessionID, draft)
       }
     })
+    }) // end startTransition
   }
 
   // ── SSE event handling ──────────────────────────────────────────────────
@@ -471,12 +475,14 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     switch (evt.type) {
       case "text": {
         ensureAssistantMessage(sessionID)
+        charStream.pushChars(`${sessionID}:text`, evt.content)
         textBuffer.current.set(sessionID, (textBuffer.current.get(sessionID) ?? "") + evt.content)
         scheduleFlush()
         break
       }
       case "thought": {
         ensureAssistantMessage(sessionID)
+        charStream.pushChars(`${sessionID}:thought`, evt.content)
         if (!thinkingStartTime.current.has(sessionID)) {
           thinkingStartTime.current.set(sessionID, Date.now())
         }
@@ -579,6 +585,10 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       }
       case "error": {
         flushBuffers()
+        charStream.flush(`${sessionID}:text`)
+        charStream.flush(`${sessionID}:thought`)
+        charStream.clearStream(`${sessionID}:text`)
+        charStream.clearStream(`${sessionID}:thought`)
         ensureAssistantMessage(sessionID)
         updateAssistantParts(sessionID, (parts) => {
           parts.push({ id: nextPartId(), type: "text", content: `\n\n**Error:** ${evt.content}` })
@@ -592,6 +602,10 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       }
       case "usage": {
         flushBuffers()
+        charStream.flush(`${sessionID}:text`)
+        charStream.flush(`${sessionID}:thought`)
+        charStream.clearStream(`${sessionID}:text`)
+        charStream.clearStream(`${sessionID}:thought`)
         const thinkStart2 = thinkingStartTime.current.get(sessionID)
         if (thinkStart2) {
           const durationMs = Date.now() - thinkStart2
@@ -757,6 +771,10 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     const sessionID = store.activeSession
     if (!sessionID) return
     abortedSessions.current.add(sessionID)
+    charStream.flush(`${sessionID}:text`)
+    charStream.flush(`${sessionID}:thought`)
+    charStream.clearStream(`${sessionID}:text`)
+    charStream.clearStream(`${sessionID}:thought`)
     assistantMsgId.current.delete(sessionID)
     setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
     // Tell server to actually cancel the agent's prompt
