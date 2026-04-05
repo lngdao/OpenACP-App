@@ -76,6 +76,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        "ds-demo": path.resolve(__dirname, "ds-demo.html"),
+      },
       external: [
         "ghostty-web",
       ],
