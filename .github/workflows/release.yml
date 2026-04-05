@@ -113,6 +113,14 @@ jobs:
             console.log('Version:', v, '| WiX:', wixVersion);
           "
 
+      # Auto-updater requires signed artifacts. Generate keys once with:
+      #   pnpm tauri signer generate -w ~/.tauri/openacp.key
+      # Then set these GitHub repo secrets:
+      #   TAURI_SIGNING_PRIVATE_KEY       — contents of ~/.tauri/openacp.key
+      #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD — password used during generation
+      # The public key goes in src-tauri/tauri.conf.json plugins.updater.pubkey.
+      # tauri-action automatically produces latest.json updater manifest when
+      # createUpdaterArtifacts is set in tauri.conf.json and signing keys are present.
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
