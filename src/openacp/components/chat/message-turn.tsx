@@ -151,9 +151,9 @@ export const MessageTurn = React.memo(function MessageTurn({ message, streaming 
           return (
             <TimelineStep key={block.type === "tool" ? block.id : `b-${idx}`} status={blockStatus(block)} isFirst={isFirst} isLast={isLast}>
               {block.type === "text" ? (
-                <TextBlockView block={block as TextBlock} streaming={streaming && isLastBlock} />
+                <TextBlockView block={block as TextBlock} streaming={streaming && isLastBlock} sessionID={message.sessionID} />
               ) : block.type === "thinking" ? (
-                <ThinkingBlockView block={block as ThinkingBlock} />
+                <ThinkingBlockView block={block as ThinkingBlock} sessionID={message.sessionID} />
               ) : block.type === "tool" ? (
                 <ToolBlockView block={block as ToolBlock} feedbackReason={feedbackReason} />
               ) : block.type === "plan" ? (
