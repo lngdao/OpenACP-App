@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react"
+import React, { useRef, useEffect, useCallback } from "react"
 import { cn } from "../../../lib/utils"
 import DOMPurify from "dompurify"
 import morphdom from "morphdom"
@@ -138,7 +138,7 @@ export function Markdown({ text, cacheKey, streamId, streaming, className }: Mar
 
   textRef.current = text
 
-  function renderMarkdown(mdText: string, isStreaming: boolean) {
+  const renderMarkdown = useCallback(function renderMarkdown(mdText: string, isStreaming: boolean) {
     if (renderingRef.current || !elRef.current) return
     if (mdText === lastTextRef.current) return
 
@@ -167,7 +167,7 @@ export function Markdown({ text, cacheKey, streamId, streaming, className }: Mar
 
     if (result instanceof Promise) result.then(apply)
     else apply(result)
-  }
+  }, [cacheKey])
 
   // Streaming: subscribe to CharStream for character-by-character display
   useEffect(() => {
