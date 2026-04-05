@@ -49,10 +49,10 @@
   --container-7xl: 80rem;
 
   /* Fonts */
-  --font-sans: var(--font-family-sans);
-  --font-sans--font-feature-settings: var(--font-family-sans--font-feature-settings);
-  --font-mono: var(--font-family-mono);
-  --font-mono--font-feature-settings: var(--font-family-mono--font-feature-settings);
+  --font-sans: "SF Pro", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans--font-feature-settings: normal;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-mono--font-feature-settings: normal;
 
   /* Font sizes */
   --text-2xs: 0.6875rem;   /* 11px */
@@ -86,9 +86,15 @@
   --radius-lg: 0.5rem;
   --radius-xl: 0.625rem;
 
-  /* Shadows (reference theme.css tokens) */
-  --shadow-xs: var(--shadow-xs);
-  --shadow-md: var(--shadow-md);
+  /* Shadows (Tailwind defaults) */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* Shadow-border tokens (reference theme.css — use border color vars) */
   --shadow-xs-border: var(--shadow-xs-border);
   --shadow-xs-border-base: var(--shadow-xs-border-base);
   --shadow-xs-border-select: var(--shadow-xs-border-select);
@@ -104,7 +110,6 @@
 /* Maps CSS custom properties from theme.css to Tailwind --color-* utilities  */
 
 @theme {
-  --color-*: initial;
 
   /* shadcn/ui core */
   --color-background: var(--background);

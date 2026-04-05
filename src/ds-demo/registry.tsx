@@ -111,7 +111,7 @@ export const registry: DemoEntry[] = [
           <div className="flex flex-wrap items-center gap-3">
             <Button size="icon-xs">X</Button>
             <Button size="icon-sm">S</Button>
-            <Button size="icon">M</Button>
+            <Button size="icon-md">M</Button>
             <Button size="icon-lg">L</Button>
           </div>
         </div>
@@ -137,8 +137,8 @@ export const registry: DemoEntry[] = [
               <span className="text-[10px] text-muted-foreground">icon-sm<br/>32px</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <Button size="icon" variant="outline"><Plus /></Button>
-              <span className="text-[10px] text-muted-foreground">icon<br/>36px</span>
+              <Button size="icon-md" variant="outline"><Plus /></Button>
+              <span className="text-[10px] text-muted-foreground">icon-md<br/>36px</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <Button size="icon-lg" variant="outline"><Plus /></Button>
@@ -149,11 +149,11 @@ export const registry: DemoEntry[] = [
         <div>
           <div className="text-sm-medium text-muted-foreground mb-2">Icon only — variants</div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button size="icon" variant="default"><Plus /></Button>
-            <Button size="icon" variant="secondary"><GearSix /></Button>
-            <Button size="icon" variant="outline"><PencilSimple /></Button>
-            <Button size="icon" variant="ghost"><MagnifyingGlass /></Button>
-            <Button size="icon" variant="destructive"><Trash /></Button>
+            <Button size="icon-md" variant="default"><Plus /></Button>
+            <Button size="icon-md" variant="secondary"><GearSix /></Button>
+            <Button size="icon-md" variant="outline"><PencilSimple /></Button>
+            <Button size="icon-md" variant="ghost"><MagnifyingGlass /></Button>
+            <Button size="icon-md" variant="destructive"><Trash /></Button>
           </div>
         </div>
         <div>
@@ -179,7 +179,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
 <Button variant="secondary">Next <ArrowRight /></Button>
 
 // Icon only
-<Button size="icon" variant="outline"><Trash /></Button>`,
+<Button size="icon-md" variant="outline"><Trash /></Button>`,
     props: [
       { name: "variant", type: '"default" | "secondary" | "outline" | "ghost" | "link" | "destructive"', default: '"default"' },
       { name: "size", type: '"default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg"', default: '"default"' },

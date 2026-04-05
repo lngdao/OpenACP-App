@@ -64,7 +64,7 @@ export function SidebarRail(props: {
           <div className="mt-1">
             <Button
               variant="ghost"
-              size="icon"
+              size="icon-lg"
               title="Open workspace"
               onClick={props.onOpenFolder}
             >
@@ -78,7 +78,7 @@ export function SidebarRail(props: {
         {import.meta.env.DEV && (
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-lg"
             title="[Dev] Reset OpenACP"
             onClick={async () => {
               await invoke('dev_reset_openacp')
@@ -88,7 +88,7 @@ export function SidebarRail(props: {
             <Trash size={16} className="text-foreground-weak" />
           </Button>
         )}
-        <Button variant="ghost" size="icon" title="Settings" onClick={props.onOpenSettings}>
+        <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
           <GearSix size={16} className="text-foreground-weak" />
         </Button>
       </div>

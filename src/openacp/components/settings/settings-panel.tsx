@@ -33,7 +33,7 @@ export function SettingsPanel(props: {
         <div className="shrink-0 px-3 pt-4 pb-2 flex items-center gap-2">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon-md"
             className="size-7"
             onClick={props.onClose}
             title="Back"
