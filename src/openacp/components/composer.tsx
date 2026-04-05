@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react"
 import { Plus, Command, X, File as FileIcon, Image as ImageIcon } from "@phosphor-icons/react"
 import { DockShellForm, DockTray } from "./ui/dock-surface"
 import { useChat } from "../context/chat"
+import { useSessions } from "../context/sessions"
 import { AgentSelector } from "./agent-selector"
 import { CommandPalette } from "./command-palette"
 import { ConfigSelector } from "./config-selector"
@@ -17,9 +18,20 @@ function nextAttachId() { return `att-${++attachIdCounter}` }
 
 export function Composer() {
   const chat = useChat()
+  const sessions = useSessions()
   const [text, setText] = useState("")
   const [agent, setAgent] = useState<string>()
   const [isBypass, setIsBypass] = useState(false)
+
+  // Sync agent from active session (e.g. on reload or session switch)
+  useEffect(() => {
+    const sessionId = chat.activeSession()
+    if (!sessionId) return
+    const session = sessions.list().find((s) => s.id === sessionId)
+    if (session?.agent && session.agent !== agent) {
+      setAgent(session.agent)
+    }
+  }, [chat.activeSession(), sessions.list()])
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [paletteFilter, setPaletteFilter] = useState<string | undefined>()
   const [configVersion, setConfigVersion] = useState(0)
