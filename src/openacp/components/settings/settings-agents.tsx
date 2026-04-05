@@ -89,26 +89,26 @@ export function SettingsAgents({ workspacePath }: { workspacePath?: string }) {
   return (
     <div data-component="oac-settings" className="flex flex-col gap-6">
       <div>
-        <h2 className="text-16-medium text-text-strong mb-1">Agents</h2>
-        <p className="text-13-regular text-text-weak">Manage AI coding agents</p>
+        <h2 className="text-16-medium text-foreground mb-1">Agents</h2>
+        <p className="text-13-regular text-muted-foreground">Manage AI coding agents</p>
       </div>
 
       <input
         type="text"
         placeholder="Search agents..."
-        className="h-8 rounded-md border border-border-base bg-background-base px-3 text-13-regular text-text-base placeholder:text-text-weak focus:outline-none focus:ring-1 focus:ring-border-selected"
+        className="h-8 rounded-md border border-border bg-background px-3 text-13-regular text-foreground-weak placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border-selected"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
 
       {loading ? (
-        <div className="text-13-regular text-text-weak py-4">Loading agents...</div>
+        <div className="text-13-regular text-muted-foreground py-4">Loading agents...</div>
       ) : (
         <>
           {/* Installed */}
           {installed.length > 0 && (
             <div className="flex flex-col gap-1">
-              <span className="text-11-regular text-text-weaker uppercase tracking-wider mb-1">Installed</span>
+              <span className="text-11-regular text-foreground-weaker uppercase tracking-wider mb-1">Installed</span>
               {installed.map((agent) => (
                 <AgentRow
                   key={agent.key}
@@ -123,7 +123,7 @@ export function SettingsAgents({ workspacePath }: { workspacePath?: string }) {
           {/* Available to install */}
           {available.length > 0 && (
             <div className="flex flex-col gap-1">
-              <span className="text-11-regular text-text-weaker uppercase tracking-wider mb-1">Available</span>
+              <span className="text-11-regular text-foreground-weaker uppercase tracking-wider mb-1">Available</span>
               {available.map((agent) => (
                 <AgentRow
                   key={agent.key}
@@ -136,13 +136,13 @@ export function SettingsAgents({ workspacePath }: { workspacePath?: string }) {
           )}
 
           {installed.length === 0 && available.length === 0 && (
-            <div className="text-13-regular text-text-weak py-2">No agents found</div>
+            <div className="text-13-regular text-muted-foreground py-2">No agents found</div>
           )}
         </>
       )}
 
       {installLog && (
-        <pre className="p-3 rounded-md bg-surface-inset-base border border-border-weaker-base text-11-regular text-text-weak font-mono max-h-40 overflow-y-auto whitespace-pre-wrap">
+        <pre className="p-3 rounded-md bg-muted border border-border-weak/50 text-11-regular text-muted-foreground font-mono max-h-40 overflow-y-auto whitespace-pre-wrap">
           {installLog}
         </pre>
       )}
@@ -159,30 +159,30 @@ function AgentRow(props: {
 }) {
   const { agent, installing, uninstalling, onInstall, onUninstall } = props
   return (
-    <div className="flex items-center gap-3 py-2 px-3 rounded-md border border-border-weaker-base">
+    <div className="flex items-center gap-3 py-2 px-3 rounded-md border border-border-weak/50">
       <div className="flex-1 min-w-0">
-        <div className="text-14-medium text-text-strong capitalize">{agent.name}</div>
+        <div className="text-14-medium text-foreground capitalize">{agent.name}</div>
         {agent.description && (
-          <div className="text-12-regular text-text-weak truncate">{agent.description}</div>
+          <div className="text-12-regular text-muted-foreground truncate">{agent.description}</div>
         )}
       </div>
       {agent.installed ? (
         onUninstall ? (
           <button
-            className="text-12-medium shrink-0 rounded-md border border-border-base px-3 py-1 text-text-weak transition-colors hover:text-text-strong hover:bg-surface-raised-base-hover disabled:opacity-50"
+            className="text-12-medium shrink-0 rounded-md border border-border px-3 py-1 text-muted-foreground transition-colors hover:text-foreground hover:bg-accent disabled:opacity-50"
             disabled={uninstalling}
             onClick={onUninstall}
           >
             {uninstalling ? "Removing..." : "Uninstall"}
           </button>
         ) : (
-          <span className="text-11-regular text-text-weaker shrink-0 px-2 py-0.5 rounded bg-surface-raised-base">
+          <span className="text-11-regular text-foreground-weaker shrink-0 px-2 py-0.5 rounded bg-secondary">
             installed
           </span>
         )
       ) : onInstall ? (
         <button
-          className="text-12-medium shrink-0 rounded-md border border-border-base px-3 py-1 text-text-strong transition-colors hover:bg-surface-raised-base-hover disabled:opacity-50"
+          className="text-12-medium shrink-0 rounded-md border border-border px-3 py-1 text-foreground transition-colors hover:bg-accent disabled:opacity-50"
           disabled={installing}
           onClick={onInstall}
         >

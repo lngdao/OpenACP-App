@@ -85,31 +85,31 @@ export function ReviewPanel({ onClose }: { onClose: () => void }) {
   const fileName = (path: string) => path.split("/").pop() || path
 
   return (
-    <div className="relative flex flex-col h-full bg-background-base border-l border-border-weaker-base" style={{ width: `${panelWidth}px` }}>
+    <div className="relative flex flex-col h-full bg-background border-l border-border-weak/50" style={{ width: `${panelWidth}px` }}>
       <ResizeHandle direction="horizontal" edge="start" size={panelWidth} min={MIN_WIDTH} max={MAX_WIDTH} onResize={setPanelWidth} />
-      <div className="flex items-center justify-between px-3 h-11 border-b border-border-weaker-base flex-shrink-0">
+      <div className="flex items-center justify-between px-3 h-11 border-b border-border-weak/50 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-base font-medium leading-lg text-text-strong">Review</span>
-          {fileDiffs.length > 0 && <span className="text-sm leading-lg text-text-weak">{fileDiffs.length} file{fileDiffs.length !== 1 ? "s" : ""}</span>}
+          <span className="text-base font-medium leading-lg text-foreground">Review</span>
+          {fileDiffs.length > 0 && <span className="text-sm leading-lg text-muted-foreground">{fileDiffs.length} file{fileDiffs.length !== 1 ? "s" : ""}</span>}
         </div>
-        <Button variant="ghost" size="icon-sm" className="text-icon-weak hover:text-icon-base" onClick={onClose} title="Close">
+        <Button variant="ghost" size="icon-sm" className="text-foreground-weaker hover:text-muted-foreground" onClick={onClose} title="Close">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 5L15 15M15 5L5 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         </Button>
       </div>
       {fileDiffs.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-sm leading-lg text-text-weak">No file changes yet</div>
-            <div className="text-sm leading-lg text-text-weaker mt-1">Changes will appear as the agent edits files</div>
+            <div className="text-sm leading-lg text-muted-foreground">No file changes yet</div>
+            <div className="text-sm leading-lg text-foreground-weaker mt-1">Changes will appear as the agent edits files</div>
           </div>
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-0 px-2 py-1.5 border-b border-border-weaker-base overflow-x-auto no-scrollbar flex-shrink-0">
+          <div className="flex items-center gap-0 px-2 py-1.5 border-b border-border-weak/50 overflow-x-auto no-scrollbar flex-shrink-0">
             {fileDiffs.map((item) => {
               const isSelected = (selectedFile ?? fileDiffs[0]?.path) === item.path
               return (
-                <button key={item.path} className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium leading-lg whitespace-nowrap transition-colors ${isSelected ? "bg-surface-raised-base text-text-strong" : "text-text-base hover:text-text-strong hover:bg-surface-raised-base-hover"}`} onClick={() => setSelectedFile(item.path)}>
+                <button key={item.path} className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium leading-lg whitespace-nowrap transition-colors ${isSelected ? "bg-secondary text-foreground" : "text-foreground-weak hover:text-foreground hover:bg-accent"}`} onClick={() => setSelectedFile(item.path)}>
                   {fileName(item.path)}
                   <DiffStats before={item.diff.before ?? ""} after={item.diff.after} />
                 </button>

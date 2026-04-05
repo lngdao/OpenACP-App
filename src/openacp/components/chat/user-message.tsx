@@ -61,33 +61,33 @@ export const UserMessage = memo(function UserMessage({ message }: { message: Mes
   return (
     <div
       data-component="oac-user-message"
-      className="rounded-md border border-border-base shadow-sm"
+      className="rounded-md border border-border shadow-sm"
       style={{ padding: "8px 12px", backgroundColor: "var(--surface-raised-stronger-non-alpha, var(--background-stronger))" }}
     >
       {message.sourceAdapterId ? (
         <div className="flex items-center gap-1 mb-1.5">
-          <span className="text-11-regular text-text-weak select-none">via {adapterLabel(message.sourceAdapterId)}</span>
+          <span className="text-11-regular text-muted-foreground select-none">via {adapterLabel(message.sourceAdapterId)}</span>
         </div>
       ) : null}
       {message.attachments?.length ? (
         <div className="flex flex-wrap gap-1.5 mb-1.5">
           {message.attachments.map(att => (
-            <div key={att.id} className="flex items-center gap-1.5 h-7 pl-1.5 pr-2 rounded-md border border-border-weak-base bg-surface-inset-base">
+            <div key={att.id} className="flex items-center gap-1.5 h-7 pl-1.5 pr-2 rounded-md border border-border-weak bg-muted">
               {isImageMime(att.mimeType) && att.dataUrl ? (
                 <img src={att.dataUrl} alt="" className="size-4 rounded-sm object-cover flex-shrink-0" />
               ) : (
-                <FileIcon size={14} className="text-icon-weak flex-shrink-0" />
+                <FileIcon size={14} className="text-foreground-weaker flex-shrink-0" />
               )}
-              <span className="text-[12px] text-text-base truncate max-w-[200px] leading-none">{att.fileName}</span>
+              <span className="text-[12px] text-foreground-weak truncate max-w-[200px] leading-none">{att.fileName}</span>
             </div>
           ))}
         </div>
       ) : null}
-      <div className="text-14-regular text-text-strong whitespace-pre-wrap break-words leading-relaxed">
+      <div className="text-14-regular text-foreground whitespace-pre-wrap break-words leading-relaxed">
         {text}
       </div>
       <div className="flex items-center gap-2 mt-1" style={{ justifyContent: "flex-end" }}>
-        <span className="text-12-regular text-text-weak select-none">{timeStr}</span>
+        <span className="text-12-regular text-muted-foreground select-none">{timeStr}</span>
         <CopyButton text={text} />
       </div>
     </div>

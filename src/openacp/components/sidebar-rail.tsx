@@ -29,7 +29,7 @@ export function SidebarRail(props: {
   return (
     <div
       data-component="sidebar-rail"
-      className="w-14 shrink-0 bg-background-base flex flex-col items-center overflow-hidden"
+      className="w-14 shrink-0 bg-background flex flex-col items-center overflow-hidden"
     >
       <div className="flex-1 min-h-0 w-full">
         <div className="h-full w-full flex flex-col items-center gap-2 px-2 overflow-y-auto no-scrollbar pt-5">
@@ -68,7 +68,7 @@ export function SidebarRail(props: {
               title="Open workspace"
               onClick={props.onOpenFolder}
             >
-              <Plus size={16} className="text-icon-weak" />
+              <Plus size={16} className="text-foreground-weaker" />
             </Button>
           </div>
         </div>
@@ -85,11 +85,11 @@ export function SidebarRail(props: {
               location.reload()
             }}
           >
-            <Trash size={16} className="text-icon-weak" />
+            <Trash size={16} className="text-foreground-weaker" />
           </Button>
         )}
         <Button variant="ghost" size="icon-sm" title="Settings" onClick={props.onOpenSettings}>
-          <GearSix size={16} className="text-icon-weak" />
+          <GearSix size={16} className="text-foreground-weaker" />
         </Button>
       </div>
     </div>

@@ -34,13 +34,13 @@ export function SettingsGeneral(props: { workspacePath: string }) {
   return (
     <div data-component="oac-settings" className="flex flex-col gap-6">
       <div>
-        <h2 className="text-16-medium text-text-strong mb-1">General</h2>
-        <p className="text-13-regular text-text-weak">Basic application settings</p>
+        <h2 className="text-16-medium text-foreground mb-1">General</h2>
+        <p className="text-13-regular text-muted-foreground">Basic application settings</p>
       </div>
 
       <SettingRow label="Language" description="Choose the display language for the app">
         <select
-          className="h-8 rounded-md border border-border-base bg-background-base px-2 text-13-regular text-text-base focus:outline-none focus:ring-1 focus:ring-border-selected min-w-[160px]"
+          className="h-8 rounded-md border border-border bg-background px-2 text-13-regular text-foreground-weak focus:outline-none focus:ring-1 focus:ring-border-selected min-w-[160px]"
           value={language}
           onChange={(e) => void handleLanguageChange(e.target.value)}
         >
@@ -54,7 +54,7 @@ export function SettingsGeneral(props: { workspacePath: string }) {
 
       <SettingRow label="Workspace folder" description="Current workspace data location">
         <div className="flex items-center gap-2">
-          <code className="text-12-regular text-text-base font-mono bg-surface-raised-base px-2 py-1 rounded-md max-w-[300px] truncate">
+          <code className="text-12-regular text-foreground-weak font-mono bg-secondary px-2 py-1 rounded-md max-w-[300px] truncate">
             {props.workspacePath || "No workspace selected"}
           </code>
         </div>
@@ -65,10 +65,10 @@ export function SettingsGeneral(props: { workspacePath: string }) {
 
 function SettingRow(props: { label: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2 border-b border-border-weaker-base last:border-b-0">
+    <div className="flex items-center justify-between gap-4 py-2 border-b border-border-weak/50 last:border-b-0">
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-14-medium text-text-strong">{props.label}</span>
-        <span className="text-12-regular text-text-weak">{props.description}</span>
+        <span className="text-14-medium text-foreground">{props.label}</span>
+        <span className="text-12-regular text-muted-foreground">{props.description}</span>
       </div>
       <div className="shrink-0">{props.children}</div>
     </div>

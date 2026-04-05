@@ -4,10 +4,13 @@
 /* To add a new theme, add [data-theme="<name>"] and override semantic vars.  */
 
 :root {
-  --font-family-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   --font-family-sans--font-feature-settings: normal;
   --font-family-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
   --font-family-mono--font-feature-settings: normal;
 
   --font-size-small: 13px;
@@ -67,30 +70,42 @@
     0 1px 2.5px light-dark(hsl(0 0% 0% / 0.025), hsl(0 0% 0% / 0.1));
   --shadow-xxs-border: 0 0 0 0.5px var(--border-weak-base, rgba(0, 0, 0, 0.07));
   --shadow-xs-border:
-    0 0 0 1px var(--border-base, rgba(11, 6, 0, 0.2)), 0 1px 2px -1px rgba(19, 16, 16, 0.04),
-    0 1px 2px 0 rgba(19, 16, 16, 0.06), 0 1px 3px 0 rgba(19, 16, 16, 0.08);
+    0 0 0 1px var(--border-base, rgba(11, 6, 0, 0.2)),
+    0 1px 2px -1px rgba(19, 16, 16, 0.04), 0 1px 2px 0 rgba(19, 16, 16, 0.06),
+    0 1px 3px 0 rgba(19, 16, 16, 0.08);
   --shadow-xs-border-base:
-    0 0 0 1px var(--border-weak-base, rgba(17, 0, 0, 0.12)), 0 1px 2px -1px rgba(19, 16, 16, 0.04),
-    0 1px 2px 0 rgba(19, 16, 16, 0.06), 0 1px 3px 0 rgba(19, 16, 16, 0.08);
+    0 0 0 1px var(--border-weak-base, rgba(17, 0, 0, 0.12)),
+    0 1px 2px -1px rgba(19, 16, 16, 0.04), 0 1px 2px 0 rgba(19, 16, 16, 0.06),
+    0 1px 3px 0 rgba(19, 16, 16, 0.08);
   --shadow-xs-border-select:
     0 0 0 3px var(--border-weak-selected, rgba(1, 103, 255, 0.29)),
-    0 0 0 1px var(--border-selected, rgba(0, 74, 255, 0.99)), 0 1px 2px -1px rgba(19, 16, 16, 0.25),
-    0 1px 2px 0 rgba(19, 16, 16, 0.08), 0 1px 3px 0 rgba(19, 16, 16, 0.12);
+    0 0 0 1px var(--border-selected, rgba(0, 74, 255, 0.99)),
+    0 1px 2px -1px rgba(19, 16, 16, 0.25), 0 1px 2px 0 rgba(19, 16, 16, 0.08),
+    0 1px 3px 0 rgba(19, 16, 16, 0.12);
   --shadow-xs-border-focus:
-    0 0 0 1px var(--border-base, rgba(11, 6, 0, 0.2)), 0 1px 2px -1px rgba(19, 16, 16, 0.25),
-    0 1px 2px 0 rgba(19, 16, 16, 0.08), 0 1px 3px 0 rgba(19, 16, 16, 0.12), 0 0 0 2px var(--background-weak, #f1f0f0),
+    0 0 0 1px var(--border-base, rgba(11, 6, 0, 0.2)),
+    0 1px 2px -1px rgba(19, 16, 16, 0.25), 0 1px 2px 0 rgba(19, 16, 16, 0.08),
+    0 1px 3px 0 rgba(19, 16, 16, 0.12),
+    0 0 0 2px var(--background-weak, #f1f0f0),
     0 0 0 3px var(--border-selected, rgba(0, 74, 255, 0.99));
   --shadow-xs-border-hover:
-    0 0 0 1px var(--border-weak-selected, rgba(0, 112, 255, 0.22)), 0 1px 2px -1px rgba(19, 16, 16, 0.04),
-    0 1px 2px 0 rgba(19, 16, 16, 0.06), 0 1px 3px 0 rgba(19, 16, 16, 0.08);
-  --shadow-xs-border-critical-base: 0 0 0 1px var(--border-critical-selected, #fc543a);
+    0 0 0 1px var(--border-weak-selected, rgba(0, 112, 255, 0.22)),
+    0 1px 2px -1px rgba(19, 16, 16, 0.04), 0 1px 2px 0 rgba(19, 16, 16, 0.06),
+    0 1px 3px 0 rgba(19, 16, 16, 0.08);
+  --shadow-xs-border-critical-base: 0 0 0 1px
+    var(--border-critical-selected, #fc543a);
   --shadow-xs-border-critical-focus:
-    0 0 0 3px var(--border-critical-weak, rgba(251, 34, 0, 0.18)), 0 0 0 1px var(--border-critical-selected, #fc543a),
-    0 1px 2px -1px rgba(19, 16, 16, 0.25), 0 1px 2px 0 rgba(19, 16, 16, 0.08), 0 1px 3px 0 rgba(19, 16, 16, 0.12);
+    0 0 0 3px var(--border-critical-weak, rgba(251, 34, 0, 0.18)),
+    0 0 0 1px var(--border-critical-selected, #fc543a),
+    0 1px 2px -1px rgba(19, 16, 16, 0.25), 0 1px 2px 0 rgba(19, 16, 16, 0.08),
+    0 1px 3px 0 rgba(19, 16, 16, 0.12);
   --shadow-lg-border-base:
-    0 0 0 1px var(--border-weak-base, rgba(0, 0, 0, 0.07)), 0 36px 80px 0 rgba(0, 0, 0, 0.03),
-    0 13.141px 29.201px 0 rgba(0, 0, 0, 0.04), 0 6.38px 14.177px 0 rgba(0, 0, 0, 0.05),
-    0 3.127px 6.95px 0 rgba(0, 0, 0, 0.06), 0 1.237px 2.748px 0 rgba(0, 0, 0, 0.09);
+    0 0 0 1px var(--border-weak-base, rgba(0, 0, 0, 0.07)),
+    0 36px 80px 0 rgba(0, 0, 0, 0.03),
+    0 13.141px 29.201px 0 rgba(0, 0, 0, 0.04),
+    0 6.38px 14.177px 0 rgba(0, 0, 0, 0.05),
+    0 3.127px 6.95px 0 rgba(0, 0, 0, 0.06),
+    0 1.237px 2.748px 0 rgba(0, 0, 0, 0.09);
 }
 
 /* ── Light theme (default) ─────────────────────────────────────────────────── */
@@ -355,36 +370,60 @@
   --avatar-text-lime: #5d770d;
   --text-stronger: #171717;
 
-  /* ── shadcn/ui theme aliases ──────────────────────────────────────────── */
-  --background: var(--background-base);
-  --foreground: var(--text-strong);
-  --card: var(--background-stronger);
-  --card-foreground: var(--text-strong);
-  --popover: var(--background-stronger);
-  --popover-foreground: var(--text-strong);
-  --primary: var(--button-primary-base);
-  --primary-foreground: var(--text-invert-strong);
-  --secondary: var(--surface-raised-base);
-  --secondary-foreground: var(--text-strong);
-  --muted: var(--surface-weak);
-  --muted-foreground: var(--text-weak);
-  --accent: var(--surface-raised-base-hover);
-  --accent-foreground: var(--text-strong);
-  --destructive: var(--surface-critical-strong);
-  --destructive-foreground: var(--text-invert-strong);
-  --border: var(--border-base);
-  --input: var(--border-base);
-  --ring: var(--border-selected);
+  /* ── shadcn/ui tokens (source of truth) ──────────────────────────────── */
+  --background: #f8f8f8;
+  --foreground: #171717;
+  --card: #fcfcfc;
+  --card-foreground: var(--foreground);
+  --popover: #fcfcfc;
+  --popover-foreground: var(--foreground);
+  --primary: #171717;
+  --primary-foreground: #fcfcfc;
+  --secondary: rgba(0, 0, 0, 0.031);
+  --secondary-foreground: var(--foreground);
+  --muted: rgba(0, 0, 0, 0.051);
+  --muted-foreground: #8f8f8f;
+  --accent: rgba(0, 0, 0, 0.051);
+  --accent-foreground: var(--foreground);
+  --destructive: #fc533a;
+  --destructive-foreground: #fcfcfc;
+  --border: rgba(0, 0, 0, 0.162);
+  --input: rgba(0, 0, 0, 0.162);
+  --ring: rgba(3, 76, 255, 0.99);
   --radius: 0.5rem;
 
-  --sidebar-background: var(--background-base);
-  --sidebar-foreground: var(--text-strong);
-  --sidebar-primary: var(--text-strong);
+  /* Extensions */
+  --border-weak: #e5e5e5;
+  --foreground-weak: #6f6f6f;
+  --foreground-weaker: #c7c7c7;
+
+  /* Sidebar */
+  --sidebar-background: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
   --sidebar-primary-foreground: var(--background-strong);
-  --sidebar-accent: var(--surface-raised-base);
-  --sidebar-accent-foreground: var(--text-strong);
-  --sidebar-border: var(--border-weak-base);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-weak);
   --sidebar-ring: var(--border-interactive-base);
+
+  /* ── Backward-compat aliases (legacy → shadcn, removed in Phase 3) ── */
+  --background-base: var(--background);
+  --background-stronger: var(--card);
+  --text-strong: var(--foreground);
+  --text-base: var(--foreground-weak);
+  --text-weak: var(--muted-foreground);
+  --text-weaker: var(--foreground-weaker);
+  --text-invert-strong: var(--primary-foreground);
+  --text-stronger: var(--foreground);
+  --button-primary-base: var(--primary);
+  --surface-raised-base: var(--secondary);
+  --surface-weak: var(--muted);
+  --surface-raised-base-hover: var(--accent);
+  --surface-critical-strong: var(--destructive);
+  --border-base: var(--border);
+  --border-selected: var(--ring);
+  --border-weak-base: var(--border-weak);
 }
 
 /* ── Dark theme ────────────────────────────────────────────────────────────── */
@@ -649,36 +688,60 @@
     --avatar-text-lime: #c4f042;
     --text-stronger: rgba(255, 255, 255, 0.936);
 
-    /* ── shadcn/ui theme aliases ──────────────────────────────────────── */
-    --background: var(--background-base);
-    --foreground: var(--text-strong);
-    --card: var(--background-stronger);
-    --card-foreground: var(--text-strong);
-    --popover: var(--background-stronger);
-    --popover-foreground: var(--text-strong);
-    --primary: var(--button-primary-base);
-    --primary-foreground: var(--text-invert-strong);
-    --secondary: var(--surface-raised-base);
-    --secondary-foreground: var(--text-strong);
-    --muted: var(--surface-weak);
-    --muted-foreground: var(--text-weak);
-    --accent: var(--surface-raised-base-hover);
-    --accent-foreground: var(--text-strong);
-    --destructive: var(--surface-critical-strong);
-    --destructive-foreground: var(--text-invert-strong);
-    --border: var(--border-base);
-    --input: var(--border-base);
-    --ring: var(--border-selected);
+    /* ── shadcn/ui tokens (source of truth) ──────────────────────────── */
+    --background: #101010;
+    --foreground: rgba(255, 255, 255, 0.936);
+    --card: #151515;
+    --card-foreground: var(--foreground);
+    --popover: #151515;
+    --popover-foreground: var(--foreground);
+    --primary: #ededed;
+    --primary-foreground: #ededed;
+    --secondary: rgba(255, 255, 255, 0.059);
+    --secondary-foreground: var(--foreground);
+    --muted: rgba(255, 255, 255, 0.078);
+    --muted-foreground: rgba(255, 255, 255, 0.422);
+    --accent: rgba(255, 255, 255, 0.078);
+    --accent-foreground: var(--foreground);
+    --destructive: #fc533a;
+    --destructive-foreground: #ededed;
+    --border: rgba(255, 255, 255, 0.195);
+    --input: rgba(255, 255, 255, 0.195);
+    --ring: #9dbefe;
     --radius: 0.5rem;
 
-    --sidebar-background: var(--background-base);
-    --sidebar-foreground: var(--text-strong);
-    --sidebar-primary: var(--text-strong);
+    /* Extensions */
+    --border-weak: #282828;
+    --foreground-weak: rgba(255, 255, 255, 0.618);
+    --foreground-weaker: rgba(255, 255, 255, 0.284);
+
+    /* Sidebar */
+    --sidebar-background: var(--background);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--foreground);
     --sidebar-primary-foreground: var(--background-strong);
-    --sidebar-accent: var(--surface-raised-base);
-    --sidebar-accent-foreground: var(--text-strong);
-    --sidebar-border: var(--border-weak-base);
+    --sidebar-accent: var(--secondary);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border-weak);
     --sidebar-ring: var(--border-interactive-base);
+
+    /* ── Backward-compat aliases (legacy → shadcn, removed in Phase 3) */
+    --background-base: var(--background);
+    --background-stronger: var(--card);
+    --text-strong: var(--foreground);
+    --text-base: var(--foreground-weak);
+    --text-weak: var(--muted-foreground);
+    --text-weaker: var(--foreground-weaker);
+    --text-invert-strong: var(--primary-foreground);
+    --text-stronger: var(--foreground);
+    --button-primary-base: var(--primary);
+    --surface-raised-base: var(--secondary);
+    --surface-weak: var(--muted);
+    --surface-raised-base-hover: var(--accent);
+    --surface-critical-strong: var(--destructive);
+    --border-base: var(--border);
+    --border-selected: var(--ring);
+    --border-weak-base: var(--border-weak);
   }
 }
 
@@ -942,36 +1005,60 @@
   --avatar-text-lime: #c4f042;
   --text-stronger: rgba(255, 255, 255, 0.936);
 
-  /* ── shadcn/ui theme aliases ──────────────────────────────────────── */
-  --background: var(--background-base);
-  --foreground: var(--text-strong);
-  --card: var(--background-stronger);
-  --card-foreground: var(--text-strong);
-  --popover: var(--background-stronger);
-  --popover-foreground: var(--text-strong);
-  --primary: var(--button-primary-base);
-  --primary-foreground: var(--text-invert-strong);
-  --secondary: var(--surface-raised-base);
-  --secondary-foreground: var(--text-strong);
-  --muted: var(--surface-weak);
-  --muted-foreground: var(--text-weak);
-  --accent: var(--surface-raised-base-hover);
-  --accent-foreground: var(--text-strong);
-  --destructive: var(--surface-critical-strong);
-  --destructive-foreground: var(--text-invert-strong);
-  --border: var(--border-base);
-  --input: var(--border-base);
-  --ring: var(--border-selected);
+  /* ── shadcn/ui tokens (source of truth) ──────────────────────────── */
+  --background: #101010;
+  --foreground: rgba(255, 255, 255, 0.936);
+  --card: #151515;
+  --card-foreground: var(--foreground);
+  --popover: #151515;
+  --popover-foreground: var(--foreground);
+  --primary: #ededed;
+  --primary-foreground: #ededed;
+  --secondary: rgba(255, 255, 255, 0.059);
+  --secondary-foreground: var(--foreground);
+  --muted: rgba(255, 255, 255, 0.078);
+  --muted-foreground: rgba(255, 255, 255, 0.422);
+  --accent: rgba(255, 255, 255, 0.078);
+  --accent-foreground: var(--foreground);
+  --destructive: #fc533a;
+  --destructive-foreground: #ededed;
+  --border: rgba(255, 255, 255, 0.195);
+  --input: rgba(255, 255, 255, 0.195);
+  --ring: #9dbefe;
   --radius: 0.5rem;
 
-  --sidebar-background: var(--background-base);
-  --sidebar-foreground: var(--text-strong);
-  --sidebar-primary: var(--text-strong);
+  /* Extensions */
+  --border-weak: #282828;
+  --foreground-weak: rgba(255, 255, 255, 0.618);
+  --foreground-weaker: rgba(255, 255, 255, 0.284);
+
+  /* Sidebar */
+  --sidebar-background: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--foreground);
   --sidebar-primary-foreground: var(--background-strong);
-  --sidebar-accent: var(--surface-raised-base);
-  --sidebar-accent-foreground: var(--text-strong);
-  --sidebar-border: var(--border-weak-base);
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-weak);
   --sidebar-ring: var(--border-interactive-base);
+
+  /* ── Backward-compat aliases (legacy → shadcn, removed in Phase 3) */
+  --background-base: var(--background);
+  --background-stronger: var(--card);
+  --text-strong: var(--foreground);
+  --text-base: var(--foreground-weak);
+  --text-weak: var(--muted-foreground);
+  --text-weaker: var(--foreground-weaker);
+  --text-invert-strong: var(--primary-foreground);
+  --text-stronger: var(--foreground);
+  --button-primary-base: var(--primary);
+  --surface-raised-base: var(--secondary);
+  --surface-weak: var(--muted);
+  --surface-raised-base-hover: var(--accent);
+  --surface-critical-strong: var(--destructive);
+  --border-base: var(--border);
+  --border-selected: var(--ring);
+  --border-weak-base: var(--border-weak);
 }
 
 /* ── Font size scaling ──────────────────────────────────────────────────────── */

@@ -25,26 +25,26 @@ function ChatHeader({ onOpenReview }: { onOpenReview?: () => void }) {
   if (!chat.activeSession()) return null
 
   return (
-    <div className="flex items-center h-11 px-4 border-b border-border-weaker-base flex-shrink-0">
+    <div className="flex items-center h-11 px-4 border-b border-border-weak/50 flex-shrink-0">
       <div className="flex-1 min-w-0">
-        <span className="text-14-medium text-text-strong truncate block">{title}</span>
+        <span className="text-14-medium text-foreground truncate block">{title}</span>
       </div>
       <div className="flex items-center gap-1.5">
         <Button
           variant="ghost"
           size="icon-sm"
           title="Review changes"
-          className="text-icon-weak hover:text-icon-base"
+          className="text-foreground-weaker hover:text-muted-foreground"
           onClick={() => onOpenReview?.()}
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
             <path d="M3.33 4.17h13.34M3.33 8.33h8.34M3.33 12.5h13.34M3.33 16.67h8.34" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
           </svg>
         </Button>
-        <Button variant="ghost" size="icon-sm" title="Context" className="text-icon-weak hover:text-icon-base">
+        <Button variant="ghost" size="icon-sm" title="Context" className="text-foreground-weaker hover:text-muted-foreground">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.2" /></svg>
         </Button>
-        <Button variant="ghost" size="icon-sm" title="More options" className="text-icon-weak hover:text-icon-base">
+        <Button variant="ghost" size="icon-sm" title="More options" className="text-foreground-weaker hover:text-muted-foreground">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="4.5" cy="10" r="1.25" fill="currentColor" /><circle cx="10" cy="10" r="1.25" fill="currentColor" /><circle cx="15.5" cy="10" r="1.25" fill="currentColor" /></svg>
         </Button>
       </div>
@@ -76,16 +76,16 @@ function EmptyState() {
   return (
     <div className="h-full flex flex-col items-center justify-center">
       <div className="flex flex-col items-center gap-5">
-        <div className="w-10 h-10 rounded-lg bg-surface-raised-base flex items-center justify-center border border-border-weaker-base">
+        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center border border-border-weak/50">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12.292 6.04167L16.2503 9.99998L12.292 13.9583M2.91699 9.99998H15.6253M17.0837 3.75V16.25" stroke="currentColor" strokeLinecap="square" className="text-text-weak" />
+            <path d="M12.292 6.04167L16.2503 9.99998L12.292 13.9583M2.91699 9.99998H15.6253M17.0837 3.75V16.25" stroke="currentColor" strokeLinecap="square" className="text-muted-foreground" />
           </svg>
         </div>
         <div className="text-center">
-          <div className="text-14-medium text-text-strong">
+          <div className="text-14-medium text-foreground">
             {hasSession ? "Ready to chat" : "No session selected"}
           </div>
-          <div className="text-13-regular text-text-weak mt-1">
+          <div className="text-13-regular text-muted-foreground mt-1">
             {hasSession ? "Type a message below to start" : "Create a new session or select one from the sidebar"}
           </div>
         </div>
@@ -118,7 +118,7 @@ function ScrollToBottomButton({ visible, onClick }: { visible: boolean; onClick:
       <Button
         variant="outline"
         size="icon-sm"
-        className="rounded-full text-text-base hover:text-text-strong"
+        className="rounded-full text-foreground-weak hover:text-foreground"
         style={{ background: "var(--surface-stronger-non-alpha, var(--background-stronger))", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
         onClick={onClick}
       >

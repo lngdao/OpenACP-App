@@ -61,8 +61,8 @@ export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
     <div className="space-y-4">
       {!preview ? (
         <div className="space-y-4">
-          <div><p className="text-base font-medium leading-lg text-text-strong mb-1">Connect to a remote workspace</p><p className="text-sm leading-lg text-text-weak">Run <code className="font-mono bg-surface-raised-base px-1 py-0.5 rounded text-text-base">openacp remote</code> on the remote machine, then paste the invite link below.</p></div>
-          <label className="block"><span className="text-sm font-medium leading-lg text-text-weaker uppercase tracking-wider block mb-2">Invite link</span>
+          <div><p className="text-base font-medium leading-lg text-foreground mb-1">Connect to a remote workspace</p><p className="text-sm leading-lg text-muted-foreground">Run <code className="font-mono bg-secondary px-1 py-0.5 rounded text-foreground-weak">openacp remote</code> on the remote machine, then paste the invite link below.</p></div>
+          <label className="block"><span className="text-sm font-medium leading-lg text-foreground-weaker uppercase tracking-wider block mb-2">Invite link</span>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -83,12 +83,12 @@ export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
         </div>
       ) : (
         <div className="space-y-4">
-          <div><p className="text-base font-medium leading-lg text-text-strong mb-1">Connection successful</p><p className="text-sm leading-lg text-text-weak">Review the details below before adding this workspace.</p></div>
-          <div className="rounded-xl border border-border-base divide-y divide-border-base overflow-hidden">
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-text-weak">Workspace</span><span className="text-base font-medium leading-lg text-text-strong">{preview.workspaceName}</span></div>
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-text-weak">Server address</span><span className="text-sm leading-lg text-text-base font-mono truncate max-w-48">{preview.host.replace(/^https?:\/\//, '')}</span></div>
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-text-weak">Access level</span><span className="text-sm leading-lg text-text-base capitalize">{preview.role}</span></div>
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-text-weak">Session expires</span><span className="text-sm leading-lg text-text-base">{new Date(preview.expiresAt).toLocaleString()}</span></div>
+          <div><p className="text-base font-medium leading-lg text-foreground mb-1">Connection successful</p><p className="text-sm leading-lg text-muted-foreground">Review the details below before adding this workspace.</p></div>
+          <div className="rounded-xl border border-border divide-y divide-border-base overflow-hidden">
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Workspace</span><span className="text-base font-medium leading-lg text-foreground">{preview.workspaceName}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Server address</span><span className="text-sm leading-lg text-foreground-weak font-mono truncate max-w-48">{preview.host.replace(/^https?:\/\//, '')}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Access level</span><span className="text-sm leading-lg text-foreground-weak capitalize">{preview.role}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Session expires</span><span className="text-sm leading-lg text-foreground-weak">{new Date(preview.expiresAt).toLocaleString()}</span></div>
           </div>
           {error && <p className="text-sm leading-lg text-red-500">{error}</p>}
           <div className="flex gap-2">

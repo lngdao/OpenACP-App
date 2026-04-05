@@ -26,18 +26,18 @@ export function SettingsPanel(props: {
   const [page, setPage] = useState<SettingsPage>(props.initialPage || "general")
 
   return (
-    <div className="flex-1 flex min-h-0 h-full bg-background-stronger">
+    <div className="flex-1 flex min-h-0 h-full bg-card">
       {/* Settings sidebar nav */}
-      <div className="w-[200px] shrink-0 border-r border-border-weaker-base bg-background-base flex flex-col">
+      <div className="w-[200px] shrink-0 border-r border-border-weak/50 bg-background flex flex-col">
         <div className="shrink-0 px-3 pt-4 pb-2 flex items-center gap-2">
           <button
-            className="size-7 rounded-md flex items-center justify-center hover:bg-surface-raised-base-hover transition-colors"
+            className="size-7 rounded-md flex items-center justify-center hover:bg-accent transition-colors"
             onClick={props.onClose}
             title="Back"
           >
-            <ArrowLeft size={16} className="text-icon-base" />
+            <ArrowLeft size={16} className="text-muted-foreground" />
           </button>
-          <span className="text-14-medium text-text-strong">Settings</span>
+          <span className="text-14-medium text-foreground">Settings</span>
         </div>
 
         <nav className="flex flex-col gap-0.5 px-2 py-2">
@@ -46,8 +46,8 @@ export function SettingsPanel(props: {
               key={item.id}
               className={`w-full text-left px-3 py-1.5 rounded-md text-13-regular transition-colors ${
                 page === item.id
-                  ? "bg-surface-raised-base text-text-strong"
-                  : "text-text-base hover:bg-surface-raised-base-hover"
+                  ? "bg-secondary text-foreground"
+                  : "text-foreground-weak hover:bg-accent"
               }`}
               onClick={() => setPage(item.id)}
             >

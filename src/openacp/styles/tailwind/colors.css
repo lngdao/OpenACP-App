@@ -254,6 +254,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Extensions */
+  --color-border-weak: var(--border-weak);
+  --color-foreground-weak: var(--foreground-weak);
+  --color-foreground-weaker: var(--foreground-weaker);
+
   --color-sidebar-background: var(--sidebar-background);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

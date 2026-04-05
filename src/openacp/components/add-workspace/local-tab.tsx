@@ -43,30 +43,30 @@ export function LocalTab(props: LocalTabProps) {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-12-medium text-text-weaker uppercase tracking-wider mb-3">Workspaces on this machine</p>
-        {loading && <p className="text-14-regular text-text-weak py-2">Looking for workspaces...</p>}
-        {!loading && instances.length === 0 && <p className="text-14-regular text-text-weak py-2">No workspaces found on this machine.</p>}
+        <p className="text-12-medium text-foreground-weaker uppercase tracking-wider mb-3">Workspaces on this machine</p>
+        {loading && <p className="text-14-regular text-muted-foreground py-2">Looking for workspaces...</p>}
+        {!loading && instances.length === 0 && <p className="text-14-regular text-muted-foreground py-2">No workspaces found on this machine.</p>}
         <div className="space-y-2">
           {instances.map((inst) => {
             const alreadyAdded = props.existingIds?.includes(inst.id) ?? false
             const isRunning = inst.status === 'running'
             return (
               <button key={inst.id} type="button" disabled={alreadyAdded} onClick={() => handleSelectInstance(inst)}
-                className={`w-full text-left rounded-xl border transition-colors p-4 ${alreadyAdded ? 'border-border-base opacity-60 cursor-not-allowed' : 'border-border-base hover:border-border-hover hover:bg-surface-raised-base-hover'}`}>
+                className={`w-full text-left rounded-xl border transition-colors p-4 ${alreadyAdded ? 'border-border opacity-60 cursor-not-allowed' : 'border-border hover:border-border-hover hover:bg-accent'}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-15-semibold text-text-strong">{inst.name ?? inst.id}</span>
+                      <span className="text-15-semibold text-foreground">{inst.name ?? inst.id}</span>
                       {alreadyAdded && (
                         <Badge variant="secondary" className="text-11-medium">Added</Badge>
                       )}
                     </div>
                     <div className="space-y-0.5">
-                      <p className="text-12-regular text-text-weak truncate"><span className="text-text-weaker">Folder </span>{inst.directory}</p>
+                      <p className="text-12-regular text-muted-foreground truncate"><span className="text-foreground-weaker">Folder </span>{inst.directory}</p>
                       {inst.port ? (
-                        <p className="text-12-regular text-text-weak"><span className="text-text-weaker">Address </span><span className="font-mono">http://localhost:{inst.port}</span></p>
+                        <p className="text-12-regular text-muted-foreground"><span className="text-foreground-weaker">Address </span><span className="font-mono">http://localhost:{inst.port}</span></p>
                       ) : (
-                        <p className="text-12-regular text-text-weaker">Not running</p>
+                        <p className="text-12-regular text-foreground-weaker">Not running</p>
                       )}
                     </div>
                   </div>
@@ -82,15 +82,15 @@ export function LocalTab(props: LocalTabProps) {
           })}
         </div>
       </div>
-      <div className="border-t border-border-base pt-5">
-        <p className="text-12-medium text-text-weaker uppercase tracking-wider mb-3">Open a folder</p>
+      <div className="border-t border-border pt-5">
+        <p className="text-12-medium text-foreground-weaker uppercase tracking-wider mb-3">Open a folder</p>
         <Button
           type="button"
           variant="outline"
           onClick={handleBrowse}
-          className="w-full px-4 py-3 rounded-xl text-14-medium text-text-base h-auto justify-start gap-3"
+          className="w-full px-4 py-3 rounded-xl text-14-medium text-foreground-weak h-auto justify-start gap-3"
         >
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="text-text-weak shrink-0"><path d="M2.5 5.83333V15.8333H17.5V7.5H9.58333L7.5 5.83333H2.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="text-muted-foreground shrink-0"><path d="M2.5 5.83333V15.8333H17.5V7.5H9.58333L7.5 5.83333H2.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           <span>Choose a folder to open or create a workspace...</span>
         </Button>
       </div>
@@ -104,8 +104,8 @@ function BrowseResultView(props: { result: BrowseResult; instances: InstanceList
   if (result.type === 'known') {
     const inst = result.instance
     return (
-      <div className="p-4 bg-surface-raised-base rounded-xl border border-border-base space-y-3">
-        <div><p className="text-14-medium text-text-strong mb-1">Workspace found</p><p className="text-13-regular text-text-weak">This folder is already set up as <strong className="text-text-base">{inst.name ?? inst.id}</strong>. Click Add to open it here.</p></div>
+      <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
+        <div><p className="text-14-medium text-foreground mb-1">Workspace found</p><p className="text-13-regular text-muted-foreground">This folder is already set up as <strong className="text-foreground-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.</p></div>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -114,18 +114,18 @@ function BrowseResultView(props: { result: BrowseResult; instances: InstanceList
           >
             Add workspace
           </Button>
-          <Button type="button" variant="ghost" onClick={props.onClose} className="text-13-regular text-text-weak h-auto">Back</Button>
+          <Button type="button" variant="ghost" onClick={props.onClose} className="text-13-regular text-muted-foreground h-auto">Back</Button>
         </div>
       </div>
     )
   }
   if (result.type === 'unregistered') {
     return (
-      <div className="p-4 bg-surface-raised-base rounded-xl border border-border-base space-y-3">
-        <div><p className="text-14-medium text-text-strong mb-1">Existing workspace detected</p><p className="text-13-regular text-text-weak">This folder already has an OpenACP workspace. Click Add to register it.</p></div>
+      <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
+        <div><p className="text-14-medium text-foreground mb-1">Existing workspace detected</p><p className="text-13-regular text-muted-foreground">This folder already has an OpenACP workspace. Click Add to register it.</p></div>
         <div className="flex items-center gap-2">
           <RegisterExistingButton path={result.path} onAdd={props.onAdd} />
-          <Button type="button" variant="ghost" onClick={props.onClose} className="text-13-regular text-text-weak h-auto">Back</Button>
+          <Button type="button" variant="ghost" onClick={props.onClose} className="text-13-regular text-muted-foreground h-auto">Back</Button>
         </div>
       </div>
     )

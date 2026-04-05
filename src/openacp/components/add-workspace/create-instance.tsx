@@ -26,23 +26,23 @@ export function CreateInstance(props: CreateInstanceProps) {
   }
 
   return (
-    <div className="space-y-4 p-3 bg-surface-raised-base rounded-lg">
-      <p className="text-14-regular text-text-base">No OpenACP instance at <code className="text-12-regular text-text-strong">{folderName}</code></p>
+    <div className="space-y-4 p-3 bg-secondary rounded-lg">
+      <p className="text-14-regular text-foreground-weak">No OpenACP instance at <code className="text-12-regular text-foreground">{folderName}</code></p>
       {mode === 'choose' && (
         <div className="space-y-2">
           {props.existingInstances.length > 0 && (
-            <button type="button" onClick={() => setMode('clone')} className="w-full text-left px-3 py-2 rounded-lg border border-border-base text-14-regular text-text-base hover:bg-surface-raised-base-hover transition-colors">
-              <span className="text-14-medium text-text-strong">Clone from existing</span><span className="text-12-regular text-text-weak block">Copy config from another instance</span>
+            <button type="button" onClick={() => setMode('clone')} className="w-full text-left px-3 py-2 rounded-lg border border-border text-14-regular text-foreground-weak hover:bg-accent transition-colors">
+              <span className="text-14-medium text-foreground">Clone from existing</span><span className="text-12-regular text-muted-foreground block">Copy config from another instance</span>
             </button>
           )}
-          <button type="button" onClick={() => setMode('new')} className="w-full text-left px-3 py-2 rounded-lg border border-border-base text-14-regular text-text-base hover:bg-surface-raised-base-hover transition-colors">
-            <span className="text-14-medium text-text-strong">Create new</span><span className="text-12-regular text-text-weak block">Start with a fresh instance</span>
+          <button type="button" onClick={() => setMode('new')} className="w-full text-left px-3 py-2 rounded-lg border border-border text-14-regular text-foreground-weak hover:bg-accent transition-colors">
+            <span className="text-14-medium text-foreground">Create new</span><span className="text-12-regular text-muted-foreground block">Start with a fresh instance</span>
           </button>
         </div>
       )}
       {mode === 'clone' && (
         <div className="space-y-3">
-          <label className="block"><span className="text-12-regular text-text-weak block mb-1">Clone from</span>
+          <label className="block"><span className="text-12-regular text-muted-foreground block mb-1">Clone from</span>
             <Select value={cloneFrom ?? ''} onValueChange={(v) => setCloneFrom(v || null)}>
               <SelectTrigger className="w-full rounded-lg">
                 <SelectValue placeholder="Select instance..." />
@@ -72,7 +72,7 @@ export function CreateInstance(props: CreateInstanceProps) {
 
 function NameInput(props: { value: string; folderName: string; onInput: (v: string) => void }) {
   return (
-    <label className="block"><span className="text-12-regular text-text-weak block mb-1">Instance name</span>
+    <label className="block"><span className="text-12-regular text-muted-foreground block mb-1">Instance name</span>
       <Input
         type="text"
         value={props.value}
@@ -89,7 +89,7 @@ function ActionButtons(props: { onBack: () => void; onConfirm: () => void; disab
     <>
       {props.error && <p className="text-12-regular text-red-500">{props.error}</p>}
       <div className="flex gap-2">
-        <Button type="button" variant="ghost" onClick={props.onBack} className="px-3 py-1 text-14-regular text-text-weak h-auto">Back</Button>
+        <Button type="button" variant="ghost" onClick={props.onBack} className="px-3 py-1 text-14-regular text-muted-foreground h-auto">Back</Button>
         <Button
           type="button"
           onClick={props.onConfirm}

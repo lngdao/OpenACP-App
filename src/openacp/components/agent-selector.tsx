@@ -75,7 +75,7 @@ export function AgentSelector(props: {
         <Button
           variant="ghost"
           size="sm"
-          className="min-w-0 max-w-[320px] text-12-regular text-text-base capitalize gap-1 px-2"
+          className="min-w-0 max-w-[320px] text-12-regular text-foreground-weak capitalize gap-1 px-2"
           disabled={switching}
         >
           <span className="truncate">{currentName}</span>
@@ -93,17 +93,17 @@ export function AgentSelector(props: {
         />
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 && (
-            <div className="text-12-regular text-text-weak px-2 py-2">No agents available</div>
+            <div className="text-12-regular text-muted-foreground px-2 py-2">No agents available</div>
           )}
           {filtered.map((agent: any) => (
             <DropdownMenuItem
               key={agent.name}
-              className={`text-12-regular capitalize ${agent.name === props.current ? "text-text-strong" : "text-text-base"}`}
+              className={`text-12-regular capitalize ${agent.name === props.current ? "text-foreground" : "text-foreground-weak"}`}
               onClick={() => handleSelect(agent.name)}
             >
               <span className="truncate">{agent.displayName || agent.name}</span>
               {agent.name === props.current && (
-                <span className="ml-auto text-text-interactive-base text-10-regular shrink-0">&#10003;</span>
+                <span className="ml-auto text-primary text-10-regular shrink-0">&#10003;</span>
               )}
             </DropdownMenuItem>
           ))}
@@ -112,7 +112,7 @@ export function AgentSelector(props: {
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-12-regular text-text-weak"
+              className="text-12-regular text-muted-foreground"
               onClick={() => props.onInstallAgent?.()}
             >
               <Plus size={14} weight="bold" />

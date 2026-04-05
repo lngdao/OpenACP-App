@@ -10,19 +10,19 @@ export function SettingsServer(props: {
   return (
     <div data-component="oac-settings" className="flex flex-col gap-6">
       <div>
-        <h2 className="text-16-medium text-text-strong mb-1">Server</h2>
-        <p className="text-13-regular text-text-weak">OpenACP server connection details</p>
+        <h2 className="text-16-medium text-foreground mb-1">Server</h2>
+        <p className="text-13-regular text-muted-foreground">OpenACP server connection details</p>
       </div>
 
       <SettingRow label="Status" description="Current server connection status">
         <div className="flex items-center gap-2">
           <div className={`size-2 rounded-full ${statusColor}`} />
-          <span className="text-13-regular text-text-base">{statusText}</span>
+          <span className="text-13-regular text-foreground-weak">{statusText}</span>
         </div>
       </SettingRow>
 
       <SettingRow label="Server address" description="The address of the connected OpenACP server">
-        <code className="text-12-regular text-text-base font-mono bg-surface-raised-base px-2 py-1 rounded-md">
+        <code className="text-12-regular text-foreground-weak font-mono bg-secondary px-2 py-1 rounded-md">
           {props.serverUrl ?? "N/A"}
         </code>
       </SettingRow>
@@ -32,10 +32,10 @@ export function SettingsServer(props: {
 
 function SettingRow(props: { label: string; description: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2 border-b border-border-weaker-base last:border-b-0">
+    <div className="flex items-center justify-between gap-4 py-2 border-b border-border-weak/50 last:border-b-0">
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-14-medium text-text-strong">{props.label}</span>
-        <span className="text-12-regular text-text-weak">{props.description}</span>
+        <span className="text-14-medium text-foreground">{props.label}</span>
+        <span className="text-12-regular text-muted-foreground">{props.description}</span>
       </div>
       <div className="shrink-0">{props.children}</div>
     </div>

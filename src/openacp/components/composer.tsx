@@ -208,7 +208,7 @@ export function Composer() {
   }
 
   return (
-    <div className="shrink-0 w-full pb-3 flex flex-col justify-center items-center bg-background-stronger">
+    <div className="shrink-0 w-full pb-3 flex flex-col justify-center items-center bg-card">
       <div className="w-full px-3 md:max-w-200 md:mx-auto 2xl:max-w-[1000px] relative">
         {paletteOpen && (
           <div className="absolute bottom-full left-3 right-3 mb-1 z-50">
@@ -241,20 +241,20 @@ export function Composer() {
                 {attachments.map(att => (
                   <div
                     key={att.id}
-                    className="group flex items-center gap-1.5 h-7 pl-1.5 pr-1 rounded-md border border-border-weak-base bg-surface-inset-base hover:bg-surface-inset-base-hover transition-colors"
+                    className="group flex items-center gap-1.5 h-7 pl-1.5 pr-1 rounded-md border border-border-weak bg-muted hover:bg-muted-hover transition-colors"
                   >
                     {isImageMime(att.mimeType) ? (
                       <img src={att.dataUrl} alt="" className="size-4 rounded-sm object-cover flex-shrink-0" />
                     ) : (
-                      <FileIcon size={14} className="text-icon-weak flex-shrink-0" />
+                      <FileIcon size={14} className="text-foreground-weaker flex-shrink-0" />
                     )}
-                    <span className="text-[12px] text-text-base truncate max-w-[160px] leading-none">{att.fileName}</span>
+                    <span className="text-[12px] text-foreground-weak truncate max-w-[160px] leading-none">{att.fileName}</span>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon-xs"
                       onClick={() => removeAttachment(att.id)}
-                      className="size-4 flex-shrink-0 text-icon-weak hover:text-icon-strong"
+                      className="size-4 flex-shrink-0 text-foreground-weaker hover:text-icon-strong"
                     >
                       <X size={10} weight="bold" />
                     </Button>
@@ -272,12 +272,12 @@ export function Composer() {
                 contentEditable="true"
                 onInput={handleInput}
                 onKeyDown={handleKeyDown}
-                className="select-text w-full pl-3 pr-2 pt-2 text-base leading-xl text-text-strong focus:outline-none whitespace-pre-wrap"
+                className="select-text w-full pl-3 pr-2 pt-2 text-base leading-xl text-foreground focus:outline-none whitespace-pre-wrap"
                 style={{ paddingBottom: space }}
               />
               {!text.trim() && !attachments.length && (
                 <div
-                  className="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 text-base leading-xl text-text-weak pointer-events-none whitespace-nowrap truncate"
+                  className="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 text-base leading-xl text-muted-foreground pointer-events-none whitespace-nowrap truncate"
                   style={{ paddingBottom: space }}
                 >
                   Ask anything...
@@ -322,7 +322,7 @@ export function Composer() {
                   size="icon-sm"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <Plus size={18} weight="bold" className="text-icon-weak" />
+                  <Plus size={18} weight="bold" className="text-foreground-weaker" />
                 </Button>
                 <Button
                   data-action="prompt-command"
@@ -336,7 +336,7 @@ export function Composer() {
                     setPaletteOpen(!paletteOpen)
                   }}
                 >
-                  <Command size={18} weight="regular" className="text-icon-weak" />
+                  <Command size={18} weight="regular" className="text-foreground-weaker" />
                 </Button>
               </div>
             </div>
@@ -385,10 +385,10 @@ export function Composer() {
 
       {/* Drag overlay */}
       {dragging && (
-        <div className="fixed inset-0 z-50 bg-background-base/80 flex items-center justify-center pointer-events-none">
+        <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-3 p-8 rounded-xl border-2 border-dashed border-border-selected">
-            <ImageIcon size={40} className="text-text-interactive-base" />
-            <span className="text-base font-medium leading-lg text-text-strong">Drop files to attach</span>
+            <ImageIcon size={40} className="text-primary" />
+            <span className="text-base font-medium leading-lg text-foreground">Drop files to attach</span>
           </div>
         </div>
       )}

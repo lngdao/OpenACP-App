@@ -73,7 +73,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
     >
       {/* Title */}
       <div className="px-3.5 pt-3 pb-2">
-        <div className="text-13-medium text-text-strong">
+        <div className="text-13-medium text-foreground">
           {request.description}
         </div>
       </div>
@@ -102,7 +102,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
               >
                 {idx + 1}
               </span>
-              <span className="text-13-regular text-text-strong">{opt.label}</span>
+              <span className="text-13-regular text-foreground">{opt.label}</span>
             </button>
           )
         })}
@@ -114,7 +114,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
           ref={inputRef}
           type="text"
           placeholder="Tell agent what to do instead"
-          className="w-full bg-transparent text-13-regular text-text-strong placeholder:text-text-weak focus:outline-none rounded-md px-2.5 py-1.5"
+          className="w-full bg-transparent text-13-regular text-foreground placeholder:text-muted-foreground focus:outline-none rounded-md px-2.5 py-1.5"
           style={{
             background: "var(--surface-inset-base)",
             border: "1px solid var(--border-weaker-base)",

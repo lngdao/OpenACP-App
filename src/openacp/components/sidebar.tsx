@@ -29,7 +29,7 @@ export function SidebarPanel() {
 
   return (
     <div
-      className="relative flex flex-col min-h-0 min-w-0 box-border rounded-tl-[12px] px-3 border-l border-t border-border-weaker-base bg-background-base overflow-hidden shrink-0"
+      className="relative flex flex-col min-h-0 min-w-0 box-border rounded-tl-[12px] px-3 border-l border-t border-border-weak/50 bg-background overflow-hidden shrink-0"
       style={{ width: `${panelWidth}px` }}
     >
       <ResizeHandle
@@ -43,8 +43,8 @@ export function SidebarPanel() {
       <div className="shrink-0 pl-1 py-1">
         <div className="group/project flex items-start justify-between gap-2 py-2 pl-2 pr-0">
           <div className="flex flex-col min-w-0">
-            <span className="text-base font-medium leading-lg text-text-strong truncate">{workspaceName}</span>
-            <span className="text-sm leading-lg text-text-base truncate" title={workspace.directory}>{workspacePath}</span>
+            <span className="text-base font-medium leading-lg text-foreground truncate">{workspaceName}</span>
+            <span className="text-sm leading-lg text-foreground-weak truncate" title={workspace.directory}>{workspacePath}</span>
           </div>
         </div>
       </div>
@@ -110,7 +110,7 @@ function NewSessionButton() {
       }}
     >
       {creating ? (
-        <Spinner className="size-[15px] text-text-weak" />
+        <Spinner className="size-[15px] text-muted-foreground" />
       ) : (
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M10 4.16699V15.8337M4.16699 10.0003H15.8337" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
       )}
@@ -129,7 +129,7 @@ function SessionItem({ session, active, streaming, onClick, onDelete }: {
   return (
     <div
       data-session-id={session.id}
-      className={`group/session relative w-full min-w-0 rounded-md cursor-default pl-2 pr-3 transition-colors hover:bg-surface-raised-base-hover`}
+      className={`group/session relative w-full min-w-0 rounded-md cursor-default pl-2 pr-3 transition-colors hover:bg-accent`}
     >
       <div className="flex min-w-0 items-center gap-1">
         <div className="min-w-0 flex-1">
@@ -140,12 +140,12 @@ function SessionItem({ session, active, streaming, onClick, onDelete }: {
           >
             <div className="shrink-0 size-6 flex items-center justify-center">
               {streaming ? (
-                <Spinner className="size-[15px] text-text-weak" />
+                <Spinner className="size-[15px] text-muted-foreground" />
               ) : (
-                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 10H15" stroke="currentColor" strokeLinecap="round" className="text-icon-weak" /></svg>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 10H15" stroke="currentColor" strokeLinecap="round" className="text-foreground-weaker" /></svg>
               )}
             </div>
-            <span className="text-base leading-xl text-text-strong min-w-0 flex-1 truncate">{session.name}</span>
+            <span className="text-base leading-xl text-foreground min-w-0 flex-1 truncate">{session.name}</span>
           </Button>
         </div>
         <div className="shrink-0 overflow-hidden transition-[width,opacity] w-0 opacity-0 pointer-events-none group-hover/session:w-6 group-hover/session:opacity-100 group-hover/session:pointer-events-auto">
@@ -155,7 +155,7 @@ function SessionItem({ session, active, streaming, onClick, onDelete }: {
             title="Archive"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete() }}
           >
-            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3.33 6.67h13.34M5 6.67V15.83a1.67 1.67 0 001.67 1.67h6.66A1.67 1.67 0 0015 15.83V6.67M7.5 3.33h5" stroke="currentColor" strokeLinecap="round" className="text-icon-weak" /></svg>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3.33 6.67h13.34M5 6.67V15.83a1.67 1.67 0 001.67 1.67h6.66A1.67 1.67 0 0015 15.83V6.67M7.5 3.33h5" stroke="currentColor" strokeLinecap="round" className="text-foreground-weaker" /></svg>
           </Button>
         </div>
       </div>
@@ -167,7 +167,7 @@ function SessionSkeleton() {
   return (
     <div className="flex flex-col gap-1">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-8 w-full rounded-md bg-surface-raised-base opacity-60 animate-pulse" />
+        <div key={i} className="h-8 w-full rounded-md bg-secondary opacity-60 animate-pulse" />
       ))}
     </div>
   )
