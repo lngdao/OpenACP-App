@@ -1,61 +1,34 @@
-:root {
-  interpolate-size: allow-keywords;
+.text-2xs-regular {
+  @apply font-sans font-regular leading-lg tracking-normal;
+  font-size: var(--text-2xs);
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.text-sm-regular {
+  @apply font-sans font-regular leading-lg tracking-normal;
+  font-size: var(--text-sm);
 }
 
-.text-12-regular {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-small);
-  font-style: normal;
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-large);
-  letter-spacing: var(--letter-spacing-normal);
+.text-sm-medium {
+  @apply font-sans font-medium leading-lg tracking-normal;
+  font-size: var(--text-sm);
 }
 
-.text-12-medium {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-small);
-  font-style: normal;
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-large);
-  letter-spacing: var(--letter-spacing-normal);
+.text-md-regular {
+  @apply font-sans font-regular leading-xl tracking-normal;
+  font-size: var(--text-base);
 }
 
-.text-14-regular {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-base);
-  font-style: normal;
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-x-large);
-  letter-spacing: var(--letter-spacing-normal);
+.text-md-medium {
+  @apply font-sans font-medium leading-lg tracking-normal;
+  font-size: var(--text-base);
 }
 
-.text-14-medium {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-base);
-  font-style: normal;
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-large);
-  letter-spacing: var(--letter-spacing-normal);
+.text-lg-medium {
+  @apply font-sans font-medium leading-xl tracking-tight;
+  font-size: var(--text-lg);
 }
 
-.text-16-medium {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-large);
-  font-style: normal;
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-x-large);
-  letter-spacing: var(--letter-spacing-tight);
+.text-xl-medium {
+  @apply font-sans font-medium leading-xl tracking-tightest;
+  font-size: var(--text-xl);
 }
-

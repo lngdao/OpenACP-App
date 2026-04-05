@@ -43,9 +43,9 @@ export function LocalTab(props: LocalTabProps) {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-12-medium text-foreground-weaker uppercase tracking-wider mb-3">Workspaces on this machine</p>
-        {loading && <p className="text-14-regular text-muted-foreground py-2">Looking for workspaces...</p>}
-        {!loading && instances.length === 0 && <p className="text-14-regular text-muted-foreground py-2">No workspaces found on this machine.</p>}
+        <p className="text-sm-medium text-foreground-weaker uppercase tracking-wider mb-3">Workspaces on this machine</p>
+        {loading && <p className="text-md-regular text-muted-foreground py-2">Looking for workspaces...</p>}
+        {!loading && instances.length === 0 && <p className="text-md-regular text-muted-foreground py-2">No workspaces found on this machine.</p>}
         <div className="space-y-2">
           {instances.map((inst) => {
             const alreadyAdded = props.existingIds?.includes(inst.id) ?? false
@@ -62,11 +62,11 @@ export function LocalTab(props: LocalTabProps) {
                       )}
                     </div>
                     <div className="space-y-0.5">
-                      <p className="text-12-regular text-muted-foreground truncate"><span className="text-foreground-weaker">Folder </span>{inst.directory}</p>
+                      <p className="text-sm-regular text-muted-foreground truncate"><span className="text-foreground-weaker">Folder </span>{inst.directory}</p>
                       {inst.port ? (
-                        <p className="text-12-regular text-muted-foreground"><span className="text-foreground-weaker">Address </span><span className="font-mono">http://localhost:{inst.port}</span></p>
+                        <p className="text-sm-regular text-muted-foreground"><span className="text-foreground-weaker">Address </span><span className="font-mono">http://localhost:{inst.port}</span></p>
                       ) : (
-                        <p className="text-12-regular text-foreground-weaker">Not running</p>
+                        <p className="text-sm-regular text-foreground-weaker">Not running</p>
                       )}
                     </div>
                   </div>
@@ -83,12 +83,12 @@ export function LocalTab(props: LocalTabProps) {
         </div>
       </div>
       <div className="border-t border-border pt-5">
-        <p className="text-12-medium text-foreground-weaker uppercase tracking-wider mb-3">Open a folder</p>
+        <p className="text-sm-medium text-foreground-weaker uppercase tracking-wider mb-3">Open a folder</p>
         <Button
           type="button"
           variant="outline"
           onClick={handleBrowse}
-          className="w-full px-4 py-3 rounded-xl text-14-medium text-foreground-weak h-auto justify-start gap-3"
+          className="w-full px-4 py-3 rounded-xl text-md-medium text-foreground-weak h-auto justify-start gap-3"
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="text-muted-foreground shrink-0"><path d="M2.5 5.83333V15.8333H17.5V7.5H9.58333L7.5 5.83333H2.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           <span>Choose a folder to open or create a workspace...</span>
@@ -105,16 +105,16 @@ function BrowseResultView(props: { result: BrowseResult; instances: InstanceList
     const inst = result.instance
     return (
       <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
-        <div><p className="text-14-medium text-foreground mb-1">Workspace found</p><p className="text-13-regular text-muted-foreground">This folder is already set up as <strong className="text-foreground-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.</p></div>
+        <div><p className="text-md-medium text-foreground mb-1">Workspace found</p><p className="text-sm-regular text-muted-foreground">This folder is already set up as <strong className="text-foreground-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.</p></div>
         <div className="flex items-center gap-2">
           <Button
             type="button"
             onClick={() => props.onAdd({ id: inst.id, name: inst.name ?? inst.id, directory: inst.directory, type: 'local' })}
-            className="px-4 py-1.5 text-13-medium h-auto"
+            className="px-4 py-1.5 text-sm-medium h-auto"
           >
             Add workspace
           </Button>
-          <Button type="button" variant="ghost" onClick={props.onClose} className="text-13-regular text-muted-foreground h-auto">Back</Button>
+          <Button type="button" variant="ghost" onClick={props.onClose} className="text-sm-regular text-muted-foreground h-auto">Back</Button>
         </div>
       </div>
     )
@@ -122,10 +122,10 @@ function BrowseResultView(props: { result: BrowseResult; instances: InstanceList
   if (result.type === 'unregistered') {
     return (
       <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
-        <div><p className="text-14-medium text-foreground mb-1">Existing workspace detected</p><p className="text-13-regular text-muted-foreground">This folder already has an OpenACP workspace. Click Add to register it.</p></div>
+        <div><p className="text-md-medium text-foreground mb-1">Existing workspace detected</p><p className="text-sm-regular text-muted-foreground">This folder already has an OpenACP workspace. Click Add to register it.</p></div>
         <div className="flex items-center gap-2">
           <RegisterExistingButton path={result.path} onAdd={props.onAdd} />
-          <Button type="button" variant="ghost" onClick={props.onClose} className="text-13-regular text-muted-foreground h-auto">Back</Button>
+          <Button type="button" variant="ghost" onClick={props.onClose} className="text-sm-regular text-muted-foreground h-auto">Back</Button>
         </div>
       </div>
     )
@@ -150,11 +150,11 @@ function RegisterExistingButton(props: { path: string; onAdd: (e: WorkspaceEntry
         type="button"
         onClick={register}
         disabled={loading}
-        className="px-4 py-1.5 text-13-medium h-auto"
+        className="px-4 py-1.5 text-sm-medium h-auto"
       >
         {loading ? 'Adding...' : 'Add workspace'}
       </Button>
-      {error && <p className="text-12-regular text-red-500">{error}</p>}
+      {error && <p className="text-sm-regular text-red-500">{error}</p>}
     </>
   )
 }

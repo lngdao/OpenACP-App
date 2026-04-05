@@ -40,21 +40,26 @@
   --font-mono: var(--font-family-mono);
   --font-mono--font-feature-settings: var(--font-family-mono--font-feature-settings);
 
-  --text-sm: var(--font-size-small);
-  --text-base: var(--font-size-base);
-  --text-lg: var(--font-size-large);
-  --text-xl: var(--font-size-x-large);
+  --text-2xs: 0.6875rem;   /* 11px */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-md: 1rem;         /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.75rem;     /* 28px */
 
-  --font-weight-regular: var(--font-weight-regular);
-  --font-weight-medium: var(--font-weight-medium);
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
 
-  --leading-lg: var(--line-height-large);
-  --leading-xl: var(--line-height-x-large);
-  --leading-2xl: var(--line-height-2x-large);
+  --leading-lg: 150%;
+  --leading-xl: 180%;
+  --leading-2xl: 200%;
 
-  --tracking-normal: var(--letter-spacing-normal);
-  --tracking-tight: var(--letter-spacing-tight);
-  --tracking-tightest: var(--letter-spacing-tightest);
+  --tracking-normal: 0;
+  --tracking-tight: -0.16px;
+  --tracking-tightest: -0.32px;
 
   --radius-xs: 0.125rem;
   --radius-sm: 0.25rem;

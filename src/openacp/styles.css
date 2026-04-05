@@ -27,7 +27,7 @@
   font-family: var(--font-family-mono);
   font-feature-settings: var(--font-family-mono--font-feature-settings);
   font-size: 13px;
-  line-height: var(--line-height-large);
+  line-height: 150%;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   max-height: 240px;

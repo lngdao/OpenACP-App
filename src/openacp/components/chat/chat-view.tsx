@@ -27,7 +27,7 @@ function ChatHeader({ onOpenReview }: { onOpenReview?: () => void }) {
   return (
     <div className="flex items-center h-11 px-4 border-b border-border-weak/50 flex-shrink-0">
       <div className="flex-1 min-w-0">
-        <span className="text-14-medium text-foreground truncate block">{title}</span>
+        <span className="text-md-medium text-foreground truncate block">{title}</span>
       </div>
       <div className="flex items-center gap-1.5">
         <Button
@@ -82,10 +82,10 @@ function EmptyState() {
           </svg>
         </div>
         <div className="text-center">
-          <div className="text-14-medium text-foreground">
+          <div className="text-md-medium text-foreground">
             {hasSession ? "Ready to chat" : "No session selected"}
           </div>
-          <div className="text-13-regular text-muted-foreground mt-1">
+          <div className="text-sm-regular text-muted-foreground mt-1">
             {hasSession ? "Type a message below to start" : "Create a new session or select one from the sidebar"}
           </div>
         </div>

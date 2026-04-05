@@ -84,7 +84,7 @@ export function ConfigSelector(props: {
         <Button
           variant="ghost"
           size="sm"
-          className="min-w-0 max-w-[160px] text-12-regular text-foreground-weak capitalize gap-1 px-2"
+          className="min-w-0 max-w-[160px] text-sm-regular text-foreground-weak capitalize gap-1 px-2"
         >
           <span className="truncate">{currentLabel}</span>
           <svg width="12" height="12" viewBox="0 0 20 20" fill="none" className="shrink-0"><path d="M5.83 8.33L10 12.5l4.17-4.17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>

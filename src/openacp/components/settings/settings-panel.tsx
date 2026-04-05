@@ -37,14 +37,14 @@ export function SettingsPanel(props: {
           >
             <ArrowLeft size={16} className="text-muted-foreground" />
           </button>
-          <span className="text-14-medium text-foreground">Settings</span>
+          <span className="text-md-medium text-foreground">Settings</span>
         </div>
 
         <nav className="flex flex-col gap-0.5 px-2 py-2">
           {NAV_ITEMS.map((item) => (
             <button
               key={item.id}
-              className={`w-full text-left px-3 py-1.5 rounded-md text-13-regular transition-colors ${
+              className={`w-full text-left px-3 py-1.5 rounded-md text-sm-regular transition-colors ${
                 page === item.id
                   ? "bg-secondary text-foreground"
                   : "text-foreground-weak hover:bg-accent"

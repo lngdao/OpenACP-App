@@ -43,7 +43,7 @@ export function SidebarRail(props: {
                 <button
                   type="button"
                   className={`flex items-center justify-center size-8 rounded-md overflow-hidden transition-all cursor-default ${
-                    isActive ? "ring-2 ring-text-base ring-offset-1 ring-offset-background-base" : "opacity-60 hover:opacity-100"
+                    isActive ? "ring-2 ring-foreground-weak ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100"
                   }`}
                   onClick={() => hasError && props.onReconnect ? props.onReconnect(dir) : props.onSwitchWorkspace(dir)}
                 >
@@ -55,7 +55,7 @@ export function SidebarRail(props: {
                   </div>
                 </button>
                 {hasError && (
-                  <div className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-status-error border-2 border-background-base pointer-events-none" />
+                  <div className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-status-error border-2 border-background pointer-events-none" />
                 )}
               </div>
             )
@@ -64,11 +64,11 @@ export function SidebarRail(props: {
           <div className="mt-1">
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               title="Open workspace"
               onClick={props.onOpenFolder}
             >
-              <Plus size={16} className="text-foreground-weaker" />
+              <Plus size={16} className="text-foreground-weak" />
             </Button>
           </div>
         </div>
@@ -78,18 +78,18 @@ export function SidebarRail(props: {
         {import.meta.env.DEV && (
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon"
             title="[Dev] Reset OpenACP"
             onClick={async () => {
               await invoke('dev_reset_openacp')
               location.reload()
             }}
           >
-            <Trash size={16} className="text-foreground-weaker" />
+            <Trash size={16} className="text-foreground-weak" />
           </Button>
         )}
-        <Button variant="ghost" size="icon-sm" title="Settings" onClick={props.onOpenSettings}>
-          <GearSix size={16} className="text-foreground-weaker" />
+        <Button variant="ghost" size="icon" title="Settings" onClick={props.onOpenSettings}>
+          <GearSix size={16} className="text-foreground-weak" />
         </Button>
       </div>
     </div>

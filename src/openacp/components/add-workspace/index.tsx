@@ -24,8 +24,8 @@ export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
         </DialogHeader>
         <Tabs value={tab} onValueChange={(v) => setTab(v as 'local' | 'remote')} className="gap-0">
           <TabsList variant="line" className="w-full justify-start px-0 border-b border-border rounded-none h-auto">
-            <TabsTrigger value="local" className="px-6 py-3 text-14-medium rounded-none">Local</TabsTrigger>
-            <TabsTrigger value="remote" className="px-6 py-3 text-14-medium rounded-none">Remote</TabsTrigger>
+            <TabsTrigger value="local" className="px-6 py-3 text-md-medium rounded-none">Local</TabsTrigger>
+            <TabsTrigger value="remote" className="px-6 py-3 text-md-medium rounded-none">Remote</TabsTrigger>
           </TabsList>
           <TabsContent value="local" className="p-6">
             <LocalTab onAdd={props.onAdd} existingIds={props.existingIds} />

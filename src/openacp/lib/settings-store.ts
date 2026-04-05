@@ -49,9 +49,9 @@ export function applyTheme(theme: AppSettings["theme"]) {
   }
 }
 
-/** Apply font size scaling to document element */
+/** Apply font size scaling to body (not html root, to preserve rem = 16px for Tailwind).
+ *  Using body ensures Radix UI portals (Dialog, DropdownMenu, etc.) also inherit the font size. */
 export function applyFontSize(fontSize: AppSettings["fontSize"]) {
-  const root = document.documentElement
-  root.removeAttribute("data-font-size")
-  root.setAttribute("data-font-size", fontSize)
+  document.body.removeAttribute("data-font-size")
+  document.body.setAttribute("data-font-size", fontSize)
 }

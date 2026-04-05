@@ -25,8 +25,8 @@ export function SettingsAppearance() {
   return (
     <div data-component="oac-settings" className="flex flex-col gap-6">
       <div>
-        <h2 className="text-16-medium text-foreground mb-1">Appearance</h2>
-        <p className="text-13-regular text-muted-foreground">Customize the look and feel</p>
+        <h2 className="text-lg-medium text-foreground mb-1">Appearance</h2>
+        <p className="text-sm-regular text-muted-foreground">Customize the look and feel</p>
       </div>
 
       <SettingRow label="Theme" description="Choose between light, dark, or system theme">
@@ -34,7 +34,7 @@ export function SettingsAppearance() {
           {(["light", "dark", "system"] as const).map((opt) => (
             <button
               key={opt}
-              className={`px-3 py-1 rounded text-12-medium transition-colors ${
+              className={`px-3 py-1 rounded text-sm-medium transition-colors ${
                 theme === opt
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground-weak"
@@ -52,7 +52,7 @@ export function SettingsAppearance() {
           {(["small", "medium", "large"] as const).map((opt) => (
             <button
               key={opt}
-              className={`px-3 py-1 rounded text-12-medium transition-colors ${
+              className={`px-3 py-1 rounded text-sm-medium transition-colors ${
                 fontSize === opt
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground-weak"
@@ -72,8 +72,8 @@ function SettingRow(props: { label: string; description: string; children: React
   return (
     <div className="flex items-center justify-between gap-4 py-2 border-b border-border-weak/50 last:border-b-0">
       <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-14-medium text-foreground">{props.label}</span>
-        <span className="text-12-regular text-muted-foreground">{props.description}</span>
+        <span className="text-md-medium text-foreground">{props.label}</span>
+        <span className="text-sm-regular text-muted-foreground">{props.description}</span>
       </div>
       <div className="shrink-0">{props.children}</div>
     </div>

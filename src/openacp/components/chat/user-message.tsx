@@ -66,7 +66,7 @@ export const UserMessage = memo(function UserMessage({ message }: { message: Mes
     >
       {message.sourceAdapterId ? (
         <div className="flex items-center gap-1 mb-1.5">
-          <span className="text-11-regular text-muted-foreground select-none">via {adapterLabel(message.sourceAdapterId)}</span>
+          <span className="text-2xs-regular text-muted-foreground select-none">via {adapterLabel(message.sourceAdapterId)}</span>
         </div>
       ) : null}
       {message.attachments?.length ? (
@@ -83,11 +83,11 @@ export const UserMessage = memo(function UserMessage({ message }: { message: Mes
           ))}
         </div>
       ) : null}
-      <div className="text-14-regular text-foreground whitespace-pre-wrap break-words leading-relaxed">
+      <div className="text-md-regular text-foreground whitespace-pre-wrap break-words leading-relaxed">
         {text}
       </div>
       <div className="flex items-center gap-2 mt-1" style={{ justifyContent: "flex-end" }}>
-        <span className="text-12-regular text-muted-foreground select-none">{timeStr}</span>
+        <span className="text-sm-regular text-muted-foreground select-none">{timeStr}</span>
         <CopyButton text={text} />
       </div>
     </div>

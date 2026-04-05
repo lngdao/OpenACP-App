@@ -73,7 +73,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
     >
       {/* Title */}
       <div className="px-3.5 pt-3 pb-2">
-        <div className="text-13-medium text-foreground">
+        <div className="text-sm-medium text-foreground">
           {request.description}
         </div>
       </div>
@@ -97,12 +97,12 @@ export function PermissionRequestCard({ sessionId }: Props) {
               }}
             >
               <span
-                className="text-12-regular shrink-0"
+                className="text-sm-regular shrink-0"
                 style={{ color: "var(--muted-foreground)", width: "14px" }}
               >
                 {idx + 1}
               </span>
-              <span className="text-13-regular text-foreground">{opt.label}</span>
+              <span className="text-sm-regular text-foreground">{opt.label}</span>
             </button>
           )
         })}
@@ -114,7 +114,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
           ref={inputRef}
           type="text"
           placeholder="Tell agent what to do instead"
-          className="w-full bg-transparent text-13-regular text-foreground placeholder:text-muted-foreground focus:outline-none rounded-md px-2.5 py-1.5"
+          className="w-full bg-transparent text-sm-regular text-foreground placeholder:text-muted-foreground focus:outline-none rounded-md px-2.5 py-1.5"
           style={{
             background: "var(--surface-inset-base)",
             border: "1px solid var(--border-weaker-base)",
@@ -135,7 +135,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
 
       {/* Hint */}
       <div className="px-3.5 pb-2.5">
-        <span className="text-11-regular" style={{ color: "var(--foreground-weaker)" }}>
+        <span className="text-2xs-regular" style={{ color: "var(--foreground-weaker)" }}>
           Esc to cancel
         </span>
         {isResolving && (
