@@ -1,9 +1,5 @@
 :root {
   interpolate-size: allow-keywords;
-
-  [data-popper-positioner] {
-    pointer-events: none;
-  }
 }
 
 .sr-only {
@@ -36,16 +32,6 @@
   letter-spacing: var(--letter-spacing-normal);
 }
 
-.text-12-mono {
-  font-family: var(--font-family-mono);
-  font-feature-settings: var(--font-feature-settings-mono);
-  font-size: var(--font-size-small);
-  font-style: normal;
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-large);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
 .text-14-regular {
   font-family: var(--font-family-sans);
   font-size: var(--font-size-base);
@@ -64,16 +50,6 @@
   letter-spacing: var(--letter-spacing-normal);
 }
 
-.text-14-mono {
-  font-family: var(--font-family-mono);
-  font-feature-settings: var(--font-feature-settings-mono);
-  font-size: var(--font-size-base);
-  font-style: normal;
-  font-weight: var(--font-weight-regular);
-  line-height: var(--line-height-large);
-  letter-spacing: var(--letter-spacing-normal);
-}
-
 .text-16-medium {
   font-family: var(--font-family-sans);
   font-size: var(--font-size-large);
@@ -83,11 +59,3 @@
   letter-spacing: var(--letter-spacing-tight);
 }
 
-.text-20-medium {
-  font-family: var(--font-family-sans);
-  font-size: var(--font-size-x-large);
-  font-style: normal;
-  font-weight: var(--font-weight-medium);
-  line-height: var(--line-height-x-large);
-  letter-spacing: var(--letter-spacing-tightest);
-}

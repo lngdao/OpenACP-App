@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Check as CheckIcon, CaretRight as ChevronRightIcon, Circle as CircleIcon } from "@phosphor-icons/react"
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"

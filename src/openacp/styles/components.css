@@ -8,7 +8,7 @@
   min-width: 0;
   max-width: 100%;
   overflow-wrap: break-word;
-  color: var(--text-strong);
+  color: var(--foreground);
   font-family: var(--font-family-sans);
   font-size: var(--font-size-base); /* 14px */
   line-height: 1.6;
@@ -24,29 +24,29 @@
   /* Headings — scaled sizes matching Claude Code */
   h1 {
     font-size: 1.6em;
-    color: var(--text-strong);
+    color: var(--foreground);
     font-weight: 600;
     margin-top: 24px;
     margin-bottom: 8px;
     line-height: 1.3;
-    border-bottom: 1px solid var(--border-weak-base);
+    border-bottom: 1px solid var(--border-weak);
     padding-bottom: 8px;
   }
 
   h2 {
     font-size: 1.3em;
-    color: var(--text-strong);
+    color: var(--foreground);
     font-weight: 600;
     margin-top: 24px;
     margin-bottom: 8px;
     line-height: 1.3;
-    border-bottom: 1px solid var(--border-weak-base);
+    border-bottom: 1px solid var(--border-weak);
     padding-bottom: 6px;
   }
 
   h3 {
     font-size: 1.1em;
-    color: var(--text-strong);
+    color: var(--foreground);
     font-weight: 600;
     margin-top: 24px;
     margin-bottom: 8px;
@@ -57,7 +57,7 @@
   h5,
   h6 {
     font-size: var(--font-size-base);
-    color: var(--text-strong);
+    color: var(--foreground);
     font-weight: 600;
     margin-top: 24px;
     margin-bottom: 8px;
@@ -67,7 +67,7 @@
   /* Emphasis & Strong */
   strong,
   b {
-    color: var(--text-strong);
+    color: var(--foreground);
     font-weight: 600;
   }
 
@@ -121,7 +121,7 @@
   }
 
   li::marker {
-    color: var(--text-weak);
+    color: var(--muted-foreground);
   }
 
   /* Nested lists */
@@ -134,17 +134,17 @@
 
   /* Blockquotes — 3px border matching Claude Code */
   blockquote {
-    border-left: 3px solid var(--border-weak-base);
+    border-left: 3px solid var(--border-weak);
     margin: 8px 0;
     padding: 4px 12px;
-    color: var(--text-weak);
+    color: var(--muted-foreground);
     font-style: normal;
   }
 
   /* Horizontal Rule */
   hr {
     border: none;
-    border-top: 1px solid var(--border-weak-base);
+    border-top: 1px solid var(--border-weak);
     margin: 16px 0;
   }
 
@@ -152,7 +152,7 @@
     font-size: 13px;
     padding: 12px;
     border-radius: 4px;
-    border: 0.5px solid var(--border-weak-base);
+    border: 0.5px solid var(--border-weak);
   }
 
   [data-component="markdown-code"] {
@@ -205,7 +205,7 @@
 
   [data-slot="markdown-copy-button"][data-variant="secondary"] {
     box-shadow: none;
-    border: 1px solid var(--border-weak-base);
+    border: 1px solid var(--border-weak);
   }
 
   [data-slot="markdown-copy-button"][data-variant="secondary"] [data-slot="icon-svg"] {
@@ -263,14 +263,14 @@
 
   th,
   td {
-    border: 1px solid var(--border-weak-base);
+    border: 1px solid var(--border-weak);
     padding: 6px 12px;
     text-align: left;
     vertical-align: top;
   }
 
   th {
-    color: var(--text-strong);
+    color: var(--foreground);
     font-weight: 600;
     background: var(--surface-inset-base);
   }
@@ -370,8 +370,8 @@
   --text-shimmer-angle: 90deg;
   --text-shimmer-spread: 5.2ch;
   --text-shimmer-size: 360%;
-  --text-shimmer-base-color: var(--text-weak);
-  --text-shimmer-peak-color: var(--text-strong);
+  --text-shimmer-base-color: var(--muted-foreground);
+  --text-shimmer-peak-color: var(--foreground);
   --text-shimmer-sweep: linear-gradient(
     var(--text-shimmer-angle),
     transparent calc(50% - var(--text-shimmer-spread)),
@@ -411,7 +411,7 @@
 }
 
 [data-component="text-shimmer"] [data-slot="text-shimmer-char-shimmer"] {
-  color: var(--text-weaker);
+  color: var(--foreground-weaker);
   opacity: 0;
 }
 
@@ -480,30 +480,4 @@
   [data-component="text-shimmer"] [data-slot="text-shimmer-char-base"] {
     opacity: 1 !important;
   }
-}
-
-/* ── Dock Surface ──────────────────────────────────────────────────────────── */
-
-[data-dock-surface="shell"] {
-  background-color: var(--surface-raised-stronger-non-alpha);
-  box-shadow: var(--shadow-xs-border);
-  position: relative;
-  z-index: 10;
-  border-radius: 12px;
-  overflow: clip;
-}
-
-[data-dock-surface="tray"] {
-  background-color: var(--background-base);
-  border: 1px solid var(--border-weak-base);
-  position: relative;
-  z-index: 0;
-  border-radius: 12px;
-  overflow: clip;
-}
-
-[data-dock-surface="tray"][data-dock-attach="top"] {
-  margin-top: -0.875rem;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
 }
