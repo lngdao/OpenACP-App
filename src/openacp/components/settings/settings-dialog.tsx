@@ -1,27 +1,26 @@
-import React, { useState } from "react"
-import {
-  GearSix,
-  Palette,
-  Robot,
-  Desktop,
-  Info,
-} from "@phosphor-icons/react"
-import { Dialog, DialogContent, DialogTitle } from "../ui/dialog"
-import { VisuallyHidden } from "radix-ui"
-import { SettingsGeneral } from "./settings-general"
-import { SettingsAppearance } from "./settings-appearance"
-import { SettingsAgents } from "./settings-agents"
-import { SettingsServer } from "./settings-server"
-import { SettingsAbout } from "./settings-about"
+import React, { useState } from "react";
+import { GearSix, Palette, Robot, Desktop, Info } from "@phosphor-icons/react";
+import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
+import { VisuallyHidden } from "radix-ui";
+import { SettingsGeneral } from "./settings-general";
+import { SettingsAppearance } from "./settings-appearance";
+import { SettingsAgents } from "./settings-agents";
+import { SettingsServer } from "./settings-server";
+import { SettingsAbout } from "./settings-about";
 
-export type SettingsPage = "general" | "appearance" | "agents" | "server" | "about"
+export type SettingsPage =
+  | "general"
+  | "appearance"
+  | "agents"
+  | "server"
+  | "about";
 
-const APP_VERSION = __APP_VERSION__
-declare const __APP_VERSION__: string
+const APP_VERSION = __APP_VERSION__;
+declare const __APP_VERSION__: string;
 
 interface NavGroup {
-  label: string
-  items: { id: SettingsPage; label: string; icon: React.ElementType }[]
+  label: string;
+  items: { id: SettingsPage; label: string; icon: React.ElementType }[];
 }
 
 const NAV_GROUPS: NavGroup[] = [
@@ -41,11 +40,9 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     label: "Info",
-    items: [
-      { id: "about", label: "About", icon: Info },
-    ],
+    items: [{ id: "about", label: "About", icon: Info }],
   },
-]
+];
 
 export function SettingsDialog({
   open,
@@ -55,19 +52,19 @@ export function SettingsDialog({
   serverConnected,
   initialPage = "general",
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  workspacePath: string
-  serverUrl: string | null
-  serverConnected: boolean
-  initialPage?: SettingsPage
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  workspacePath: string;
+  serverUrl: string | null;
+  serverConnected: boolean;
+  initialPage?: SettingsPage;
 }) {
-  const [page, setPage] = useState<SettingsPage>(initialPage)
+  const [page, setPage] = useState<SettingsPage>(initialPage);
 
   // Sync initialPage when dialog opens with a different page
   React.useEffect(() => {
-    if (open) setPage(initialPage)
-  }, [open, initialPage])
+    if (open) setPage(initialPage);
+  }, [open, initialPage]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -80,20 +77,20 @@ export function SettingsDialog({
         </VisuallyHidden.Root>
 
         {/* Sidebar */}
-        <div className="w-[200px] shrink-0 border-r border-border-weak/50 flex flex-col px-3 py-4">
+        <div className="w-50 shrink-0 bg-background-base border-r border-border-weak flex flex-col px-3 py-4">
           <nav className="flex flex-col gap-1 flex-1">
             {NAV_GROUPS.map((group, gi) => (
               <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1 block">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2 mb-1 block">
                   {group.label}
                 </span>
                 {group.items.map((item) => {
-                  const Icon = item.icon
-                  const isActive = page === item.id
+                  const Icon = item.icon;
+                  const isActive = page === item.id;
                   return (
                     <button
                       key={item.id}
-                      className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                      className={`w-full flex items-center gap-2 px-2 py-1.5 cursor-pointer rounded-md text-base transition-colors ${
                         isActive
                           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -103,27 +100,36 @@ export function SettingsDialog({
                       <Icon size={18} weight={isActive ? "fill" : "regular"} />
                       {item.label}
                     </button>
-                  )
+                  );
                 })}
               </div>
             ))}
           </nav>
-          <span className="text-xs text-muted-foreground px-2">{APP_VERSION}</span>
+          <span className="text-xs text-muted-foreground px-2">
+            {APP_VERSION}
+          </span>
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0 overflow-y-auto">
-          <div className="max-w-[560px] mx-auto px-8 py-6">
-            {page === "general" && <SettingsGeneral workspacePath={workspacePath} />}
+          <div className="mx-auto px-8 py-6">
+            {page === "general" && (
+              <SettingsGeneral workspacePath={workspacePath} />
+            )}
             {page === "appearance" && <SettingsAppearance />}
-            {page === "agents" && <SettingsAgents workspacePath={workspacePath} />}
+            {page === "agents" && (
+              <SettingsAgents workspacePath={workspacePath} />
+            )}
             {page === "server" && (
-              <SettingsServer serverUrl={serverUrl} connected={serverConnected} />
+              <SettingsServer
+                serverUrl={serverUrl}
+                connected={serverConnected}
+              />
             )}
             {page === "about" && <SettingsAbout />}
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
