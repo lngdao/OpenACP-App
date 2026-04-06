@@ -116,6 +116,10 @@ function turnToMessage(turn: HistoryTurn, sessionId: string): Message {
     }
   }
 
+  if (turn.sourceAdapterId) {
+    msg.sourceAdapterId = turn.sourceAdapterId
+  }
+
   return msg
 }
 
