@@ -87,30 +87,42 @@ jobs:
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
           echo "Version: $VERSION"
-          # Version format is YYYY.MDD.N (e.g. 2026.403.1) — already semver-compatible
+
           node -e "
             const fs = require('fs');
             const v = '$VERSION';
-            // WiX3 MSI requires major ≤ 255. Convert YYYY.MDD.N → YY.MDD.N for WiX.
             const parts = v.split('.');
-            const wixVersion = (parseInt(parts[0]) % 100) + '.' + parts.slice(1).join('.');
+            const yyyy = parseInt(parts[0]);
+            const mdd = parts[1];
+            const n = parseInt(parts[2] || '1');
+
+            // WiX MSI: major ≤ 255, minor ≤ 255, build ≤ 65535.
+            // YYYY.MDD.N → YY.M.(DD * 100 + N)
+            // e.g. 2026.403.1 → 26.4.301, 2026.1231.5 → 26.12.3105
+            const yy = yyyy % 100;
+            const m = parseInt(mdd.length <= 3 ? mdd.slice(0, -2) : mdd.slice(0, -2));
+            const dd = parseInt(mdd.slice(-2));
+            const wixVersion = yy + '.' + m + '.' + (dd * 100 + n);
+
             // package.json
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
             pkg.version = v;
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-            // tauri.conf.json — set WiX version override for Windows MSI
+
+            // tauri.conf.json — set WiX version override
             const conf = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
-            conf.version = v;
             if (!conf.bundle) conf.bundle = {};
             if (!conf.bundle.windows) conf.bundle.windows = {};
             if (!conf.bundle.windows.wix) conf.bundle.windows.wix = {};
             conf.bundle.windows.wix.version = wixVersion;
             fs.writeFileSync('src-tauri/tauri.conf.json', JSON.stringify(conf, null, 2) + '\n');
+
             // Cargo.toml
             let cargo = fs.readFileSync('src-tauri/Cargo.toml', 'utf8');
             cargo = cargo.replace(/^version = \".*\"/m, 'version = \"' + v + '\"');
             fs.writeFileSync('src-tauri/Cargo.toml', cargo);
-            console.log('Version:', v, '| WiX:', wixVersion);
+
+            console.log('App version:', v, '| WiX:', wixVersion);
           "
 
       # Auto-updater requires signed artifacts. Generate keys once with:
