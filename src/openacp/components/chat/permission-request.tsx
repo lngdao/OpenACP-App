@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import { usePermissions } from "../../context/permissions"
 import { useChat } from "../../context/chat"
+import { Button } from "../ui/button"
 
 interface Props {
   sessionId: string
@@ -67,13 +68,13 @@ export function PermissionRequestCard({ sessionId }: Props) {
       tabIndex={-1}
       className="my-3 mx-0 rounded-lg overflow-hidden focus:outline-none"
       style={{
-        background: "var(--surface-raised-base)",
-        border: "1px solid var(--border-base)",
+        background: "var(--secondary)",
+        border: "1px solid var(--border)",
       }}
     >
       {/* Title */}
       <div className="px-3.5 pt-3 pb-2">
-        <div className="text-13-medium text-text-strong">
+        <div className="text-sm-medium text-foreground">
           {request.description}
         </div>
       </div>
@@ -83,12 +84,13 @@ export function PermissionRequestCard({ sessionId }: Props) {
         {request.options.map((opt, idx) => {
           const isFirst = idx === 0
           return (
-            <button
+            <Button
               key={opt.id}
+              variant="ghost"
               disabled={isResolving}
               onClick={() => permissions.resolve(sessionId, request.id, opt.id)}
               onMouseEnter={() => setHighlighted(idx)}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-left transition-colors disabled:opacity-50"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 h-auto justify-start text-left"
               style={{
                 background: highlighted === idx
                   ? "var(--surface-interactive-subtle, rgba(100,116,139,0.25))"
@@ -97,13 +99,13 @@ export function PermissionRequestCard({ sessionId }: Props) {
               }}
             >
               <span
-                className="text-12-regular shrink-0"
-                style={{ color: "var(--text-weak)", width: "14px" }}
+                className="text-sm-regular shrink-0"
+                style={{ color: "var(--muted-foreground)", width: "14px" }}
               >
                 {idx + 1}
               </span>
-              <span className="text-13-regular text-text-strong">{opt.label}</span>
-            </button>
+              <span className="text-sm-regular text-foreground">{opt.label}</span>
+            </Button>
           )
         })}
       </div>
@@ -114,7 +116,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
           ref={inputRef}
           type="text"
           placeholder="Tell agent what to do instead"
-          className="w-full bg-transparent text-13-regular text-text-strong placeholder:text-text-weak focus:outline-none rounded-md px-2.5 py-1.5"
+          className="w-full bg-transparent text-sm-regular text-foreground placeholder:text-muted-foreground focus:outline-none rounded-md px-2.5 py-1.5"
           style={{
             background: "var(--surface-inset-base)",
             border: "1px solid var(--border-weaker-base)",
@@ -135,13 +137,13 @@ export function PermissionRequestCard({ sessionId }: Props) {
 
       {/* Hint */}
       <div className="px-3.5 pb-2.5">
-        <span className="text-11-regular" style={{ color: "var(--text-weaker)" }}>
+        <span className="text-2xs-regular" style={{ color: "var(--foreground-weaker)" }}>
           Esc to cancel
         </span>
         {isResolving && (
           <span
             className="inline-block w-3 h-3 border-2 rounded-full oac-spinner ml-2 align-middle"
-            style={{ borderColor: "var(--text-weak)", borderTopColor: "transparent" }}
+            style={{ borderColor: "var(--muted-foreground)", borderTopColor: "transparent" }}
           />
         )}
       </div>

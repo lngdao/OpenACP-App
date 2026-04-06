@@ -1,6 +1,7 @@
 import React from "react"
 import { invoke } from "@tauri-apps/api/core"
-import { GearSix, Plus, Trash } from "@phosphor-icons/react"
+import { GearSix, PuzzlePiece, Plus, Trash } from "@phosphor-icons/react"
+import { Button } from "./ui/button"
 
 const AVATAR_COLORS = ["pink", "mint", "orange", "purple", "cyan", "lime"] as const
 
@@ -21,6 +22,7 @@ export function SidebarRail(props: {
   onSwitchWorkspace: (dir: string) => void
   onReconnect?: (dir: string) => void
   onOpenFolder: () => void
+  onOpenPlugins?: () => void
   onOpenSettings?: () => void
 }) {
   const dirName = (dir: string) => dir.split("/").pop() || "Workspace"
@@ -28,7 +30,7 @@ export function SidebarRail(props: {
   return (
     <div
       data-component="sidebar-rail"
-      className="w-14 shrink-0 bg-background-base flex flex-col items-center overflow-hidden"
+      className="w-14 shrink-0 bg-background flex flex-col items-center overflow-hidden"
     >
       <div className="flex-1 min-h-0 w-full">
         <div className="h-full w-full flex flex-col items-center gap-2 px-2 overflow-y-auto no-scrollbar pt-5">
@@ -42,56 +44,57 @@ export function SidebarRail(props: {
                 <button
                   type="button"
                   className={`flex items-center justify-center size-8 rounded-md overflow-hidden transition-all cursor-default ${
-                    isActive ? "ring-2 ring-text-base ring-offset-1 ring-offset-background-base" : "opacity-60 hover:opacity-100"
+                    isActive ? "ring-2 ring-foreground-weak ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100"
                   }`}
                   onClick={() => hasError && props.onReconnect ? props.onReconnect(dir) : props.onSwitchWorkspace(dir)}
                 >
                   <div
-                    className="size-full rounded-lg flex items-center justify-center text-12-medium"
+                    className="size-full rounded-lg flex items-center justify-center text-sm font-medium leading-lg"
                     style={{ background: colors.background, color: colors.foreground }}
                   >
                     {initial}
                   </div>
                 </button>
                 {hasError && (
-                  <div className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-status-error border-2 border-background-base pointer-events-none" />
+                  <div className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-status-error border-2 border-background pointer-events-none" />
                 )}
               </div>
             )
           })}
 
           <div className="mt-1">
-            <button
-              className="size-8 rounded-md flex items-center justify-center hover:bg-surface-raised-base-hover transition-colors"
+            <Button
+              variant="ghost"
+              size="icon-lg"
               title="Open workspace"
               onClick={props.onOpenFolder}
             >
-              <Plus size={16} className="text-icon-weak" />
-            </button>
+              <Plus size={16} className="text-foreground-weak" />
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="shrink-0 w-full pb-5 pt-3 flex flex-col items-center gap-2">
         {import.meta.env.DEV && (
-          <button
-            className="size-8 rounded-md flex items-center justify-center hover:bg-surface-raised-base-hover"
+          <Button
+            variant="ghost"
+            size="icon-lg"
             title="[Dev] Reset OpenACP"
             onClick={async () => {
               await invoke('dev_reset_openacp')
               location.reload()
             }}
           >
-            <Trash size={16} className="text-icon-weak" />
-          </button>
+            <Trash size={16} className="text-foreground-weak" />
+          </Button>
         )}
-        <button
-          className="size-8 rounded-md flex items-center justify-center hover:bg-surface-raised-base-hover"
-          title="Settings"
-          onClick={props.onOpenSettings}
-        >
-          <GearSix size={16} className="text-icon-weak" />
-        </button>
+        <Button variant="ghost" size="icon-lg" title="Plugins" onClick={props.onOpenPlugins}>
+          <PuzzlePiece size={16} className="text-foreground-weak" />
+        </Button>
+        <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
+          <GearSix size={16} className="text-foreground-weak" />
+        </Button>
       </div>
     </div>
   )

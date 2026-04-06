@@ -47,6 +47,7 @@
     "marked-shiki": "^1.2.1",
     "morphdom": "^2.7.8",
     "motion": "^12.38.0",
+    "radix-ui": "^1.4.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "remeda": "^2.33.6",
