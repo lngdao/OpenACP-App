@@ -1,13 +1,4 @@
 {
-  "_todo_overlay_titlebar": "Uncomment app.windows below when UI has padding-top for traffic lights",
-  "_app_windows_disabled": [
-    {
-      "titleBarStyle": "Overlay",
-      "hiddenTitle": true,
-      "transparent": true,
-      "decorations": true
-    }
-  ],
   "bundle": {
     "targets": ["dmg"]
   }
