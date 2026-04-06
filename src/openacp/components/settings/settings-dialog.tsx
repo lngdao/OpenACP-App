@@ -73,7 +73,7 @@ export function SettingsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-[800px] max-w-[800px] h-[560px] p-0 gap-0 overflow-hidden flex flex-row bg-card"
+        className="w-[90vw] max-w-[900px] h-[80vh] max-h-[640px] p-0 gap-0 overflow-hidden flex flex-row bg-card"
       >
         <VisuallyHidden.Root>
           <DialogTitle>Settings</DialogTitle>
@@ -113,7 +113,7 @@ export function SettingsDialog({
 
         {/* Content */}
         <div className="flex-1 min-w-0 overflow-y-auto">
-          <div className="max-w-[480px] mx-auto px-8 py-6">
+          <div className="max-w-[560px] mx-auto px-8 py-6">
             {page === "general" && <SettingsGeneral workspacePath={workspacePath} />}
             {page === "appearance" && <SettingsAppearance />}
             {page === "agents" && <SettingsAgents workspacePath={workspacePath} />}
