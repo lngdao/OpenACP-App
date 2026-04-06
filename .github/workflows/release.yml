@@ -87,13 +87,23 @@ jobs:
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
           echo "Version: $VERSION"
-          # Version format is YYYY.MDD.N (e.g. 2026.403.1) — already semver-compatible
+          # Version format is YYYY.MMDD.N (e.g. 2026.406.1)
           node -e "
             const fs = require('fs');
             const v = '$VERSION';
-            // WiX3 MSI requires major ≤ 255. Convert YYYY.MDD.N → YY.MDD.N for WiX.
+            // WiX3 MSI requires Major ≤ 255 and Minor ≤ 255.
+            // YYYY.MMDD.N exceeds both limits (e.g. major=2026, minor=406).
+            // Encode as YY.MM.(DD*100+N):
+            //   2026.406.1 → 26.4.601  (year=26, month=4, day*100+patch=601)
+            //   2026.1205.2 → 26.12.502
+            // All components stay within WiX limits (≤255 for major/minor, ≤65535 for patch).
             const parts = v.split('.');
-            const wixVersion = (parseInt(parts[0]) % 100) + '.' + parts.slice(1).join('.');
+            const year = parseInt(parts[0]) % 100;
+            const mmdd = parts[1];
+            const month = parseInt(mmdd.slice(0, -2));   // leading digits = month
+            const day   = parseInt(mmdd.slice(-2));      // last 2 digits = day
+            const patch = parseInt(parts[2]);
+            const wixVersion = year + '.' + month + '.' + (day * 100 + patch);
             // package.json
             const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
             pkg.version = v;
