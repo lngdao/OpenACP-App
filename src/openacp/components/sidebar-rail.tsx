@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { GearSix, PuzzlePiece, Plus, Trash } from "@phosphor-icons/react"
 import { Button } from "./ui/button"
@@ -15,17 +15,71 @@ function avatarColor(dir: string) {
   }
 }
 
+/** Get display name: prefer directory folder name over raw name/id */
+function displayName(ws: WorkspaceItem) {
+  const folderName = ws.directory ? ws.directory.split("/").pop() : null
+  return folderName || ws.name || ws.id
+}
+
+export interface WorkspaceItem {
+  id: string
+  directory: string
+  name: string
+  type: "local" | "remote"
+}
+
+function ContextMenu(props: {
+  x: number
+  y: number
+  onRemove: () => void
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) props.onClose()
+    }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") props.onClose()
+    }
+    document.addEventListener("mousedown", handleClick)
+    document.addEventListener("keydown", handleKey)
+    return () => {
+      document.removeEventListener("mousedown", handleClick)
+      document.removeEventListener("keydown", handleKey)
+    }
+  }, [props.onClose])
+
+  return (
+    <div
+      ref={ref}
+      className="fixed z-50 min-w-[140px] rounded-md border border-border-weak bg-popover shadow-lg py-1"
+      style={{ left: props.x, top: props.y }}
+    >
+      <button
+        className="w-full px-3 py-1.5 text-left text-sm text-foreground hover:bg-accent transition-colors"
+        onClick={() => { props.onRemove(); props.onClose() }}
+      >
+        Remove workspace
+      </button>
+    </div>
+  )
+}
+
 export function SidebarRail(props: {
-  workspaces: string[]
-  activeWorkspace: string
-  errorWorkspaces?: Set<string>
-  onSwitchWorkspace: (dir: string) => void
-  onReconnect?: (dir: string) => void
+  workspaces: WorkspaceItem[]
+  activeId: string | null
+  connectedIds?: Set<string>
+  errorIds?: Set<string>
+  onSwitchWorkspace: (id: string) => void
+  onRemoveWorkspace?: (id: string) => void
+  onReconnect?: (id: string) => void
   onOpenFolder: () => void
   onOpenPlugins?: () => void
   onOpenSettings?: () => void
 }) {
-  const dirName = (dir: string) => dir.split("/").pop() || "Workspace"
+  const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null)
 
   return (
     <div
@@ -34,19 +88,29 @@ export function SidebarRail(props: {
     >
       <div className="flex-1 min-h-0 w-full">
         <div className="h-full w-full flex flex-col items-center gap-2 px-2 overflow-y-auto no-scrollbar pt-5">
-          {props.workspaces.map((dir) => {
-            const isActive = dir === props.activeWorkspace
-            const hasError = props.errorWorkspaces?.has(dir) ?? false
-            const colors = avatarColor(dir)
-            const initial = dirName(dir).charAt(0).toUpperCase()
+          {props.workspaces.map((ws) => {
+            const isActive = ws.id === props.activeId
+            const hasError = props.errorIds?.has(ws.id) ?? false
+            const isConnected = props.connectedIds?.has(ws.id) ?? false
+            const colors = avatarColor(ws.directory || ws.id)
+            const label = displayName(ws)
+            const initial = label.charAt(0).toUpperCase()
             return (
-              <div key={dir} className="relative" title={hasError ? `${dirName(dir)} -- reconnect needed` : dirName(dir)}>
+              <div
+                key={ws.id}
+                className="relative"
+                title={`${label}${ws.type === "remote" ? " (remote)" : ""}${hasError ? " — reconnect needed" : ""}`}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  setContextMenu({ id: ws.id, x: e.clientX, y: e.clientY })
+                }}
+              >
                 <button
                   type="button"
                   className={`flex items-center justify-center size-8 rounded-md overflow-hidden transition-all cursor-default ${
                     isActive ? "ring-2 ring-foreground-weak ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100"
                   }`}
-                  onClick={() => hasError && props.onReconnect ? props.onReconnect(dir) : props.onSwitchWorkspace(dir)}
+                  onClick={() => hasError && props.onReconnect ? props.onReconnect(ws.id) : props.onSwitchWorkspace(ws.id)}
                 >
                   <div
                     className="size-full rounded-lg flex items-center justify-center text-sm font-medium leading-lg"
@@ -55,9 +119,9 @@ export function SidebarRail(props: {
                     {initial}
                   </div>
                 </button>
-                {hasError && (
-                  <div className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-status-error border-2 border-background pointer-events-none" />
-                )}
+                <div className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background pointer-events-none"
+                  style={{ background: hasError ? 'var(--surface-critical-strong)' : isConnected ? 'var(--surface-success-strong)' : 'var(--text-weaker)' }}
+                />
               </div>
             )
           })}
@@ -96,6 +160,15 @@ export function SidebarRail(props: {
           <GearSix size={16} className="text-foreground-weak" />
         </Button>
       </div>
+
+      {contextMenu && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onRemove={() => props.onRemoveWorkspace?.(contextMenu.id)}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
     </div>
   )
 }

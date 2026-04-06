@@ -72,6 +72,7 @@ export function OpenACPApp() {
   const [errorWorkspaceIds, setErrorWorkspaceIds] = useState<Set<string>>(
     new Set(),
   );
+  const [connectedWorkspaceIds, setConnectedWorkspaceIds] = useState<Set<string>>(new Set());
 
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
   const [addWorkspaceDefaultTab, setAddWorkspaceDefaultTab] = useState<
@@ -250,7 +251,9 @@ export function OpenACPApp() {
         }
         if (info) {
           try {
-            const res = await fetch(`${info.url}/api/v1/system/health`);
+            const res = await fetch(`${info.url}/api/v1/system/health`, {
+              headers: info.token ? { Authorization: `Bearer ${info.token}` } : {},
+            });
             if (res.ok) {
               setServerLoading(false);
               setServerError(false);
@@ -259,20 +262,23 @@ export function OpenACPApp() {
                 next.delete(instanceId);
                 return next;
               });
+              setConnectedWorkspaceIds((prev) => new Set([...prev, instanceId]));
               retryCountRef.current = 0;
               void refreshWorkspaceInfo(instanceId);
               return info;
             }
-          } catch {}
+          } catch { /* health check failed */ }
         }
         setServerLoading(false);
         setServerError(true);
         setErrorWorkspaceIds((prev) => new Set([...prev, instanceId]));
+        setConnectedWorkspaceIds((prev) => { const next = new Set(prev); next.delete(instanceId); return next });
         return null;
       } catch {
         setServerLoading(false);
         setServerError(true);
         setErrorWorkspaceIds((prev) => new Set([...prev, instanceId]));
+        setConnectedWorkspaceIds((prev) => { const next = new Set(prev); next.delete(instanceId); return next });
         return null;
       }
     },
@@ -302,20 +308,28 @@ export function OpenACPApp() {
     [stopRetry, resolveServer],
   );
 
+  // Keep refs to avoid stale closures while only re-running on active change
+  const resolveServerRef = useRef(resolveServer);
+  const startRetryRef = useRef(startRetry);
+  const stopRetryRef = useRef(stopRetry);
+  resolveServerRef.current = resolveServer;
+  startRetryRef.current = startRetry;
+  stopRetryRef.current = stopRetry;
+
   // React to active workspace changes
   useEffect(() => {
-    stopRetry();
+    stopRetryRef.current();
     setServer(null);
     if (!active) return;
     let cancelled = false;
-    void resolveServer(active).then((info) => {
+    void resolveServerRef.current(active).then((info) => {
       if (cancelled) return;
       if (info) setServer(info);
-      else startRetry(active);
+      else startRetryRef.current(active);
     });
     return () => {
       cancelled = true;
-      stopRetry();
+      stopRetryRef.current();
     };
   }, [active]);
 
@@ -403,30 +417,13 @@ export function OpenACPApp() {
   return (
     <div className="flex h-screen w-screen bg-background text-foreground-weak select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
       <SidebarRail
-        workspaces={workspaces.map((w) => w.directory || w.id)}
-        activeWorkspace={
-          activeWorkspace?.directory ?? activeWorkspace?.id ?? ""
-        }
-        errorWorkspaces={
-          new Set(
-            workspaces
-              .filter((w) => errorWorkspaceIds.has(w.id))
-              .map((w) => w.directory || w.id),
-          )
-        }
-        onSwitchWorkspace={(dir) => {
-          const match = workspaces.find(
-            (w) => w.directory === dir || w.id === dir,
-          );
-          if (match) switchInstance(match.id);
-        }}
-        onReconnect={(dir) => {
-          const match = workspaces.find(
-            (w) => w.directory === dir || w.id === dir,
-          );
-          if (match) switchInstance(match.id);
-          openAddWorkspaceModal("remote");
-        }}
+        workspaces={workspaces.map((w) => ({ id: w.id, directory: w.directory, name: w.name, type: w.type }))}
+        activeId={active}
+        connectedIds={connectedWorkspaceIds}
+        errorIds={errorWorkspaceIds}
+        onSwitchWorkspace={(id) => switchInstance(id)}
+        onRemoveWorkspace={(id) => removeInstance(id)}
+        onReconnect={(id) => { switchInstance(id); openAddWorkspaceModal("remote") }}
         onOpenFolder={() => openAddWorkspaceModal("local")}
         onOpenPlugins={() => setPluginsOpen(true)}
         onOpenSettings={() => {
