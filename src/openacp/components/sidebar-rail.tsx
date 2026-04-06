@@ -1,6 +1,6 @@
 import React from "react"
 import { invoke } from "@tauri-apps/api/core"
-import { GearSix, Plus, Trash } from "@phosphor-icons/react"
+import { GearSix, PuzzlePiece, Plus, Trash } from "@phosphor-icons/react"
 import { Button } from "./ui/button"
 
 const AVATAR_COLORS = ["pink", "mint", "orange", "purple", "cyan", "lime"] as const
@@ -22,6 +22,7 @@ export function SidebarRail(props: {
   onSwitchWorkspace: (dir: string) => void
   onReconnect?: (dir: string) => void
   onOpenFolder: () => void
+  onOpenPlugins?: () => void
   onOpenSettings?: () => void
 }) {
   const dirName = (dir: string) => dir.split("/").pop() || "Workspace"
@@ -88,6 +89,9 @@ export function SidebarRail(props: {
             <Trash size={16} className="text-foreground-weak" />
           </Button>
         )}
+        <Button variant="ghost" size="icon-lg" title="Plugins" onClick={props.onOpenPlugins}>
+          <PuzzlePiece size={16} className="text-foreground-weak" />
+        </Button>
         <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
           <GearSix size={16} className="text-foreground-weak" />
         </Button>
