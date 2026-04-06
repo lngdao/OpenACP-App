@@ -199,6 +199,7 @@ export interface HistoryTurn {
   steps?: HistoryStep[]
   usage?: { tokensUsed?: number; contextSize?: number; cost?: unknown }
   stopReason?: string
+  sourceAdapterId?: string
 }
 
 export type HistoryStep =
