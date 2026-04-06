@@ -31,7 +31,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ1RjlDMTBFNjYzRTExNzUKUldSMUVUNW1Ec0g1MVNCWTJ6Z1N5TFo4by9zdDFXb1FleEltUE0xb3ZIQUFWMUh3Yi9lUnZIeEcK",
       "endpoints": [
         "https://github.com/Open-ACP/OpenACP-App/releases/latest/download/latest.json"
       ],
