@@ -1,5 +1,35 @@
 import React, { useEffect, useState } from "react"
 import { getSetting, setSetting, applyTheme, applyFontSize, type AppSettings } from "../../lib/settings-store"
+import { SettingCard } from "./setting-card"
+import { SettingRow } from "./setting-row"
+
+function ToggleGroup<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string }[]
+  value: T
+  onChange: (value: T) => void
+}) {
+  return (
+    <div className="flex items-center gap-0 rounded-md border border-border overflow-hidden">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          className={`px-3 py-1 text-sm font-medium transition-colors border-r border-border last:border-r-0 ${
+            value === opt.value
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground-weak bg-background"
+          }`}
+          onClick={() => onChange(opt.value)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export function SettingsAppearance() {
   const [theme, setTheme] = useState<AppSettings["theme"]>("dark")
@@ -23,59 +53,33 @@ export function SettingsAppearance() {
   }
 
   return (
-    <div data-component="oac-settings" className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-16-medium text-text-strong mb-1">Appearance</h2>
-        <p className="text-13-regular text-text-weak">Customize the look and feel</p>
-      </div>
-
-      <SettingRow label="Theme" description="Choose between light, dark, or system theme">
-        <div className="flex items-center gap-1 rounded-md border border-border-base p-0.5">
-          {(["light", "dark", "system"] as const).map((opt) => (
-            <button
-              key={opt}
-              className={`px-3 py-1 rounded text-12-medium transition-colors ${
-                theme === opt
-                  ? "bg-surface-raised-base text-text-strong"
-                  : "text-text-weak hover:text-text-base"
-              }`}
-              onClick={() => void handleThemeChange(opt)}
-            >
-              {opt.charAt(0).toUpperCase() + opt.slice(1)}
-            </button>
-          ))}
-        </div>
-      </SettingRow>
-
-      <SettingRow label="Font size" description="Adjust the interface font size">
-        <div className="flex items-center gap-1 rounded-md border border-border-base p-0.5">
-          {(["small", "medium", "large"] as const).map((opt) => (
-            <button
-              key={opt}
-              className={`px-3 py-1 rounded text-12-medium transition-colors ${
-                fontSize === opt
-                  ? "bg-surface-raised-base text-text-strong"
-                  : "text-text-weak hover:text-text-base"
-              }`}
-              onClick={() => void handleFontSizeChange(opt)}
-            >
-              {opt.charAt(0).toUpperCase() + opt.slice(1)}
-            </button>
-          ))}
-        </div>
-      </SettingRow>
-    </div>
-  )
-}
-
-function SettingRow(props: { label: string; description: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2 border-b border-border-weaker-base last:border-b-0">
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <span className="text-14-medium text-text-strong">{props.label}</span>
-        <span className="text-12-regular text-text-weak">{props.description}</span>
-      </div>
-      <div className="shrink-0">{props.children}</div>
+    <div className="flex flex-col gap-6">
+      <SettingCard title="Theme">
+        <SettingRow label="Color scheme" description="Choose light, dark, or system theme">
+          <ToggleGroup
+            options={[
+              { value: "light", label: "Light" },
+              { value: "dark", label: "Dark" },
+              { value: "system", label: "System" },
+            ]}
+            value={theme}
+            onChange={(v) => void handleThemeChange(v)}
+          />
+        </SettingRow>
+      </SettingCard>
+      <SettingCard title="Typography">
+        <SettingRow label="Font size" description="Adjust the interface font size">
+          <ToggleGroup
+            options={[
+              { value: "small", label: "Small" },
+              { value: "medium", label: "Medium" },
+              { value: "large", label: "Large" },
+            ]}
+            value={fontSize}
+            onChange={(v) => void handleFontSizeChange(v)}
+          />
+        </SettingRow>
+      </SettingCard>
     </div>
   )
 }
