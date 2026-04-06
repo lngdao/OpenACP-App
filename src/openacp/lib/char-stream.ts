@@ -14,9 +14,12 @@ type Stream = {
   listeners: Set<(displayText: string) => void>
 }
 
-const DRAIN_BASE_CHARS = 80 // chars revealed per frame at normal pace
-const DRAIN_FAST_CHARS = 200 // chars revealed per frame when buffer is lagging
-const DRAIN_LAG_THRESHOLD = 300 // lag (chars) that triggers fast drain mode
+// Tuned to real ACP stream data: avg chunk ≈ 44 chars every ~410ms ≈ 1.8 chars/frame @60fps.
+// DRAIN_BASE_CHARS matches model output speed so each chunk "types out" smoothly before
+// the next chunk arrives, instead of appearing all at once in a single frame.
+const DRAIN_BASE_CHARS = 2   // chars revealed per frame at normal pace (~120 chars/sec @60fps)
+const DRAIN_FAST_CHARS = 20  // chars revealed per frame when buffer is building up
+const DRAIN_LAG_THRESHOLD = 100 // lag threshold (≈ 2 avg chunks) that triggers fast drain
 
 const streams = new Map<string, Stream>()
 let rafScheduled = false
