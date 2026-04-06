@@ -1,8 +1,9 @@
 import React from "react"
+import { cn } from "../../../lib/utils"
 
 export function DockShell({ children, className, ...rest }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div {...rest} data-dock-surface="shell" className={className}>
+    <div {...rest} data-dock-surface="shell" className={cn(className)}>
       {children}
     </div>
   )
@@ -10,7 +11,7 @@ export function DockShell({ children, className, ...rest }: React.HTMLAttributes
 
 export function DockShellForm({ children, className, ...rest }: React.FormHTMLAttributes<HTMLFormElement>) {
   return (
-    <form {...rest} data-dock-surface="shell" className={className}>
+    <form {...rest} data-dock-surface="shell" className={cn(className)}>
       {children}
     </form>
   )
@@ -26,7 +27,7 @@ export function DockTray({ attach, children, className, ...rest }: DockTrayProps
       {...rest}
       data-dock-surface="tray"
       data-dock-attach={attach || "none"}
-      className={className}
+      className={cn(className)}
     >
       {children}
     </div>

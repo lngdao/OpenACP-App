@@ -1,5 +1,6 @@
 import React from "react"
 import { invoke } from "@tauri-apps/api/core"
+import { GearSix, Plus, Trash } from "@phosphor-icons/react"
 
 const AVATAR_COLORS = ["pink", "mint", "orange", "purple", "cyan", "lime"] as const
 
@@ -64,7 +65,7 @@ export function SidebarRail(props: {
               title="Open workspace"
               onClick={props.onOpenFolder}
             >
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 4.16699V15.8337M4.16699 10.0003H15.8337" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-icon-weak" /></svg>
+              <Plus size={16} className="text-icon-weak" />
             </button>
           </div>
         </div>
@@ -80,11 +81,11 @@ export function SidebarRail(props: {
               location.reload()
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3.33 6.67h13.34M5 6.67V15.83a1.67 1.67 0 001.67 1.67h6.66A1.67 1.67 0 0015 15.83V6.67M7.5 3.33h5" stroke="currentColor" strokeLinecap="round" className="text-icon-weak" /></svg>
+            <Trash size={16} className="text-icon-weak" />
           </button>
         )}
         <button className="size-8 rounded-md flex items-center justify-center hover:bg-surface-raised-base-hover" title="Settings">
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.2" className="text-icon-weak" /><path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" className="text-icon-weak" /></svg>
+          <GearSix size={16} className="text-icon-weak" />
         </button>
       </div>
     </div>

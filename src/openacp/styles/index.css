@@ -6,5 +6,7 @@
 @import "./base.css" layer(base);
 @import "katex/dist/katex.min.css" layer(base);
 
+@import "./components.css" layer(components);
+
 @import "./utilities.css" layer(utilities);
 @import "./animations.css" layer(utilities);

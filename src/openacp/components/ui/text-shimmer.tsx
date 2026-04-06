@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react"
+import { cn } from "../../../lib/utils"
 
 interface TextShimmerProps {
   text: string
@@ -55,7 +56,7 @@ export function TextShimmer({
     <Component
       data-component="text-shimmer"
       data-active={active ? "true" : "false"}
-      className={className}
+      className={cn("inline-flex items-baseline font-[inherit]", className)}
       aria-label={text}
       style={combinedStyle}
     >

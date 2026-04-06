@@ -1,4 +1,5 @@
 import React, { useCallback } from "react"
+import { cn } from "../../../lib/utils"
 
 export interface ResizeHandleProps {
   direction: "horizontal" | "vertical"
@@ -73,7 +74,12 @@ export function ResizeHandle({
       data-component="resize-handle"
       data-direction={direction}
       data-edge={resolvedEdge}
-      className={className}
+      className={cn(
+        "absolute z-10 cursor-col-resize",
+        direction === "horizontal" ? "top-0 bottom-0 w-1.5" : "left-0 right-0 h-1.5 cursor-row-resize",
+        resolvedEdge === "start" ? (direction === "horizontal" ? "left-0" : "top-0") : (direction === "horizontal" ? "right-0" : "bottom-0"),
+        className,
+      )}
       onMouseDown={handleMouseDown}
     />
   )

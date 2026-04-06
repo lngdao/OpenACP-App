@@ -94,6 +94,16 @@ export interface ErrorBlock {
 
 export type MessageBlock = TextBlock | ThinkingBlock | ToolBlock | PlanBlock | ErrorBlock
 
+// ── File Attachments ───────────────────────────────────────────────────────
+
+export interface FileAttachment {
+  id: string
+  fileName: string
+  mimeType: string
+  dataUrl: string
+  size: number
+}
+
 // ── Messages ────────────────────────────────────────────────────────────────
 
 export interface Message {
@@ -103,6 +113,7 @@ export interface Message {
   parentID?: string
   parts: MessagePart[]
   blocks: MessageBlock[]
+  attachments?: FileAttachment[]
   createdAt: number
 }
 

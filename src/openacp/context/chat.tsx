@@ -20,7 +20,7 @@ interface ChatContext {
   sseStatus: () => 'connected' | 'reconnecting' | 'disconnected'
   activeSession: () => string | undefined
   setActiveSession: (id: string) => void
-  sendPrompt: (text: string) => Promise<boolean>
+  sendPrompt: (text: string, attachments?: import("../types").FileAttachment[]) => Promise<boolean>
   abort: () => void
   connect: () => void
   addCommandResponse: (sessionID: string, text: string, role?: "user" | "assistant") => void
@@ -532,7 +532,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     })
   }, [workspace.directory, workspace.client.eventsUrl])
 
-  async function doSendPrompt(text: string): Promise<boolean> {
+  async function doSendPrompt(text: string, attachments?: import("../types").FileAttachment[]): Promise<boolean> {
     let sessionID = store.activeSession
     if (!sessionID) {
       const session = await sessions.create()
@@ -546,6 +546,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       id: userMsgId, role: "user", sessionID,
       parts: [{ id: nextPartId(), type: "text", content: text }],
       blocks: [{ type: "text", id: nextPartId(), content: text }],
+      attachments: attachments?.length ? attachments : undefined,
       createdAt: Date.now(),
     })
 
@@ -560,18 +561,18 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     connect()
 
     try {
-      await workspace.client.sendPrompt(sessionID, text)
+      await workspace.client.sendPrompt(sessionID, text, attachments)
       return true
     } catch {
       return false
     }
   }
 
-  const sendPrompt = useCallback(async (text: string): Promise<boolean> => {
+  const sendPrompt = useCallback(async (text: string, attachments?: import("../types").FileAttachment[]): Promise<boolean> => {
     if (sendingRef.current) return false
     sendingRef.current = true
     try {
-      return await doSendPrompt(text)
+      return await doSendPrompt(text, attachments)
     } finally {
       sendingRef.current = false
     }
@@ -598,8 +599,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     abortedSessions.current.add(sessionID)
     assistantMsgId.current.delete(sessionID)
     setStore((draft) => { draft.streaming = false })
-    setTimeout(() => abortedSessions.current.delete(sessionID), 2000)
-  }, [store.activeSession])
+    // Tell server to actually cancel the agent's prompt
+    workspace.client.cancelPrompt(sessionID).catch(() => {})
+    setTimeout(() => abortedSessions.current.delete(sessionID), 5000)
+  }, [store.activeSession, workspace.client])
 
   // Connect on mount, disconnect on cleanup
   useEffect(() => {

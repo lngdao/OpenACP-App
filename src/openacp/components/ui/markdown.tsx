@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useMemo } from "react"
+import React, { useRef, useEffect } from "react"
+import { cn } from "../../../lib/utils"
 import DOMPurify from "dompurify"
 import morphdom from "morphdom"
 import { marked } from "marked"
@@ -7,7 +8,8 @@ import markedShiki from "marked-shiki"
 import { bundledLanguages, type BundledLanguage } from "shiki"
 import { getSharedHighlighter, registerCustomTheme, type ThemeRegistrationResolved } from "@pierre/diffs"
 
-// Register the theme once
+// ── Theme ────────────────────────────────────────────────────────────────────
+
 let themeRegistered = false
 function ensureTheme() {
   if (themeRegistered) return
@@ -48,38 +50,43 @@ function ensureTheme() {
   })
 }
 
-// Build parser once
-let parserInstance: typeof marked | null = null
-function getParser() {
-  if (parserInstance) return parserInstance
+// ── Parsers ──────────────────────────────────────────────────────────────────
+
+const linkRenderer = {
+  link({ href, title, text }: { href: string; title?: string | null; text: string }) {
+    const titleAttr = title ? ` title="${title}"` : ""
+    return `<a href="${href}"${titleAttr} class="external-link" target="_blank" rel="noopener noreferrer">${text}</a>`
+  },
+}
+
+let fullParser: typeof marked | null = null
+let fastParser: typeof marked | null = null
+
+function getFullParser() {
+  if (fullParser) return fullParser
   ensureTheme()
-  parserInstance = marked.use(
-    {
-      renderer: {
-        link({ href, title, text }) {
-          const titleAttr = title ? ` title="${title}"` : ""
-          return `<a href="${href}"${titleAttr} class="external-link" target="_blank" rel="noopener noreferrer">${text}</a>`
-        },
-      },
-    },
+  fullParser = marked.use(
+    { renderer: linkRenderer },
     markedKatex({ throwOnError: false, nonStandard: true }),
     markedShiki({
       async highlight(code, lang) {
-        const highlighter = await getSharedHighlighter({
-          themes: ["OpenACP"],
-          langs: [],
-          preferredHighlighter: "shiki-wasm",
-        })
+        const highlighter = await getSharedHighlighter({ themes: ["OpenACP"], langs: [], preferredHighlighter: "shiki-wasm" })
         if (!(lang in bundledLanguages)) lang = "text"
-        if (!highlighter.getLoadedLanguages().includes(lang)) {
-          await highlighter.loadLanguage(lang as BundledLanguage)
-        }
+        if (!highlighter.getLoadedLanguages().includes(lang)) await highlighter.loadLanguage(lang as BundledLanguage)
         return highlighter.codeToHtml(code, { lang: lang || "text", theme: "OpenACP", tabindex: false })
       },
     }),
   )
-  return parserInstance
+  return fullParser
 }
+
+function getFastParser() {
+  if (fastParser) return fastParser
+  fastParser = marked.use({ renderer: linkRenderer }, markedKatex({ throwOnError: false, nonStandard: true }))
+  return fastParser
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 const sanitizeConfig = {
   USE_PROFILES: { html: true, mathMl: true },
@@ -93,7 +100,6 @@ function sanitize(html: string) {
   return DOMPurify.sanitize(html, sanitizeConfig)
 }
 
-// Cache for parsed HTML
 const cache = new Map<string, { hash: string; html: string }>()
 const MAX_CACHE = 200
 
@@ -102,6 +108,8 @@ function hashString(s: string): string {
   for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0
   return h.toString(36)
 }
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 interface MarkdownProps {
   text: string
@@ -113,6 +121,15 @@ interface MarkdownProps {
 export function Markdown({ text, cacheKey, streaming, className }: MarkdownProps) {
   const elRef = useRef<HTMLDivElement>(null)
   const renderingRef = useRef(false)
+  const prevStreamingRef = useRef(streaming)
+
+  // When streaming ends, invalidate cache to force full Shiki re-render
+  useEffect(() => {
+    if (prevStreamingRef.current && !streaming) {
+      cache.delete(cacheKey || "md")
+    }
+    prevStreamingRef.current = streaming
+  }, [streaming, cacheKey])
 
   useEffect(() => {
     if (!elRef.current || !text) return
@@ -130,39 +147,31 @@ export function Markdown({ text, cacheKey, streaming, className }: MarkdownProps
     }
 
     renderingRef.current = true
-    const parser = getParser()
+    // Fast parser during streaming (no Shiki), full parser when done
+    const parser = streaming ? getFastParser() : getFullParser()
     const result = parser.parse(text)
 
-    if (result instanceof Promise) {
-      result.then((html) => {
-        renderingRef.current = false
-        const safe = sanitize(html)
-        if (cache.size >= MAX_CACHE) {
-          const first = cache.keys().next().value
-          if (first) cache.delete(first)
-        }
-        cache.set(key, { hash, html: safe })
-        if (elRef.current) {
-          morphdom(elRef.current, `<div data-component="markdown">${safe}</div>`, { childrenOnly: true })
-        }
-      })
-    } else {
+    function apply(html: string) {
       renderingRef.current = false
-      const safe = sanitize(result)
-      if (cache.size >= MAX_CACHE) {
-        const first = cache.keys().next().value
-        if (first) cache.delete(first)
+      const safe = sanitize(html)
+      if (!streaming) {
+        if (cache.size >= MAX_CACHE) { const first = cache.keys().next().value; if (first) cache.delete(first) }
+        cache.set(key, { hash, html: safe })
       }
-      cache.set(key, { hash, html: safe })
-      morphdom(elRef.current, `<div data-component="markdown">${safe}</div>`, { childrenOnly: true })
+      if (elRef.current) {
+        morphdom(elRef.current, `<div data-component="markdown">${safe}</div>`, { childrenOnly: true })
+      }
     }
-  }, [text, cacheKey])
+
+    if (result instanceof Promise) result.then(apply)
+    else apply(result)
+  }, [text, cacheKey, streaming])
 
   return (
     <div
       ref={elRef}
       data-component="markdown"
-      className={className}
+      className={cn("prose prose-sm max-w-none", className)}
     />
   )
 }
