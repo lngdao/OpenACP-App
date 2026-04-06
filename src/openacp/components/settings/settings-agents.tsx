@@ -88,12 +88,7 @@ export function SettingsAgents({ workspacePath }: { workspacePath?: string }) {
   const available = filtered.filter((a) => !a.installed && a.available)
 
   return (
-    <div data-component="oac-settings" className="flex flex-col gap-6">
-      <div>
-        <h2 className="text-lg-medium text-foreground mb-1">Agents</h2>
-        <p className="text-sm-regular text-muted-foreground">Manage AI coding agents</p>
-      </div>
-
+    <div className="flex flex-col gap-4">
       <input
         type="text"
         placeholder="Search agents..."
