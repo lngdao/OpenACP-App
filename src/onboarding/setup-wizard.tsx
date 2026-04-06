@@ -76,7 +76,7 @@ export function SetupWizard(props: Props) {
             <div className="flex flex-col gap-2">
               <label className="text-md-medium text-text-strong">Workspace directory</label>
               <div className="flex h-10 items-center gap-2 rounded-md border border-border-base px-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-weak)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-weak)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
                 <input type="text" value={workspace} onChange={(e) => setWorkspace(e.target.value)} placeholder="/Users/you/projects" className="text-md-regular min-w-0 flex-1 bg-transparent text-text-strong outline-none placeholder:text-text-weak" />
                 <button onClick={async () => { const s = await openDialog({ directory: true, multiple: false }); if (s && typeof s === 'string') setWorkspace(s); }} className="text-md-medium shrink-0 text-text-interactive-base hover:underline">Browse</button>
               </div>

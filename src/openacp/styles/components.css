@@ -78,7 +78,7 @@
 
   /* Links */
   a {
-    color: var(--text-interactive-base);
+    color: var(--color-text-interactive-base);
     text-decoration: none;
     font-weight: inherit;
   }
