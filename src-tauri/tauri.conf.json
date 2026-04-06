@@ -49,7 +49,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "active": true,
-    "targets": "all"
+    "active": true
   }
 }

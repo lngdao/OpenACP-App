@@ -1,0 +1,15 @@
+{
+  "app": {
+    "windows": [
+      {
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "transparent": true,
+        "decorations": true
+      }
+    ]
+  },
+  "bundle": {
+    "targets": ["dmg"]
+  }
+}
