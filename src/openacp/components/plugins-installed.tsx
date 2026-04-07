@@ -96,7 +96,7 @@ export function InstalledTab({ workspace }: { workspace: WorkspaceCtx }) {
             <div className="mt-1 p-3 bg-surface-base rounded-md flex flex-col gap-2 border border-border">
               <CommandBlock label="Run in your terminal:" command={getConfigureCommand(plugin.name)} />
               <CommandBlock label="Restart the server to apply changes:" command={getRestartCommand()} />
-              <Button variant="ghost" size="xs" className="text-sm leading-lg text-muted-foreground hover:text-foreground-weak self-start px-0" onClick={() => setConfiguringPlugin(null)}>Close</Button>
+              <Button variant="ghost" size="xs" className="self-start px-0" onClick={() => setConfiguringPlugin(null)}>Close</Button>
             </div>
           )}
         </div>

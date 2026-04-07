@@ -121,7 +121,7 @@
   --input-selected: #e0eaff;
   --input-focus: #fcfdff;
   --input-disabled: #ededed;
-  --color-text-base: #6f6f6f;
+  --color-text-default: #6f6f6f;
   --color-text-weak: #8f8f8f;
   --color-text-weaker: #c7c7c7;
   --color-text-strong: #171717;
@@ -421,7 +421,7 @@
     --input-selected: #0b1730;
     --input-focus: #091123;
     --input-disabled: #282828;
-    --color-text-base: rgba(255, 255, 255, 0.618);
+    --color-text-default: rgba(255, 255, 255, 0.618);
     --color-text-weak: rgba(255, 255, 255, 0.422);
     --color-text-weaker: rgba(255, 255, 255, 0.284);
     --color-text-strong: rgba(255, 255, 255, 0.936);
@@ -720,7 +720,7 @@
   --input-selected: #0b1730;
   --input-focus: #091123;
   --input-disabled: #282828;
-  --color-text-base: rgba(255, 255, 255, 0.618);
+  --color-text-default: rgba(255, 255, 255, 0.618);
   --color-text-weak: rgba(255, 255, 255, 0.422);
   --color-text-weaker: rgba(255, 255, 255, 0.284);
   --color-text-strong: rgba(255, 255, 255, 0.936);
@@ -946,7 +946,7 @@
   --background-base: var(--background);
   --background-stronger: var(--card);
   --color-text-strong: var(--foreground);
-  --color-text-base: var(--foreground-weak);
+  --color-text-default: var(--foreground-weak);
   --color-text-weak: var(--muted-foreground);
   --color-text-weaker: var(--foreground-weaker);
   --color-text-invert-strong: var(--primary-foreground);

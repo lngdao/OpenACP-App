@@ -53,13 +53,13 @@ export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
           >
             <TabsTrigger
               value="local"
-              className="px-6 py-3 text-md-medium rounded-none"
+              className="px-6 py-3 text-base font-medium rounded-none"
             >
               Local
             </TabsTrigger>
             <TabsTrigger
               value="remote"
-              className="px-6 py-3 text-md-medium rounded-none"
+              className="px-6 py-3 text-base font-medium rounded-none"
             >
               Remote
             </TabsTrigger>

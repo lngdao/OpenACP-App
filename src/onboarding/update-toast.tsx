@@ -39,10 +39,10 @@ function Toast(props: { icon: React.ReactNode; title: string; description: strin
     <div className="pointer-events-auto flex w-[340px] items-center gap-3 rounded-lg border border-border-base bg-surface-raised-stronger px-4 py-3.5 shadow-lg">
       <div className="shrink-0">{props.icon}</div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm-medium text-text-strong">{props.title}</p><p className="text-sm-regular text-text-weak">{props.description}</p>
-        {props.error && <p className="text-sm-regular mt-1 text-surface-critical-strong">{props.error}</p>}
+        <p className="text-sm font-medium text-text-strong">{props.title}</p><p className="text-sm font-normal text-text-weak">{props.description}</p>
+        {props.error && <p className="text-sm font-normal mt-1 text-surface-critical-strong">{props.error}</p>}
       </div>
-      <button onClick={props.onUpdate} disabled={props.loading} className="text-sm-medium shrink-0 rounded-md bg-text-strong px-3.5 py-1.5 text-background-stronger transition-opacity hover:opacity-90 disabled:opacity-50">{props.loading ? '...' : 'Update'}</button>
+      <button onClick={props.onUpdate} disabled={props.loading} className="text-sm font-medium shrink-0 rounded-md bg-text-strong px-3.5 py-1.5 text-background-stronger transition-opacity hover:opacity-90 disabled:opacity-50">{props.loading ? '...' : 'Update'}</button>
       <button onClick={props.onDismiss} className="shrink-0 text-text-weak transition-colors hover:text-text-strong" aria-label="Dismiss">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>

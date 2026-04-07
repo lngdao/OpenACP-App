@@ -163,7 +163,7 @@ export function ReviewPanel({ onClose }: { onClose: () => void }) {
       />
       <div className="flex items-center justify-between px-3 h-11 border-b border-border-weak flex-shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-md-medium text-foreground truncate block">
+          <span className="text-base font-medium text-foreground truncate block">
             Review
           </span>
           {fileDiffs.length > 0 && (

@@ -48,22 +48,22 @@ export function CreateInstance(props: CreateInstanceProps) {
 
   return (
     <div className="space-y-4 p-3 bg-secondary rounded-lg">
-      <p className="text-md-regular text-foreground-weak">No OpenACP instance at <code className="text-sm-regular text-foreground">{folderName}</code></p>
+      <p className="text-base font-normal text-foreground-weak">No OpenACP instance at <code className="text-sm font-normal text-foreground">{folderName}</code></p>
       {mode === 'choose' && (
         <div className="space-y-2">
           {props.existingInstances.length > 0 && (
-            <button type="button" onClick={() => setMode('clone')} className="w-full text-left px-3 py-2 rounded-lg border border-border text-md-regular text-foreground-weak hover:bg-accent transition-colors">
-              <span className="text-md-medium text-foreground">Clone from existing</span><span className="text-sm-regular text-muted-foreground block">Copy config from another instance</span>
+            <button type="button" onClick={() => setMode('clone')} className="w-full text-left px-3 py-2 rounded-lg border border-border text-base font-normal text-foreground-weak hover:bg-accent transition-colors">
+              <span className="text-base font-medium text-foreground">Clone from existing</span><span className="text-sm font-normal text-muted-foreground block">Copy config from another instance</span>
             </button>
           )}
-          <button type="button" onClick={() => setMode('new')} className="w-full text-left px-3 py-2 rounded-lg border border-border text-md-regular text-foreground-weak hover:bg-accent transition-colors">
-            <span className="text-md-medium text-foreground">Create new</span><span className="text-sm-regular text-muted-foreground block">Start with a fresh instance</span>
+          <button type="button" onClick={() => setMode('new')} className="w-full text-left px-3 py-2 rounded-lg border border-border text-base font-normal text-foreground-weak hover:bg-accent transition-colors">
+            <span className="text-base font-medium text-foreground">Create new</span><span className="text-sm font-normal text-muted-foreground block">Start with a fresh instance</span>
           </button>
         </div>
       )}
       {mode === 'clone' && (
         <div className="space-y-3">
-          <label className="block"><span className="text-sm-regular text-muted-foreground block mb-1">Clone from</span>
+          <label className="block"><span className="text-sm font-normal text-muted-foreground block mb-1">Clone from</span>
             <Select value={cloneFrom ?? ''} onValueChange={(v) => setCloneFrom(v || null)}>
               <SelectTrigger className="w-full rounded-lg">
                 <SelectValue placeholder="Select instance..." />
@@ -93,13 +93,13 @@ export function CreateInstance(props: CreateInstanceProps) {
 
 function NameInput(props: { value: string; folderName: string; onInput: (v: string) => void }) {
   return (
-    <label className="block"><span className="text-sm-regular text-muted-foreground block mb-1">Instance name</span>
+    <label className="block"><span className="text-sm font-normal text-muted-foreground block mb-1">Instance name</span>
       <Input
         type="text"
         value={props.value}
         placeholder={props.folderName}
         onChange={(e) => props.onInput(e.target.value)}
-        className="w-full rounded-lg text-md-regular"
+        className="w-full rounded-lg text-base font-normal"
       />
     </label>
   )
@@ -108,14 +108,14 @@ function NameInput(props: { value: string; folderName: string; onInput: (v: stri
 function ActionButtons(props: { onBack: () => void; onConfirm: () => void; disabled: boolean; loading: boolean; error: string | null }) {
   return (
     <>
-      {props.error && <p className="text-sm-regular text-red-500">{props.error}</p>}
+      {props.error && <p className="text-sm font-normal text-red-500">{props.error}</p>}
       <div className="flex gap-2">
-        <Button type="button" variant="ghost" onClick={props.onBack} className="px-3 py-1 text-md-regular text-muted-foreground h-auto">Back</Button>
+        <Button type="button" variant="ghost" onClick={props.onBack} className="px-3 py-1 text-base font-normal text-muted-foreground h-auto">Back</Button>
         <Button
           type="button"
           onClick={props.onConfirm}
           disabled={props.disabled}
-          className="flex-1 px-3 py-1 text-md-medium h-auto"
+          className="flex-1 px-3 py-1 text-base font-medium h-auto"
         >
           {props.loading ? 'Creating...' : 'Create workspace'}
         </Button>
