@@ -114,7 +114,7 @@ export const UserMessage = memo(function UserMessage({
         </div>
       </div>
       <div
-        className="hidden group-hover:flex items-center gap-2 mt-1 justify-end"
+        className="flex items-center gap-2 mt-1 justify-end invisible group-hover:visible"
       >
         <span className="text-2xs font-normal text-muted-foreground select-none">
           {timeStr}
