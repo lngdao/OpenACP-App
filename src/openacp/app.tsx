@@ -34,6 +34,7 @@ import {
   applyFontSize,
 } from "./lib/settings-store";
 import { Titlebar } from "./components/titlebar";
+import { FileTreePanel } from "./components/file-tree-panel";
 import type { ServerInfo } from "./types";
 
 function ChatArea() {
@@ -48,12 +49,46 @@ function ChatArea() {
   );
 }
 
-function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview }: {
+function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, setReviewOpen, fileTreeOpen, workspacePath }: {
   sidebarCollapsed: boolean
   reviewOpen: boolean
   onToggleReview: () => void
+  setReviewOpen: (open: boolean) => void
+  fileTreeOpen: boolean
+  workspacePath: string
 }) {
   const permissions = usePermissions();
+  const [openFiles, setOpenFiles] = useState<import("./components/review-panel").OpenFile[]>([]);
+
+  const handleOpenFile = useCallback((path: string, content: string, language: string) => {
+    setOpenFiles(prev => {
+      if (prev.some(f => f.path === path)) return prev
+      return [...prev, { path, content, language }]
+    })
+    setReviewOpen(true)
+  }, [setReviewOpen])
+
+  const handleCloseFile = useCallback((path: string) => {
+    setOpenFiles(prev => prev.filter(f => f.path !== path))
+  }, [])
+
+  // Listen for file open events from tool blocks in chat
+  useEffect(() => {
+    async function handleOpenFromChat(e: Event) {
+      const { path } = (e as CustomEvent).detail
+      if (!path || typeof path !== "string") return
+      try {
+        const { invoke } = await import("@tauri-apps/api/core")
+        const result = await invoke<{ content: string; language: string }>("read_file_content", { path })
+        handleOpenFile(path, result.content, result.language)
+      } catch (err) {
+        console.error("[open-file-in-review] failed:", err)
+      }
+    }
+    window.addEventListener("open-file-in-review", handleOpenFromChat)
+    return () => window.removeEventListener("open-file-in-review", handleOpenFromChat)
+  }, [handleOpenFile])
+
   return (
     <ChatProvider
       onPermissionRequest={permissions.addRequest}
@@ -70,7 +105,23 @@ function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview }: {
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <ReviewPanel onClose={onToggleReview} />
+            <ReviewPanel onClose={onToggleReview} openFiles={openFiles} onCloseFile={handleCloseFile} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence initial={false}>
+        {fileTreeOpen && workspacePath && (
+          <motion.div
+            className="shrink-0 h-full overflow-hidden"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: "auto", opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+          >
+            <FileTreePanel
+              workspacePath={workspacePath}
+              onOpenFile={handleOpenFile}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -436,6 +487,7 @@ export function OpenACPApp() {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [fileTreeOpen, setFileTreeOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background text-foreground-weak select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
@@ -444,6 +496,8 @@ export function OpenACPApp() {
         onToggleSidebar={() => setSidebarCollapsed((v) => !v)}
         reviewOpen={reviewOpen}
         onToggleReview={() => setReviewOpen((v) => !v)}
+        fileTreeOpen={fileTreeOpen}
+        onToggleFileTree={() => setFileTreeOpen((v) => !v)}
       />
       <div className="flex flex-1 min-h-0">
         <SidebarRail
@@ -488,6 +542,9 @@ export function OpenACPApp() {
                     sidebarCollapsed={sidebarCollapsed}
                     reviewOpen={reviewOpen}
                     onToggleReview={() => setReviewOpen((v) => !v)}
+                    setReviewOpen={setReviewOpen}
+                    fileTreeOpen={fileTreeOpen}
+                    workspacePath={activeWorkspace?.directory ?? ""}
                   />
                 </PermissionsProvider>
               </SessionsProvider>
