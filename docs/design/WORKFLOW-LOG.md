@@ -97,6 +97,36 @@ Chronological record of design & development sessions.
   - Updated references in index.css, components.css, onboarding files
   - Font-size tokens (`--text-sm`, `--text-base: 1rem`, etc.) untouched
 
+## 2026-04-07
+
+### Session 1315a270
+
+- **Brand Loader:**
+  - Created BrandIcon/BrandLoader components with octopus SVG from symbol.svg
+  - Added 8 CSS animations: breathe, float, jelly, swim, wobble, bounce-squash, color-cycle, pulse-glow, dot-bounce
+  - Added Brand Loader demo entry in ds-demo with all animation previews
+  - Sidebar session loading: replaced Spinner grid with 3-dot bounce indicator
+  - Fixed streamingSession logic (use streamingSession() not activeSession())
+  - Fixed doSendPrompt missing streamingSession assignment
+- **CSS/Tailwind Migration (major):**
+  - Root cause found: `--color-base` in @theme created `text-base` color utility, colliding with font-size
+  - `@apply text-base` in custom classes expanded to BOTH font-size AND color
+  - Removed all 8 custom text utility classes (text-sm-regular, text-md-medium, etc.)
+  - Migrated 196 occurrences across 24 files to inline Tailwind (text-base font-medium, etc.)
+  - Renamed `--color-text-base` → `--color-text-default` to avoid TW4 collision
+  - Reverted utils.ts to default twMerge config
+- **Button/Icon Cleanup:**
+  - Ghost variant: added text-foreground, hover only changes background
+  - Removed custom color overrides from icon buttons (sidebar-rail, composer, selectors)
+  - Config-selector: replaced inline styles with Tailwind classes
+- **UI Improvements:**
+  - Sidebar-rail: native title → shadcn Tooltip (TooltipProvider at app level)
+  - Empty state redesign: octopus logo + "Build anything" + workspace path + git info
+  - Root div color: text-foreground-weak → text-foreground
+  - Added get_workspace_git_info Tauri command (branch + last commit time)
+- **Misc:** installed sonner package, closed PR #2
+- **Build:** all passes
+
 ## 2026-04-04
 
 ### Session 2ec35511
