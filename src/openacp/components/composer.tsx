@@ -403,7 +403,6 @@ export function Composer() {
                   <Plus
                     size={18}
                     weight="bold"
-                    className="text-foreground-weak"
                   />
                 </Button>
                 <Button
@@ -421,7 +420,6 @@ export function Composer() {
                   <Command
                     size={18}
                     weight="regular"
-                    className="text-foreground-weak"
                   />
                 </Button>
               </div>

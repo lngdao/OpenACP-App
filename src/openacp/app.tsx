@@ -27,6 +27,8 @@ import { UpdateNotification } from "./components/update-notification";
 import { useAppUpdater } from "./hooks/use-app-updater";
 import { showToast } from "./lib/toast";
 import { Toaster } from "./components/ui/toaster";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { BrandLoader } from "./components/brand-loader";
 import {
   getAllSettings,
   applyTheme,
@@ -422,7 +424,8 @@ export function OpenACPApp() {
   const isConnected = server !== null;
 
   return (
-    <div className="flex h-screen w-screen bg-background text-foreground-weak select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
+    <TooltipProvider delayDuration={300}>
+    <div className="flex h-screen w-screen bg-background text-foreground select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
       <SidebarRail
         workspaces={workspaces.map((w) => ({ id: w.id, directory: w.directory, name: w.name, type: w.type }))}
         activeId={active}
@@ -470,6 +473,7 @@ export function OpenACPApp() {
           <div className="flex-1 flex items-center justify-center bg-card">
             {serverError ? (
               <div className="text-center flex flex-col items-center gap-4">
+                <BrandLoader />
                 <div className="flex flex-col items-center gap-2">
                   <div className="text-lg font-medium leading-xl tracking-tight text-foreground">
                     No Server Found
@@ -491,9 +495,7 @@ export function OpenACPApp() {
                 </div>
               </div>
             ) : (
-              <div className="text-base leading-xl text-muted-foreground">
-                Connecting...
-              </div>
+              <BrandLoader label="Connecting..." />
             )}
           </div>
         )
@@ -549,5 +551,6 @@ export function OpenACPApp() {
       )}
       <Toaster />
     </div>
+    </TooltipProvider>
   );
 }

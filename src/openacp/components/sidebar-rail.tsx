@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { GearSix, PuzzlePiece, Plus, Trash } from "@phosphor-icons/react"
 import { Button } from "./ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 import { showToast } from "../lib/toast"
 
 const AVATAR_COLORS = ["pink", "mint", "orange", "purple", "cyan", "lime"] as const
@@ -166,38 +167,56 @@ export function SidebarRail(props: {
           })}
 
           <div className="mt-1">
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              title="Open workspace"
-              onClick={props.onOpenFolder}
-            >
-              <Plus size={16} className="text-foreground-weak" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-lg"
+                  onClick={props.onOpenFolder}
+                >
+                  <Plus size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Open workspace</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
 
       <div className="shrink-0 w-full pb-5 pt-3 flex flex-col items-center gap-2">
         {import.meta.env.DEV && (
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            title="[Dev] Reset OpenACP"
-            onClick={async () => {
-              await invoke('dev_reset_openacp')
-              location.reload()
-            }}
-          >
-            <Trash size={16} className="text-foreground-weak" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-lg"
+                onClick={async () => {
+                  await invoke('dev_reset_openacp')
+                  location.reload()
+                }}
+              >
+                <Trash size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">[Dev] Reset OpenACP</TooltipContent>
+          </Tooltip>
         )}
-        <Button variant="ghost" size="icon-lg" title="Plugins" onClick={props.onOpenPlugins}>
-          <PuzzlePiece size={16} className="text-foreground-weak" />
-        </Button>
-        <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
-          <GearSix size={16} className="text-foreground-weak" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon-lg" onClick={props.onOpenPlugins}>
+              <PuzzlePiece size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Plugins</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon-lg" onClick={props.onOpenSettings}>
+              <GearSix size={16} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Settings</TooltipContent>
+        </Tooltip>
       </div>
 
       {contextMenu && (() => {

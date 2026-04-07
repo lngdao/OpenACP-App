@@ -1,7 +1,10 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { TextAlignLeft, Circle, DotsThree } from "@phosphor-icons/react";
+import { TextAlignLeft, Circle, DotsThree, GitBranch } from "@phosphor-icons/react";
+import { invoke } from "@tauri-apps/api/core";
 import { useChat } from "../../context/chat";
 import { useSessions } from "../../context/sessions";
+import { useWorkspace } from "../../context/workspace";
+import { BrandIcon } from "../brand-loader";
 import { usePermissions } from "../../context/permissions";
 import { useAutoScroll } from "../../hooks/use-auto-scroll";
 import { UserMessage } from "./user-message";
@@ -28,7 +31,7 @@ function ChatHeader({ onOpenReview }: { onOpenReview?: () => void }) {
   return (
     <div className="flex items-center h-11 px-4 border-b border-border-weak flex-shrink-0">
       <div className="flex-1 min-w-0">
-        <span className="text-md-medium text-foreground truncate block">
+        <span className="text-base font-medium text-foreground truncate block">
           {title}
         </span>
       </div>
@@ -55,8 +58,20 @@ function ChatHeader({ onOpenReview }: { onOpenReview?: () => void }) {
 function EmptyState() {
   const chat = useChat();
   const sessions = useSessions();
+  const workspace = useWorkspace();
   const hasSession = !!chat.activeSession();
   const [creating, setCreating] = useState(false);
+  const [gitBranch, setGitBranch] = useState<string | null>(null);
+  const [lastModified, setLastModified] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<{ branch?: string; lastCommit?: string }>("get_workspace_git_info", { directory: workspace.directory })
+      .then((info) => {
+        if (info.branch) setGitBranch(info.branch);
+        if (info.lastCommit) setLastModified(info.lastCommit);
+      })
+      .catch(() => {});
+  }, [workspace.directory]);
 
   async function handleNewSession() {
     if (creating) return;
@@ -76,28 +91,34 @@ function EmptyState() {
     }
   }
 
+  const dir = workspace.directory;
+  const parts = dir.split("/");
+  const folderName = parts[parts.length - 1];
+  const parentPath = parts.slice(0, -1).join("/") + "/";
+
   return (
     <div className="h-full flex flex-col items-center justify-center">
       <div className="flex flex-col items-center gap-5">
-        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center border border-border-weak/50">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path
-              d="M12.292 6.04167L16.2503 9.99998L12.292 13.9583M2.91699 9.99998H15.6253M17.0837 3.75V16.25"
-              stroke="currentColor"
-              strokeLinecap="square"
-              className="text-muted-foreground"
-            />
-          </svg>
-        </div>
+        <BrandIcon className="w-12 h-8 text-foreground" />
         <div className="text-center">
-          <div className="text-md-medium text-foreground">
-            {hasSession ? "Ready to chat" : "No session selected"}
+          <div className="text-xl font-medium text-foreground">
+            Build anything
           </div>
-          <div className="text-sm-regular text-muted-foreground mt-1">
-            {hasSession
-              ? "Type a message below to start"
-              : "Create a new session or select one from the sidebar"}
+          <div className="text-sm font-normal text-muted-foreground mt-3 font-mono">
+            <span>{parentPath}</span>
+            <span className="text-foreground font-semibold">{folderName}</span>
           </div>
+          {gitBranch && (
+            <div className="flex items-center justify-center gap-1.5 text-sm font-normal text-foreground mt-2">
+              <GitBranch size={14} />
+              <span>Main branch ({gitBranch})</span>
+            </div>
+          )}
+          {lastModified && (
+            <div className="text-sm font-normal text-muted-foreground mt-1">
+              Last modified {lastModified}
+            </div>
+          )}
         </div>
         {!hasSession && (
           <Button
