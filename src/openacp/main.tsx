@@ -3,8 +3,7 @@
  */
 import React, { useState, useEffect } from "react"
 import { createRoot } from "react-dom/client"
-import "./styles/tailwind/index.css"
-import "./styles.css"
+import "./styles/index.css"
 import { OpenACPApp } from "./app"
 import { SplashScreen } from "../onboarding/splash-screen"
 import { InstallScreen } from "../onboarding/install-screen"
@@ -26,10 +25,17 @@ function App() {
           invoke<boolean>('check_openacp_config').catch(() => false),
         ]),
       ])
-      setScreen(determineStartupScreen({
+      const screen = determineStartupScreen({
         installed: installedResult !== null,
         configExists: Boolean(configResult),
-      }))
+      })
+      console.log('[onboard]', {
+        installed: installedResult !== null,
+        version: installedResult,
+        configExists: Boolean(configResult),
+        screen,
+      })
+      setScreen(screen)
     })()
   }, [])
 
