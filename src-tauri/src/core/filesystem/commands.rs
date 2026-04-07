@@ -225,6 +225,15 @@ pub fn path_exists(path: String) -> bool {
 }
 
 #[tauri::command]
+pub fn remove_directory(path: String) -> Result<(), String> {
+    let p = std::path::Path::new(&path);
+    if p.exists() && p.is_dir() {
+        std::fs::remove_dir_all(p).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn invoke_cli(args: Vec<String>, _app: tauri::AppHandle) -> Result<String, String> {
     let (bin, extra_path) =
         find_openacp_binary().ok_or_else(|| "Could not find openacp binary".to_string())?;
