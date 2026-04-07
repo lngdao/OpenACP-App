@@ -1,0 +1,18 @@
+{
+  "app": {
+    "windows": [
+      {
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "transparent": true,
+        "trafficLightPosition": {
+          "x": 20,
+          "y": 24
+        }
+      }
+    ]
+  },
+  "bundle": {
+    "targets": ["dmg"]
+  }
+}

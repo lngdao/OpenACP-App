@@ -126,7 +126,7 @@ export function SidebarRail(props: {
       className="w-14 shrink-0 bg-background flex flex-col items-center overflow-hidden"
     >
       <div className="flex-1 min-h-0 w-full">
-        <div className="h-full w-full flex flex-col items-center gap-2 px-2 overflow-y-auto no-scrollbar pt-5">
+        <div className="h-full w-full flex flex-col items-center gap-3 px-2 overflow-y-auto no-scrollbar pt-5">
           {props.workspaces.map((ws) => {
             const isActive = ws.id === props.activeId
             const hasError = props.errorIds?.has(ws.id) ?? false
@@ -146,7 +146,7 @@ export function SidebarRail(props: {
               >
                 <button
                   type="button"
-                  className={`flex items-center justify-center size-8 rounded-md overflow-hidden transition-all cursor-default ${
+                  className={`flex items-center justify-center size-9 rounded-lg overflow-hidden transition-all cursor-default ${
                     isActive ? "ring-2 ring-foreground-weak ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100"
                   }`}
                   onClick={() => hasError && props.onReconnect ? props.onReconnect(ws.id) : props.onSwitchWorkspace(ws.id)}
@@ -158,14 +158,14 @@ export function SidebarRail(props: {
                     {initial}
                   </div>
                 </button>
-                <div className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full border-2 border-background pointer-events-none"
+                <div className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background pointer-events-none"
                   style={{ background: hasError ? 'var(--surface-critical-strong)' : isConnected ? 'var(--surface-success-strong)' : 'var(--text-weaker)' }}
                 />
               </div>
             )
           })}
 
-          <div className="mt-1">
+          <div>
             <Button
               variant="ghost"
               size="icon-lg"

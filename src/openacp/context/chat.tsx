@@ -182,6 +182,8 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
   const thinkingStartTime = useRef(new Map<string, number>())
   // Maps turnId → userMsgId for cross-adapter messages (message:queued → message:processing pairing)
   const turnIdToUserMsgId = useRef(new Map<string, string>())
+  // turnIds of messages sent by this App instance — used to suppress duplicate SSE echo
+  const ownTurnIds = useRef(new Set<string>())
   // Track whether we had a disconnect so we can reload history on reconnect
   const hadDisconnect = useRef(false)
   const msgCounter = useRef(0)
@@ -666,6 +668,16 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
   }
 
   function handleMessageQueued(ev: MessageQueuedEvent) {
+    // If this message was sent by this App instance, we already added it optimistically.
+    // Suppress if turnId is known OR if we're currently sending to this session.
+    if (ownTurnIds.current.has(ev.turnId)) {
+      ownTurnIds.current.delete(ev.turnId)
+      return
+    }
+    // Race condition guard: if we're actively sending to this session, suppress the echo
+    if (sendingRef.current && ev.sessionId === store.activeSession) {
+      return
+    }
     const userMsgId = nextId("usr-ext")
     turnIdToUserMsgId.current.set(ev.turnId, userMsgId)
     const userMsg: Message = {
@@ -731,7 +743,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       const session = await sessions.create()
       if (!session) return false
       sessionID = session.id
-      setStore((draft) => { draft.activeSession = sessionID })
+      setActiveSession(sessionID)
     }
 
     const userMsgId = nextId("usr")
@@ -757,7 +769,9 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     connect()
 
     try {
-      await workspace.client.sendPrompt(sessionID, text, attachments)
+      const { turnId } = await workspace.client.sendPrompt(sessionID, text, attachments)
+      // Register turnId so the SSE echo (message:queued) is suppressed for this window
+      if (turnId) ownTurnIds.current.add(turnId)
       return true
     } catch {
       return false
@@ -793,10 +807,23 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     const sessionID = store.activeSession
     if (!sessionID) return
     abortedSessions.current.add(sessionID)
+    flushBuffers()
     charStream.flush(`${sessionID}:text`)
     charStream.flush(`${sessionID}:thought`)
     charStream.clearStream(`${sessionID}:text`)
     charStream.clearStream(`${sessionID}:thought`)
+    // Mark the assistant message as interrupted
+    const msgId = assistantMsgId.current.get(sessionID)
+    if (msgId) {
+      setStore((draft) => {
+        const msgs = draft.messagesBySession[sessionID]
+        if (msgs) {
+          const msg = msgs.find((m) => m.id === msgId)
+          if (msg) msg.interrupted = true
+        }
+        syncRef(sessionID, draft)
+      })
+    }
     assistantMsgId.current.delete(sessionID)
     setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
     // Tell server to actually cancel the agent's prompt
