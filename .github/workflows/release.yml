@@ -144,13 +144,24 @@ jobs:
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
       # ── Build ──
-      # Updater signing: set TAURI_SIGNING_PRIVATE_KEY + PASSWORD secrets.
-      # macOS notarization: set APPLE_* secrets above — tauri-action handles it automatically.
-      # Windows code signing: not yet configured — add AZURE_* or similar secrets when ready.
+      # Currently builds unsigned. To enable signing, add these repo secrets:
+      #   TAURI_SIGNING_PRIVATE_KEY       — updater signing key
+      #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+      #   APPLE_CERTIFICATE              — Base64-encoded .p12 (macOS codesign)
+      #   APPLE_CERTIFICATE_PASSWORD
+      #   APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID — macOS notarization
+      # Then uncomment the env vars below.
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          # TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          # APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          # APPLE_ID: ${{ secrets.APPLE_ID }}
+          # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
