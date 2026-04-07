@@ -64,7 +64,7 @@ function DiffStats({ before, after }: { before: string; after: string }) {
     return { add, del };
   }, [before, after]);
   return (
-    <span className="flex items-center gap-1.5 text-sm leading-lg font-mono">
+    <span className="flex items-center gap-1.5 text-sm leading-normal font-mono">
       {stats.add > 0 && (
         <span style={{ color: "var(--syntax-diff-add, #2da44e)" }}>
           +{stats.add}
@@ -167,7 +167,7 @@ export function ReviewPanel({ onClose }: { onClose: () => void }) {
             Review
           </span>
           {fileDiffs.length > 0 && (
-            <span className="text-sm leading-lg text-muted-foreground">
+            <span className="text-sm leading-normal text-muted-foreground">
               {fileDiffs.length} file{fileDiffs.length !== 1 ? "s" : ""}
             </span>
           )}
@@ -184,10 +184,10 @@ export function ReviewPanel({ onClose }: { onClose: () => void }) {
       {fileDiffs.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-sm leading-lg text-muted-foreground">
+            <div className="text-sm leading-normal text-muted-foreground">
               No file changes yet
             </div>
-            <div className="text-sm leading-lg text-foreground-weaker mt-1">
+            <div className="text-sm leading-normal text-foreground-weaker mt-1">
               Changes will appear as the agent edits files
             </div>
           </div>
@@ -201,7 +201,7 @@ export function ReviewPanel({ onClose }: { onClose: () => void }) {
               return (
                 <button
                   key={item.path}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium leading-lg whitespace-nowrap transition-colors ${isSelected ? "bg-secondary text-foreground" : "text-foreground-weak hover:text-foreground hover:bg-accent"}`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-sm font-medium leading-normal whitespace-nowrap transition-colors ${isSelected ? "bg-secondary text-foreground" : "text-foreground-weak hover:text-foreground hover:bg-accent"}`}
                   onClick={() => setSelectedFile(item.path)}
                 >
                   {fileName(item.path)}

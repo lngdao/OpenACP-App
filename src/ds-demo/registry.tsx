@@ -63,12 +63,11 @@ function ShadowBox({ name, variable }: { name: string; variable: string }) {
   )
 }
 
-function RadiusBox({ name, variable }: { name: string; variable: string }) {
+function RadiusBox({ name, className }: { name: string; className: string }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className="size-16 bg-accent border border-border-weak"
-        style={{ borderRadius: `var(${variable})` }}
+        className={`size-16 bg-accent border border-border-weak ${className}`}
       />
       <span className="text-sm font-normal text-muted-foreground">{name}</span>
     </div>
@@ -299,7 +298,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
       <div className="space-y-10">
         <div>
           <div className="text-sm font-medium text-muted-foreground mb-2">Animation styles</div>
-          <p className="text-sm leading-lg text-foreground-weaker mb-4">Pick an animation for the octopus loader.</p>
+          <p className="text-sm leading-relaxed text-foreground-weaker mb-4">Pick an animation for the octopus loader.</p>
           <div className="grid grid-cols-4 gap-5">
             <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-5">
               <BrandIcon className="w-10 h-7 text-muted-foreground animate-wobble" />
@@ -388,13 +387,13 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           <div className="w-64 rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary">
               <BrandIcon className="size-[15px] text-muted-foreground animate-breathe" />
-              <span className="text-base leading-xl text-foreground truncate">Creating session...</span>
+              <span className="text-base leading-relaxed text-foreground truncate">Creating session...</span>
             </div>
             <div className="flex items-center gap-2 px-2 py-1.5">
               <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
                 <path d="M5 10H15" stroke="currentColor" strokeLinecap="round" className="text-muted-foreground" />
               </svg>
-              <span className="text-base leading-xl text-foreground truncate">Regular session</span>
+              <span className="text-base leading-relaxed text-foreground truncate">Regular session</span>
             </div>
           </div>
         </div>
@@ -783,11 +782,13 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
     type: "token",
     render: () => (
       <div className="flex flex-wrap gap-6">
-        <RadiusBox name="xs" variable="--radius-xs" />
-        <RadiusBox name="sm" variable="--radius-sm" />
-        <RadiusBox name="md" variable="--radius-md" />
-        <RadiusBox name="lg" variable="--radius-lg" />
-        <RadiusBox name="xl" variable="--radius-xl" />
+        <RadiusBox name="xs" className="rounded-xs" />
+        <RadiusBox name="sm" className="rounded-sm" />
+        <RadiusBox name="md" className="rounded-md" />
+        <RadiusBox name="lg" className="rounded-lg" />
+        <RadiusBox name="xl" className="rounded-xl" />
+        <RadiusBox name="2xl" className="rounded-2xl" />
+        <RadiusBox name="full" className="rounded-full" />
       </div>
     ),
   },

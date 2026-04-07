@@ -176,7 +176,7 @@
       z-index: 1000;
 
       max-width: 320px;
-      border-radius: var(--radius-sm);
+      border-radius: var(--radius-sm, 0.25rem);
       background: var(--surface-float-base);
       color: var(--primary-foreground);
       padding: 2px 8px;

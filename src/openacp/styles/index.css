@@ -72,22 +72,13 @@
   --font-weight-regular: 400;
   --font-weight-medium: 500;
 
-  /* Line heights */
-  --leading-lg: 150%;
-  --leading-xl: 180%;
-  --leading-2xl: 200%;
-
-  /* Letter spacing */
-  --tracking-normal: 0;
-  --tracking-tight: -0.16px;
-  --tracking-tightest: -0.32px;
-
-  /* Radius */
+  /* Radius (Tailwind 4 defaults) */
   --radius-xs: 0.125rem;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
-  --radius-xl: 0.625rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
 
   /* Shadows (Tailwind defaults) */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);

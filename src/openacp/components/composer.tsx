@@ -323,12 +323,12 @@ export function Composer() {
                 contentEditable="true"
                 onInput={handleInput}
                 onKeyDown={handleKeyDown}
-                className="select-text w-full pl-3 pr-2 pt-2 text-base leading-xl text-foreground focus:outline-none whitespace-pre-wrap"
+                className="select-text w-full pl-3 pr-2 pt-2 text-base leading-relaxed text-foreground focus:outline-none whitespace-pre-wrap"
                 style={{ paddingBottom: space }}
               />
               {!text.trim() && !attachments.length && (
                 <div
-                  className="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 text-base leading-xl text-muted-foreground pointer-events-none whitespace-nowrap truncate"
+                  className="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 text-base leading-relaxed text-muted-foreground pointer-events-none whitespace-nowrap truncate"
                   style={{ paddingBottom: space }}
                 >
                   Ask anything...
@@ -482,7 +482,7 @@ export function Composer() {
         <div className="fixed inset-0 z-50 bg-background/80 flex items-center justify-center pointer-events-none">
           <div className="flex flex-col items-center gap-3 p-8 rounded-xl border-2 border-dashed border-border-selected">
             <ImageIcon size={40} className="text-primary" />
-            <span className="text-base font-medium leading-lg text-foreground">
+            <span className="text-base font-medium leading-normal text-foreground">
               Drop files to attach
             </span>
           </div>

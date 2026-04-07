@@ -29,7 +29,7 @@ export function BrandLoader({ className, label }: BrandLoaderProps) {
     <div className={cn("flex flex-col items-center gap-3", className)}>
       <BrandIcon className="w-12 h-8 animate-breathe text-muted-foreground" />
       {label && (
-        <span className="text-sm leading-lg text-muted-foreground">{label}</span>
+        <span className="text-sm leading-normal text-muted-foreground">{label}</span>
       )}
     </div>
   )

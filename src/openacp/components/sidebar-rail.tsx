@@ -153,7 +153,7 @@ export function SidebarRail(props: {
                   onClick={() => hasError && props.onReconnect ? props.onReconnect(ws.id) : props.onSwitchWorkspace(ws.id)}
                 >
                   <div
-                    className="size-full rounded-lg flex items-center justify-center text-sm font-medium leading-lg"
+                    className="size-full rounded-lg flex items-center justify-center text-sm font-medium leading-normal"
                     style={{ background: colors.background, color: colors.foreground }}
                   >
                     {initial}

@@ -61,42 +61,42 @@ export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
     <div className="space-y-4">
       {!preview ? (
         <div className="space-y-4">
-          <div><p className="text-base font-medium leading-lg text-foreground mb-1">Connect to a remote workspace</p><p className="text-sm leading-lg text-muted-foreground">Run <code className="font-mono bg-secondary px-1 py-0.5 rounded text-foreground-weak">openacp remote</code> on the remote machine, then paste the invite link below.</p></div>
-          <label className="block"><span className="text-sm font-medium leading-lg text-foreground-weaker uppercase tracking-wider block mb-2">Invite link</span>
+          <div><p className="text-base font-medium leading-normal text-foreground mb-1">Connect to a remote workspace</p><p className="text-sm leading-normal text-muted-foreground">Run <code className="font-mono bg-secondary px-1 py-0.5 rounded text-foreground-weak">openacp remote</code> on the remote machine, then paste the invite link below.</p></div>
+          <label className="block"><span className="text-sm font-medium leading-normal text-foreground-weaker uppercase tracking-wider block mb-2">Invite link</span>
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="openacp://connect?host=...&code=..."
               rows={3}
-              className="w-full rounded-xl font-mono text-sm leading-lg resize-none"
+              className="w-full rounded-xl font-mono text-sm leading-normal resize-none"
             />
           </label>
-          {error && <p className="text-sm leading-lg text-red-500">{error}</p>}
+          {error && <p className="text-sm leading-normal text-red-500">{error}</p>}
           <Button
             type="button"
             onClick={handleConnect}
             disabled={loading || !input.trim()}
-            className="w-full py-2.5 text-base font-medium leading-lg h-auto"
+            className="w-full py-2.5 text-base font-medium leading-normal h-auto"
           >
             {loading ? 'Connecting...' : 'Connect'}
           </Button>
         </div>
       ) : (
         <div className="space-y-4">
-          <div><p className="text-base font-medium leading-lg text-foreground mb-1">Connection successful</p><p className="text-sm leading-lg text-muted-foreground">Review the details below before adding this workspace.</p></div>
+          <div><p className="text-base font-medium leading-normal text-foreground mb-1">Connection successful</p><p className="text-sm leading-normal text-muted-foreground">Review the details below before adding this workspace.</p></div>
           <div className="rounded-xl border border-border divide-y divide-border-base overflow-hidden">
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Workspace</span><span className="text-base font-medium leading-lg text-foreground">{preview.workspaceName}</span></div>
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Server address</span><span className="text-sm leading-lg text-foreground-weak font-mono truncate max-w-48">{preview.host.replace(/^https?:\/\//, '')}</span></div>
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Access level</span><span className="text-sm leading-lg text-foreground-weak capitalize">{preview.role}</span></div>
-            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-lg text-muted-foreground">Session expires</span><span className="text-sm leading-lg text-foreground-weak">{new Date(preview.expiresAt).toLocaleString()}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-normal text-muted-foreground">Workspace</span><span className="text-base font-medium leading-normal text-foreground">{preview.workspaceName}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-normal text-muted-foreground">Server address</span><span className="text-sm leading-normal text-foreground-weak font-mono truncate max-w-48">{preview.host.replace(/^https?:\/\//, '')}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-normal text-muted-foreground">Access level</span><span className="text-sm leading-normal text-foreground-weak capitalize">{preview.role}</span></div>
+            <div className="flex justify-between items-center px-4 py-3"><span className="text-sm leading-normal text-muted-foreground">Session expires</span><span className="text-sm leading-normal text-foreground-weak">{new Date(preview.expiresAt).toLocaleString()}</span></div>
           </div>
-          {error && <p className="text-sm leading-lg text-red-500">{error}</p>}
+          {error && <p className="text-sm leading-normal text-red-500">{error}</p>}
           <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => { setPreview(null); setError(null) }}
-              className="px-4 py-2.5 text-base leading-xl h-auto"
+              className="px-4 py-2.5 text-base leading-relaxed h-auto"
             >
               Back
             </Button>
@@ -104,7 +104,7 @@ export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
               type="button"
               onClick={handleConfirm}
               disabled={saving}
-              className="flex-1 px-4 py-2.5 text-base font-medium leading-lg h-auto"
+              className="flex-1 px-4 py-2.5 text-base font-medium leading-normal h-auto"
             >
               {saving ? 'Adding...' : 'Add workspace'}
             </Button>

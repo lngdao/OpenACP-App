@@ -475,21 +475,21 @@ export function OpenACPApp() {
               <div className="text-center flex flex-col items-center gap-4">
                 <BrandLoader />
                 <div className="flex flex-col items-center gap-2">
-                  <div className="text-lg font-medium leading-xl tracking-tight text-foreground">
+                  <div className="text-lg font-medium leading-relaxed tracking-tight text-foreground">
                     No Server Found
                   </div>
-                  <div className="text-base leading-xl text-muted-foreground">
+                  <div className="text-base leading-relaxed text-muted-foreground">
                     Run{" "}
-                    <code className="px-1.5 py-0.5 rounded bg-secondary text-sm leading-lg font-mono">
+                    <code className="px-1.5 py-0.5 rounded bg-secondary text-sm leading-normal font-mono">
                       openacp start
                     </code>{" "}
                     in your workspace
                   </div>
-                  <div className="text-sm leading-lg text-muted-foreground font-mono mt-1">
+                  <div className="text-sm leading-normal text-muted-foreground font-mono mt-1">
                     {activeWorkspace?.directory}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm leading-lg text-foreground-weaker">
+                <div className="flex items-center gap-2 text-sm leading-normal text-foreground-weaker">
                   <div className="w-1.5 h-1.5 rounded-full bg-text-weaker animate-pulse" />
                   Waiting for server...
                 </div>

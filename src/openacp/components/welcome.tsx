@@ -29,8 +29,8 @@ export function WelcomeScreen(props: {
             </svg>
           </div>
           <div className="text-center">
-            <div className="text-lg font-medium leading-xl tracking-tight text-foreground">OpenACP</div>
-            <div className="text-sm leading-lg text-muted-foreground mt-1">Open a workspace to get started</div>
+            <div className="text-lg font-medium leading-relaxed tracking-tight text-foreground">OpenACP</div>
+            <div className="text-sm leading-normal text-muted-foreground mt-1">Open a workspace to get started</div>
           </div>
         </div>
 
@@ -47,8 +47,8 @@ export function WelcomeScreen(props: {
                   className="w-full flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-lg h-auto"
                   onClick={() => props.onSelectWorkspace(instance.id)}
                 >
-                  <span className="text-base font-medium leading-lg text-foreground">{dirName(instance.directory)}</span>
-                  <span className="text-sm leading-lg text-muted-foreground truncate">{shortPath(instance.directory)}</span>
+                  <span className="text-base font-medium leading-normal text-foreground">{dirName(instance.directory)}</span>
+                  <span className="text-sm leading-normal text-muted-foreground truncate">{shortPath(instance.directory)}</span>
                 </Button>
               ))}
             </div>
@@ -57,7 +57,7 @@ export function WelcomeScreen(props: {
 
         <Button
           variant="outline"
-          className="flex items-center gap-2 px-4 py-2.5 text-base font-medium leading-lg text-foreground"
+          className="flex items-center gap-2 px-4 py-2.5 text-base font-medium leading-normal text-foreground"
           onClick={props.onOpenFolder}
         >
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
