@@ -156,7 +156,18 @@ function RegisterExistingButton(props: { path: string; onAdd: (e: WorkspaceEntry
       const stdout = await invoke<string>('invoke_cli', { args: ['instances', 'create', '--dir', props.path, '--no-interactive', '--json'] })
       const result = JSON.parse(stdout); const data = result?.data ?? result
       props.onAdd({ id: data.id, name: data.name ?? data.id, directory: data.directory, type: 'local' })
-    } catch (e: any) { setError(e.message ?? 'Failed to add workspace') } finally { setLoading(false) }
+    } catch (createErr) {
+      // instances create may fail if already registered — try to find it via list
+      try {
+        const list = await discoverLocalInstances()
+        const match = list.find(i => i.directory === props.path)
+        if (match) {
+          props.onAdd({ id: match.id, name: match.name ?? match.id, directory: match.directory, type: 'local' })
+          return
+        }
+      } catch {}
+      setError(typeof createErr === 'string' ? createErr : (createErr as any)?.message ?? 'Failed to add workspace')
+    } finally { setLoading(false) }
   }
   return (
     <>
