@@ -149,8 +149,9 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
     },
 
     /** Send a prompt to a session, optionally with file attachments */
-    async sendPrompt(sessionID: string, text: string, attachments?: import("../types").FileAttachment[]): Promise<{ turnId?: string }> {
+    async sendPrompt(sessionID: string, text: string, attachments?: import("../types").FileAttachment[], turnId?: string): Promise<{ turnId?: string }> {
       const body: Record<string, unknown> = { prompt: text }
+      if (turnId) body.turnId = turnId
       if (attachments?.length) {
         body.attachments = attachments.map(a => ({
           fileName: a.fileName,

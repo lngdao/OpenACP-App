@@ -768,12 +768,16 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
 
     connect()
 
+    // Generate turnId client-side and register it BEFORE the API call so the SSE echo
+    // (message:queued) is guaranteed to be suppressed even if it arrives before the response.
+    const turnId = crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+    ownTurnIds.current.add(turnId)
+
     try {
-      const { turnId } = await workspace.client.sendPrompt(sessionID, text, attachments)
-      // Register turnId so the SSE echo (message:queued) is suppressed for this window
-      if (turnId) ownTurnIds.current.add(turnId)
+      await workspace.client.sendPrompt(sessionID, text, attachments, turnId)
       return true
     } catch {
+      ownTurnIds.current.delete(turnId)
       return false
     }
   }
