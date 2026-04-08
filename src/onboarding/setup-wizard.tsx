@@ -57,10 +57,45 @@ export function SetupWizard(props: Props) {
     try {
       const jsonStr = await invoke<string>('run_openacp_setup', { workspace: workspace, agent: selectedAgent });
       setSetupStatus('starting');
-      await invoke<string>('invoke_cli', { args: ['start', '--global', '--daemon'] });
-      const parsed = JSON.parse(jsonStr) as { success: boolean; data?: { instanceId?: string; name?: string; directory?: string } };
-      const data = parsed?.data ?? {};
-      const entry: WorkspaceEntry = { id: data.instanceId ?? 'main', name: data.name ?? 'Main', directory: data.directory ?? workspace, type: 'local' };
+
+      // 1. Register the instance (setup --global does NOT do this)
+      let instanceData: { id: string; name: string; directory: string } | null = null;
+      try {
+        const createStr = await invoke<string>('invoke_cli', { args: ['instances', 'create', '--dir', workspace, '--no-interactive', '--json'] });
+        const createParsed = JSON.parse(createStr);
+        instanceData = createParsed?.data ?? createParsed;
+      } catch (createErr) {
+        // May fail if already registered — try to find it
+        const msg = String(createErr).toLowerCase();
+        if (!msg.includes('already') && !msg.includes('exists')) {
+          console.warn('[setup-wizard] instances create failed:', createErr);
+        }
+      }
+
+      // 2. Start server at the workspace directory
+      try {
+        await invoke<string>('invoke_cli', { args: ['start', '--dir', workspace, '--daemon'] });
+      } catch (startErr) {
+        const msg = String(startErr).toLowerCase();
+        if (!msg.includes('already running')) throw startErr;
+      }
+
+      // 3. Discover the registered instance to get correct ID
+      let entryId = instanceData?.id ?? 'main';
+      let entryName = instanceData?.name ?? 'Main';
+      let entryDir = instanceData?.directory ?? workspace;
+      try {
+        const listStr = await invoke<string>('invoke_cli', { args: ['instances', 'list', '--json'] });
+        const listParsed = JSON.parse(listStr);
+        const instances = listParsed?.data ?? listParsed ?? [];
+        const match = Array.isArray(instances) ? instances.find((i: any) => i.directory === workspace) : null;
+        if (match) {
+          entryId = match.id;
+          entryName = match.name ?? match.id;
+          entryDir = match.directory;
+        }
+      } catch { /* best-effort */ }
+      const entry: WorkspaceEntry = { id: entryId, name: entryName, directory: entryDir, type: 'local' };
       setSetupStatus('success'); setTimeout(() => props.onSuccess(entry), 800);
     } catch (err) { setSetupStatus('error'); setSetupError(String(err)); } finally { unlisten(); }
   };

@@ -55,6 +55,8 @@ pub fn run() {
             core::sidecar::commands::get_workspace_server_info,
             core::sidecar::commands::get_workspace_server_info_from_dir,
             core::sidecar::commands::remove_instance_registration,
+            core::sidecar::commands::check_workspace_server_alive,
+            core::sidecar::commands::get_workspace_status,
             core::sidecar::commands::start_server,
             core::sidecar::commands::stop_server,
             // Onboarding commands

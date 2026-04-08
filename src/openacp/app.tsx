@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { WorkspaceProvider, useWorkspace, resolveWorkspaceServer } from "./context/workspace";
+import { invoke } from "@tauri-apps/api/core";
+import { WorkspaceProvider, useWorkspace } from "./context/workspace";
 import { SessionsProvider } from "./context/sessions";
 import { ChatProvider, useChat } from "./context/chat";
 import { PermissionsProvider, usePermissions } from "./context/permissions";
@@ -28,6 +29,7 @@ import { SetupModal } from "./components/add-workspace/setup-modal";
 import { showToast } from "./lib/toast";
 import { Toaster } from "./components/ui/toaster";
 import { useSortedWorkspaces } from "./hooks/use-sorted-workspaces";
+import { useWorkspaceConnection, type ConnectionStatus } from "./hooks/use-workspace-connection";
 import {
   getAllSettings,
   applyTheme,
@@ -38,7 +40,7 @@ import { FileTreePanel } from "./components/file-tree-panel";
 import { BrowserPanel } from "./components/browser-panel";
 import type { ServerInfo } from "./types";
 
-function NoServerScreen({ directory, isRemote, onStart, onReconnect, onRemove }: { directory: string; isRemote?: boolean; onStart: () => void; onReconnect: () => void; onRemove?: () => void }) {
+function NoServerScreen({ directory, isRemote, errorMessage, onStart, onReconnect, onRemove }: { directory: string; isRemote?: boolean; errorMessage?: string | null; onStart: () => void; onReconnect: () => void; onRemove?: () => void }) {
   const [busy, setBusy] = useState(false)
   const [action, setAction] = useState<string | null>(null)
 
@@ -74,6 +76,9 @@ function NoServerScreen({ directory, isRemote, onStart, onReconnect, onRemove }:
           <div className="text-xs text-muted-foreground">
             The host may have stopped sharing this workspace.
           </div>
+        )}
+        {errorMessage && (
+          <div className="text-xs text-destructive max-w-[250px] text-center">{errorMessage}</div>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -237,14 +242,6 @@ export function OpenACPApp() {
   const [active, setActive] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
-  const [server, setServer] = useState<ServerInfo | null>(null);
-  const [serverLoading, setServerLoading] = useState(false);
-  const [serverError, setServerError] = useState(false);
-  const [errorWorkspaceIds, setErrorWorkspaceIds] = useState<Set<string>>(
-    new Set(),
-  );
-  const [connectedWorkspaceIds, setConnectedWorkspaceIds] = useState<Set<string>>(new Set());
-
   const [showAddWorkspace, setShowAddWorkspace] = useState(false);
   const [addWorkspaceDefaultTab, setAddWorkspaceDefaultTab] = useState<
     "local" | "remote"
@@ -257,9 +254,6 @@ export function OpenACPApp() {
   const [shareLinks, setShareLinks] = useState<Map<string, string>>(new Map());
   const [setupInfo, setSetupInfo] = useState<{ path: string; instanceId: string } | null>(null);
 
-  const retryRef = useRef<ReturnType<typeof setInterval>>();
-  const retryCountRef = useRef(0);
-
   // ── Helpers ────────────────────────────────────────────────────────────
 
   const { sorted: sortedWorkspaces, pinnedIds, togglePin, reorder, rename: renameWorkspace, touchLastActive } = useSortedWorkspaces(workspaces, setWorkspaces);
@@ -269,33 +263,141 @@ export function OpenACPApp() {
     [workspaces],
   );
 
+  const activeWorkspace = active ? (findWorkspace(active) ?? null) : null;
+
+  // ── Connection state machine ───────────────────────────────────────────
+
+  const { state: connectionState, connect, disconnect, startServer } = useWorkspaceConnection(
+    activeWorkspace,
+    {
+      onConnected: (server) => {
+        // Update background status for this workspace
+        if (active) {
+          setAllWorkspaceStatuses(prev => { const next = new Map(prev); next.set(active, 'connected'); return next; });
+          void refreshWorkspaceInfo(active, server);
+        }
+      },
+      onError: (error) => {
+        console.warn("[workspace] connection error:", error);
+        if (active) {
+          setAllWorkspaceStatuses(prev => { const next = new Map(prev); next.set(active, 'error'); return next; });
+        }
+      },
+    },
+  );
+
+  const server = connectionState.server;
+  const connectionStatus = connectionState.status;
+
+  // Track connection status for ALL workspaces (not just active)
+  const [allWorkspaceStatuses, setAllWorkspaceStatuses] = useState<Map<string, 'connected' | 'error' | 'unknown'>>(new Map());
+
+  // Check all workspace server statuses on mount + periodically
+  useEffect(() => {
+    if (!ready || workspaces.length === 0) return;
+
+    async function checkAllStatuses() {
+      const statuses = new Map<string, 'connected' | 'error' | 'unknown'>();
+      await Promise.all(
+        workspaces.map(async (ws) => {
+          if (ws.type === 'remote') {
+            statuses.set(ws.id, 'unknown');
+            return;
+          }
+          try {
+            const status = await invoke<{ server_alive: boolean; port: number | null }>('get_workspace_status', { directory: ws.directory });
+            if (status.server_alive && status.port) {
+              // Server process alive + port found → try unauthenticated health check
+              const controller = new AbortController();
+              const timer = setTimeout(() => controller.abort(), 3000);
+              try {
+                const res = await fetch(`http://127.0.0.1:${status.port}/api/v1/system/health`, {
+                  signal: controller.signal,
+                });
+                // Health endpoint is public (no auth required) — 200 means server is up
+                statuses.set(ws.id, res.ok ? 'connected' : 'unknown');
+              } catch {
+                // Network error but process alive → server may be starting
+                statuses.set(ws.id, 'unknown');
+              } finally {
+                clearTimeout(timer);
+              }
+            } else if (!status.has_config) {
+              // No .openacp config at all
+              statuses.set(ws.id, 'error');
+            } else {
+              // Config exists but server not running
+              statuses.set(ws.id, 'unknown');
+            }
+          } catch {
+            statuses.set(ws.id, 'unknown');
+          }
+        }),
+      );
+      setAllWorkspaceStatuses(statuses);
+    }
+
+    void checkAllStatuses();
+
+    // Re-check every 60 seconds
+    const interval = setInterval(checkAllStatuses, 60000);
+
+    // Re-check when app regains focus
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') void checkAllStatuses();
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [ready, workspaces]);
+
+  // Merge active workspace connection state with background checks
+  const connectedWorkspaceIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const [id, status] of allWorkspaceStatuses) {
+      if (status === 'connected') set.add(id);
+    }
+    // Active workspace: use live connection state (more accurate)
+    if (active) {
+      if (connectionStatus === 'connected') set.add(active);
+      else set.delete(active);
+    }
+    return set;
+  }, [allWorkspaceStatuses, active, connectionStatus]);
+
+  const errorWorkspaceIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const [id, status] of allWorkspaceStatuses) {
+      if (status === 'error') set.add(id);
+    }
+    if (active) {
+      if (connectionStatus === 'error' || connectionStatus === 'disconnected') set.add(active);
+      else set.delete(active);
+    }
+    return set;
+  }, [allWorkspaceStatuses, active, connectionStatus]);
+
   // ── Workspace info refresh ──────────────────────────────────────────────
 
-  async function refreshWorkspaceInfo(id: string) {
+  async function refreshWorkspaceInfo(id: string, serverInfo?: ServerInfo) {
     const entry = workspaces.find((w) => w.id === id);
     if (!entry) return;
     try {
       if (entry.type === "local") {
         const list = await discoverLocalInstances();
         const found = list.find((i) => i.id === id);
-        if (
-          found &&
-          (found.name !== entry.name || found.directory !== entry.directory)
-        ) {
+        if (found && (found.name !== entry.name || found.directory !== entry.directory)) {
           setWorkspaces((prev) =>
             prev.map((w) =>
-              w.id === id
-                ? {
-                    ...w,
-                    name: found.name ?? w.name,
-                    directory: found.directory,
-                  }
-                : w,
+              w.id === id ? { ...w, name: found.name ?? w.name, directory: found.directory } : w,
             ),
           );
         }
       } else if (entry.type === "remote" && entry.host) {
-        const token = await getKeychainToken(id);
+        const token = serverInfo?.token ?? (await getKeychainToken(id));
         if (!token) return;
         const res = await fetch(`${entry.host}/api/v1/workspace`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -305,30 +407,19 @@ export function OpenACPApp() {
         if (ws.name !== entry.name || ws.directory !== entry.directory) {
           setWorkspaces((prev) =>
             prev.map((w) =>
-              w.id === id
-                ? {
-                    ...w,
-                    name: ws.name ?? w.name,
-                    directory: ws.directory ?? w.directory,
-                  }
-                : w,
+              w.id === id ? { ...w, name: ws.name ?? w.name, directory: ws.directory ?? w.directory } : w,
             ),
           );
         }
       }
-    } catch {
-      /* best-effort */
-    }
+    } catch { /* best-effort */ }
   }
 
   // ── Load workspaces on mount ─────────────────────────────────────────────
 
   useEffect(() => {
     void loadWorkspaces().then(async (entries) => {
-      // Keep all saved workspaces — don't filter by CLI discovery
-      // resolveServer will handle connection per workspace
       if (entries.length > 0) setWorkspaces(entries);
-      // Pick the most recently active workspace, or fall back to last in array
       const sorted = [...entries].sort((a, b) => {
         if (a.lastActiveAt && b.lastActiveAt) return b.lastActiveAt.localeCompare(a.lastActiveAt)
         if (a.lastActiveAt) return -1
@@ -351,13 +442,11 @@ export function OpenACPApp() {
     void getAllSettings().then((settings) => {
       applyTheme(settings.theme);
       applyFontSize(settings.fontSize);
-      // Apply devMode: block right-click context menu unless enabled
       if (!settings.devMode) {
         document.addEventListener("contextmenu", blockContextMenu);
       }
     });
     function blockContextMenu(e: MouseEvent) {
-      // Allow context menu on inputs/textareas
       const t = e.target as HTMLElement;
       if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
       e.preventDefault();
@@ -377,7 +466,7 @@ export function OpenACPApp() {
     };
   }, []);
 
-  // Listen for open-settings custom event (e.g. from Composer "Install agent...")
+  // Listen for open-settings custom event
   useEffect(() => {
     function handleOpenSettings(e: Event) {
       const detail = (e as CustomEvent).detail;
@@ -386,8 +475,7 @@ export function OpenACPApp() {
       setShowSettings(true);
     }
     window.addEventListener("open-settings", handleOpenSettings);
-    return () =>
-      window.removeEventListener("open-settings", handleOpenSettings);
+    return () => window.removeEventListener("open-settings", handleOpenSettings);
   }, []);
 
   function addWorkspace(entry: WorkspaceEntry): boolean {
@@ -410,12 +498,7 @@ export function OpenACPApp() {
       setActive(instanceId);
       return;
     }
-    addWorkspace({
-      id: instanceId,
-      name: instanceId,
-      directory: "",
-      type: "local",
-    });
+    addWorkspace({ id: instanceId, name: instanceId, directory: "", type: "local" });
   }
 
   function switchInstance(instanceId: string) {
@@ -426,162 +509,32 @@ export function OpenACPApp() {
     setWorkspaces((prev) => prev.filter((w) => w.id !== instanceId));
     if (active === instanceId)
       setActive(workspaces.find((w) => w.id !== instanceId)?.id ?? null);
-    setErrorWorkspaceIds((prev) => {
-      const next = new Set(prev);
-      next.delete(instanceId);
-      return next;
-    });
   }
-
-  // ── Server connection ───────────────────────────────────────────────────
-
-  const resolveServer = useCallback(
-    async (instanceId: string): Promise<ServerInfo | null> => {
-      setServerLoading(true);
-      setServerError(false);
-      try {
-        const entry = findWorkspace(instanceId);
-        let info: ServerInfo | null = null;
-        if (!entry || entry.type === "local") {
-          info = await resolveWorkspaceServer(instanceId, entry?.directory);
-        } else {
-          const jwt = await getKeychainToken(entry.id);
-          if (!jwt) {
-            setServerLoading(false);
-            setServerError(true);
-            return null;
-          }
-          info = { url: entry.host ?? "", token: jwt };
-        }
-        if (info) {
-          try {
-            const res = await fetch(`${info.url}/api/v1/system/health`, {
-              headers: info.token ? { Authorization: `Bearer ${info.token}` } : {},
-            });
-            if (res.ok) {
-              setServerLoading(false);
-              setServerError(false);
-              setErrorWorkspaceIds((prev) => {
-                const next = new Set(prev);
-                next.delete(instanceId);
-                return next;
-              });
-              setConnectedWorkspaceIds((prev) => new Set([...prev, instanceId]));
-              retryCountRef.current = 0;
-              void refreshWorkspaceInfo(instanceId);
-              return info;
-            }
-          } catch { /* health check failed */ }
-        }
-        setServerLoading(false);
-        setServerError(true);
-        setErrorWorkspaceIds((prev) => new Set([...prev, instanceId]));
-        setConnectedWorkspaceIds((prev) => { const next = new Set(prev); next.delete(instanceId); return next });
-        return null;
-      } catch {
-        setServerLoading(false);
-        setServerError(true);
-        setErrorWorkspaceIds((prev) => new Set([...prev, instanceId]));
-        setConnectedWorkspaceIds((prev) => { const next = new Set(prev); next.delete(instanceId); return next });
-        return null;
-      }
-    },
-    [findWorkspace, workspaces],
-  );
-
-  const stopRetry = useCallback(() => {
-    if (retryRef.current) {
-      clearInterval(retryRef.current);
-      retryRef.current = undefined;
-    }
-  }, []);
-
-  const startRetry = useCallback(
-    (instanceId: string) => {
-      stopRetry();
-      const interval = Math.min(3000 + retryCountRef.current * 1000, 10000);
-      retryRef.current = setInterval(async () => {
-        retryCountRef.current++;
-        const info = await resolveServer(instanceId);
-        if (info) {
-          setServer(info);
-          stopRetry();
-        }
-      }, interval);
-    },
-    [stopRetry, resolveServer],
-  );
-
-  // Keep refs to avoid stale closures while only re-running on active change
-  const resolveServerRef = useRef(resolveServer);
-  const startRetryRef = useRef(startRetry);
-  const stopRetryRef = useRef(stopRetry);
-  resolveServerRef.current = resolveServer;
-  startRetryRef.current = startRetry;
-  stopRetryRef.current = stopRetry;
-
-  // React to active workspace changes
-  useEffect(() => {
-    stopRetryRef.current();
-    setServer(null);
-    if (!active) return;
-    let cancelled = false;
-    void resolveServerRef.current(active).then((info) => {
-      if (cancelled) return;
-      if (info) setServer(info);
-      else startRetryRef.current(active);
-    });
-    return () => {
-      cancelled = true;
-      stopRetryRef.current();
-    };
-  }, [active]);
-
-  // Visibility change
-  useEffect(() => {
-    const handleVisibility = async () => {
-      if (document.visibilityState === "visible" && active && !server) {
-        const info = await resolveServer(active);
-        if (info) {
-          setServer(info);
-          stopRetry();
-        }
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibility);
-  }, [active, server, resolveServer, stopRetry]);
 
   // ── Add workspace modal ─────────────────────────────────────────────────
 
-  async function handleAddWorkspace(entry: WorkspaceEntry) {
+  function handleAddWorkspace(entry: WorkspaceEntry) {
     const isNew = addWorkspace(entry);
     setShowAddWorkspace(false);
     if (!isNew && active === entry.id) {
-      stopRetry();
-      setServer(null);
-      const info = await resolveServer(entry.id);
-      if (info) setServer(info);
-      else startRetry(entry.id);
+      // Re-connect to updated workspace
+      void connect();
     }
     showToast({
       description: isNew
         ? `Workspace "${entry.name}" added.`
-        : `Workspace "${entry.name}" already exists -- info updated.`,
+        : `Workspace "${entry.name}" already exists — info updated.`,
       variant: "success",
     });
   }
 
   function openAddWorkspaceModal(defaultTab: "local" | "remote" = "local") {
-    stopRetry();
     setAddWorkspaceDefaultTab(defaultTab);
     setShowAddWorkspace(true);
   }
 
   function closeAddWorkspaceModal() {
     setShowAddWorkspace(false);
-    if (active && !server) startRetry(active);
   }
 
   async function openFolderPicker() {
@@ -597,16 +550,9 @@ export function OpenACPApp() {
       const discovered = await discoverLocalInstances();
       const match = discovered.find((info) => info.directory === selected);
       if (match)
-        addWorkspace({
-          id: match.id,
-          name: match.name ?? match.id,
-          directory: match.directory,
-          type: "local",
-        });
+        addWorkspace({ id: match.id, name: match.name ?? match.id, directory: match.directory, type: "local" });
       else
-        window.alert(
-          `No OpenACP instance found in ${selected}.\nRun "openacp start" in that directory first.`,
-        );
+        showToast({ description: `No OpenACP instance found in ${selected}. Run "openacp start" in that directory first.` });
     } catch (e) {
       console.error("[openFolder] failed", e);
     }
@@ -614,9 +560,10 @@ export function OpenACPApp() {
 
   // ── Render ──────────────────────────────────────────────────────────────
 
-  const activeWorkspace = active ? (findWorkspace(active) ?? null) : null;
   const hasInstance = active !== null;
-  const isConnected = server !== null;
+  const isConnected = connectionStatus === 'connected' && server !== null;
+  const isError = connectionStatus === 'error' || connectionStatus === 'disconnected';
+  const isLoading = connectionStatus === 'connecting' || connectionStatus === 'reconnecting';
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -675,6 +622,7 @@ export function OpenACPApp() {
         onToggleBrowser={() => setBrowserOpen((v) => !v)}
         hideFileTree={activeWorkspace?.type === "remote"}
         hideBrowser={!browserPanelEnabled}
+        disabled={!isConnected}
       />
       <div className="flex flex-1 min-h-0">
         <SidebarRail
@@ -701,10 +649,10 @@ export function OpenACPApp() {
             }
           }}
           onStopSharing={async (id) => {
-            if (!server) return
+            if (!connectionState.server) return
             try {
               const { createApiClient } = await import("./api/client")
-              const client = createApiClient(server)
+              const client = createApiClient(connectionState.server!)
               const tokens = await client.listTokens()
               await Promise.all(tokens.map(t => client.revokeToken(t.id)))
               setSharingWorkspaceIds(prev => { const next = new Set(prev); next.delete(id); return next })
@@ -716,7 +664,7 @@ export function OpenACPApp() {
             }
           }}
           sharingIds={sharingWorkspaceIds}
-          onReconnect={(id) => { switchInstance(id); openAddWorkspaceModal("remote") }}
+          onReconnect={(id) => { switchInstance(id) }}
           onOpenFolder={() => openAddWorkspaceModal("local")}
           onOpenPlugins={() => setPluginsOpen(true)}
           onOpenSettings={() => {
@@ -731,10 +679,8 @@ export function OpenACPApp() {
               workspace={activeWorkspace!}
               server={server!}
               onReconnectNeeded={() => {
-                setServer(null);
-                setServerError(true);
-                if (active)
-                  setErrorWorkspaceIds((prev) => new Set([...prev, active]));
+                // Trigger reconnection via the hook
+                void connect();
               }}
               onTokenRefreshed={({ expiresAt, refreshDeadline }) => {
                 if (!active) return;
@@ -775,48 +721,23 @@ export function OpenACPApp() {
             </WorkspaceProvider>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-card">
-            {serverError ? (
+            {isError ? (
               <NoServerScreen
                 directory={activeWorkspace?.directory || activeWorkspace?.host || ""}
                 isRemote={activeWorkspace?.type === "remote"}
+                errorMessage={connectionState.error}
                 onRemove={() => { if (active) removeInstance(active) }}
-                onReconnect={async () => {
-                  if (!active) return
-                  const info = await resolveServerRef.current(active)
-                  if (info) {
-                    setServer(info)
-                    stopRetryRef.current()
-                    showToast({ description: "Connected" })
-                  } else {
-                    showToast({ description: "Could not connect — is the server running?" })
-                    startRetryRef.current(active)
-                  }
-                }}
-                onStart={async () => {
-                  if (!activeWorkspace?.directory || !active) return
-                  try {
-                    const { invoke } = await import("@tauri-apps/api/core")
-                    await invoke<string>("invoke_cli", { args: ["start", "--dir", activeWorkspace.directory, "--daemon"] })
-                    await new Promise(r => setTimeout(r, 2000))
-                  } catch {
-                    // "already running" or other error — either way try connecting
-                  }
-                  // Always try to connect after start attempt
-                  const info = await resolveServerRef.current(active)
-                  if (info) {
-                    setServer(info)
-                    stopRetryRef.current()
-                    showToast({ description: "Server connected" })
-                  } else {
-                    showToast({ description: "Server starting — retrying..." })
-                    startRetryRef.current(active)
-                  }
-                }}
+                onReconnect={() => void connect()}
+                onStart={() => void startServer()}
               />
             ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="size-1.5 rounded-full bg-muted-foreground animate-pulse" />
-                Connecting...
+              <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <div className="size-1.5 rounded-full bg-muted-foreground animate-pulse" />
+                  {connectionStatus === 'reconnecting'
+                    ? `Reconnecting... (attempt ${connectionState.retryCount + 1})`
+                    : "Connecting..."}
+                </div>
               </div>
             )}
           </div>
@@ -859,8 +780,8 @@ export function OpenACPApp() {
         open={showSettings}
         onOpenChange={setShowSettings}
         workspacePath={activeWorkspace?.directory ?? ""}
-        serverUrl={server?.url ?? null}
-        serverConnected={!!server}
+        serverUrl={connectionState.server?.url ?? null}
+        serverConnected={connectionStatus === 'connected'}
         initialPage={settingsPage}
       />
       <Toaster />

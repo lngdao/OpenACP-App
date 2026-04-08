@@ -317,13 +317,28 @@ export function SidebarRail(props: {
             title="[Dev] Reset OpenACP"
             onClick={async () => {
               await invoke('dev_reset_openacp')
+              // Clear workspace store so onboarding starts fresh
+              try { localStorage.removeItem('workspaces_v2') } catch {}
+              try {
+                const { load } = await import('@tauri-apps/plugin-store')
+                const store = await load('openacp.bin')
+                await store.delete('workspaces_v2')
+                await store.save()
+              } catch {}
               location.reload()
             }}
           >
             <Trash size={16} className="text-foreground-weak" />
           </Button>
         )}
-        <Button variant="ghost" size="icon-lg" title="Plugins" onClick={props.onOpenPlugins}>
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          title="Plugins"
+          onClick={props.onOpenPlugins}
+          disabled={!props.activeId || !props.connectedIds?.has(props.activeId)}
+          className={!props.activeId || !props.connectedIds?.has(props.activeId) ? "opacity-30" : ""}
+        >
           <PuzzlePiece size={16} className="text-foreground-weak" />
         </Button>
         <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
