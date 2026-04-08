@@ -419,7 +419,6 @@ export function OpenACPApp() {
   }
 
   function switchInstance(instanceId: string) {
-    touchLastActive(instanceId);
     setActive(instanceId);
   }
 
@@ -637,6 +636,15 @@ export function OpenACPApp() {
     window.addEventListener("browser-panel-changed", handleBrowserSettingChanged);
     return () => window.removeEventListener("browser-panel-changed", handleBrowserSettingChanged);
   }, []);
+
+  // Touch lastActiveAt when workspace has message activity
+  useEffect(() => {
+    function handleActivity() {
+      if (active) touchLastActive(active)
+    }
+    window.addEventListener("workspace-activity", handleActivity)
+    return () => window.removeEventListener("workspace-activity", handleActivity)
+  }, [active, touchLastActive])
 
   // Listen for open-in-browser events (from link interceptor)
   useEffect(() => {
