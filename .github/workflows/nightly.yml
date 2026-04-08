@@ -108,8 +108,7 @@ jobs:
       - name: Set nightly version
         shell: bash
         run: |
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          VERSION="${LATEST_TAG#v}"
+          VERSION=$(node -e "console.log(require('./package.json').version)")
           NIGHTLY_VERSION="${VERSION}-nightly.${GITHUB_RUN_NUMBER}"
           echo "NIGHTLY_VERSION=$NIGHTLY_VERSION" >> $GITHUB_ENV
           echo "Nightly version: $NIGHTLY_VERSION"
