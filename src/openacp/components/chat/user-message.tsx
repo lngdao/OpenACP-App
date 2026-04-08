@@ -50,9 +50,14 @@ function getUserText(msg: Message): string {
     .join("\n")
 }
 
-function adapterLabel(id: string): string {
-  const map: Record<string, string> = { telegram: "Telegram", discord: "Discord", slack: "Slack" }
-  return map[id] ?? id.charAt(0).toUpperCase() + id.slice(1)
+const EXTERNAL_ADAPTER_LABELS: Record<string, string> = {
+  telegram: "Telegram",
+  discord: "Discord",
+  slack: "Slack",
+}
+
+function adapterLabel(id: string): string | null {
+  return EXTERNAL_ADAPTER_LABELS[id] ?? null
 }
 
 export const UserMessage = memo(function UserMessage({ message }: { message: Message }) {
@@ -65,7 +70,7 @@ export const UserMessage = memo(function UserMessage({ message }: { message: Mes
       className="rounded-md border border-border shadow-sm"
       style={{ padding: "8px 12px", backgroundColor: "var(--surface-raised-stronger-non-alpha, var(--card))" }}
     >
-      {message.sourceAdapterId ? (
+      {message.sourceAdapterId && adapterLabel(message.sourceAdapterId) ? (
         <div className="flex items-center gap-1 mb-1.5">
           <span className="text-2xs-regular text-muted-foreground select-none">via {adapterLabel(message.sourceAdapterId)}</span>
         </div>

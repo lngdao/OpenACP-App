@@ -669,13 +669,13 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
 
   function handleMessageQueued(ev: MessageQueuedEvent) {
     // If this message was sent by this App instance, we already added it optimistically.
-    // Still register the turnId mapping so handleMessageProcessing can pair it correctly,
-    // but skip adding a duplicate message to the store.
+    // Suppress if turnId is known OR if we're currently sending to this session.
     if (ownTurnIds.current.has(ev.turnId)) {
       ownTurnIds.current.delete(ev.turnId)
-      // Pair the optimistic user message (already in store) with this turnId
-      // so handleMessageProcessing can find it. The optimistic msg has no entry yet —
-      // leave turnIdToUserMsgId empty; handleMessageProcessing will create a new ast stub.
+      return
+    }
+    // Race condition guard: if we're actively sending to this session, suppress the echo
+    if (sendingRef.current && ev.sessionId === store.activeSession) {
       return
     }
     const userMsgId = nextId("usr-ext")
@@ -743,7 +743,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       const session = await sessions.create()
       if (!session) return false
       sessionID = session.id
-      setStore((draft) => { draft.activeSession = sessionID })
+      setActiveSession(sessionID)
     }
 
     const userMsgId = nextId("usr")
@@ -768,12 +768,16 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
 
     connect()
 
+    // Generate turnId client-side and register it BEFORE the API call so the SSE echo
+    // (message:queued) is guaranteed to be suppressed even if it arrives before the response.
+    const turnId = crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+    ownTurnIds.current.add(turnId)
+
     try {
-      const { turnId } = await workspace.client.sendPrompt(sessionID, text, attachments)
-      // Register turnId so the SSE echo (message:queued) is suppressed for this window
-      if (turnId) ownTurnIds.current.add(turnId)
+      await workspace.client.sendPrompt(sessionID, text, attachments, turnId)
       return true
     } catch {
+      ownTurnIds.current.delete(turnId)
       return false
     }
   }

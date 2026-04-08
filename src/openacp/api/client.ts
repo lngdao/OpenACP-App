@@ -109,6 +109,22 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
       })
     },
 
+    /** Rename a session */
+    async renameSession(sessionId: string, name: string): Promise<void> {
+      await api(`/sessions/${encodeURIComponent(sessionId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name }),
+      })
+    },
+
+    /** Archive a session */
+    async archiveSession(sessionId: string): Promise<void> {
+      await api(`/sessions/${encodeURIComponent(sessionId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "archived" }),
+      })
+    },
+
     /** List sessions for this workspace */
     async listSessions(): Promise<Session[]> {
       const res = await api<{ sessions: any[] }>("/sessions")
@@ -133,8 +149,9 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
     },
 
     /** Send a prompt to a session, optionally with file attachments */
-    async sendPrompt(sessionID: string, text: string, attachments?: import("../types").FileAttachment[]): Promise<{ turnId?: string }> {
+    async sendPrompt(sessionID: string, text: string, attachments?: import("../types").FileAttachment[], turnId?: string): Promise<{ turnId?: string }> {
       const body: Record<string, unknown> = { prompt: text }
+      if (turnId) body.turnId = turnId
       if (attachments?.length) {
         body.attachments = attachments.map(a => ({
           fileName: a.fileName,
@@ -193,6 +210,19 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
     /** Revoke a token by ID (requires auth:manage scope) */
     async revokeToken(tokenId: string): Promise<void> {
       await api(`/auth/tokens/${encodeURIComponent(tokenId)}`, { method: "DELETE" })
+    },
+
+    /** Generate a share code (one-time, 30-min TTL) */
+    async generateShareCode(opts: { role: string; name: string; expire?: string }): Promise<{ code: string; expiresAt: string }> {
+      return api("/auth/codes", {
+        method: "POST",
+        body: JSON.stringify(opts),
+      })
+    },
+
+    /** Get tunnel status and URL */
+    async getTunnel(): Promise<{ enabled: boolean; url?: string; provider?: string }> {
+      return api("/tunnel")
     },
 
     /** Get current auth info (role, scopes, expiry) */
