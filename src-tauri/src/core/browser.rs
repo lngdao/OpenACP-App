@@ -113,6 +113,11 @@ struct BrowserStoreInner {
     suppress_count: u32,
     /// Last known docked bounds — used to restore when unsuppressing after suppress in docked mode.
     last_docked_bounds: Option<Bounds>,
+    /// Guard against concurrent `browser_show` calls creating duplicate webviews.
+    creating: bool,
+    /// Set true before a programmatic Back/Forward navigate so the on_navigation
+    /// callback skips pushing to history (cursor was already moved).
+    programmatic_nav: bool,
 }
 
 impl BrowserStore {
@@ -123,6 +128,8 @@ impl BrowserStore {
                 history: History::default(),
                 suppress_count: 0,
                 last_docked_bounds: None,
+                creating: false,
+                programmatic_nav: false,
             }),
         }
     }
@@ -260,7 +267,11 @@ const INIT_SCRIPT: &str = r#"
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 fn parse_url(url: &str) -> Result<Url, String> {
-    url.parse::<Url>().map_err(|e| format!("invalid URL: {e}"))
+    let parsed = url.parse::<Url>().map_err(|e| format!("invalid URL: {e}"))?;
+    if !matches!(parsed.scheme(), "http" | "https") {
+        return Err(format!("unsupported URL scheme: {}", parsed.scheme()));
+    }
+    Ok(parsed)
 }
 
 /// Create the persistent webview as a child of the main window.
@@ -278,13 +289,17 @@ fn create_child_in_main(app: &AppHandle, url: &str, bounds: Bounds) -> Result<()
         .initialization_script(INIT_SCRIPT)
         .auto_resize()
         .on_navigation(move |url| {
-            // Track Rust-side history on top-level navigation.
-            // NOTE: on_navigation fires before the URL loads; we cannot
-            // distinguish programmatic vs user-click here — we push regardless
-            // and de-dupe in History::push.
+            // Track Rust-side history on top-level navigation. If the navigation
+            // was triggered programmatically by a Back/Forward command, skip
+            // pushing — the cursor was already moved by go_back/go_forward and
+            // pushing here would corrupt the forward stack.
             if let Some(store) = app_for_nav.try_state::<BrowserStore>() {
                 if let Ok(mut inner) = store.inner.lock() {
-                    inner.history.push(url.to_string());
+                    if inner.programmatic_nav {
+                        inner.programmatic_nav = false;
+                    } else {
+                        inner.history.push(url.to_string());
+                    }
                     emit_state(&app_for_nav, &inner);
                 }
             }
@@ -368,9 +383,15 @@ pub async fn browser_show(
     store: State<'_, BrowserStore>,
     opts: ShowOptions,
 ) -> Result<(), String> {
-    // Transition to Opening
+    // Acquire the creation guard and transition to Opening atomically.
+    // Two rapid calls would otherwise both pass an `is_none()` check on the
+    // webview and both try to add a child with the same label.
     {
         let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
+        if inner.creating {
+            return Err("browser_show already in progress".into());
+        }
+        inner.creating = true;
         inner.state = BrowserState::Opening {
             url: opts.url.clone(),
             mode: opts.mode,
@@ -383,37 +404,50 @@ pub async fn browser_show(
         emit_state(&app, &inner);
     }
 
-    // Create webview if it doesn't exist
-    if app.get_webview(BROWSER_LABEL).is_none() {
-        let bounds = opts.bounds.unwrap_or(Bounds {
-            x: 0.0,
-            y: 0.0,
-            width: 480.0,
-            height: 600.0,
-        });
-        create_child_in_main(&app, &opts.url, bounds)?;
-    } else {
-        // Navigate existing webview to new URL
-        if let Some(wv) = app.get_webview(BROWSER_LABEL) {
+    // Wrap the fallible work in an IIFE so we can transition to a recoverable
+    // Error state on any failure instead of leaving the state stuck in Opening.
+    let result: Result<(), String> = (|| {
+        if app.get_webview(BROWSER_LABEL).is_none() {
+            let bounds = opts.bounds.unwrap_or(Bounds {
+                x: 0.0,
+                y: 0.0,
+                width: 480.0,
+                height: 600.0,
+            });
+            create_child_in_main(&app, &opts.url, bounds)?;
+        } else if let Some(wv) = app.get_webview(BROWSER_LABEL) {
             let parsed = parse_url(&opts.url)?;
             wv.navigate(parsed).map_err(|e| e.to_string())?;
         }
+        reparent_to_mode(&app, opts.mode, opts.bounds)?;
+        Ok(())
+    })();
+
+    match result {
+        Ok(()) => {
+            let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
+            inner.creating = false;
+            inner.state = BrowserState::Ready {
+                url: opts.url,
+                mode: opts.mode,
+            };
+            emit_state(&app, &inner);
+            Ok(())
+        }
+        Err(e) => {
+            let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
+            inner.creating = false;
+            inner.state = BrowserState::Error {
+                url: opts.url.clone(),
+                message: e.clone(),
+                mode: opts.mode,
+            };
+            emit_state(&app, &inner);
+            drop(inner);
+            emit_nav_error(&app, &opts.url, &e);
+            Err(e)
+        }
     }
-
-    // Reparent to target mode's window
-    reparent_to_mode(&app, opts.mode, opts.bounds)?;
-
-    // Transition to Ready
-    {
-        let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
-        inner.state = BrowserState::Ready {
-            url: opts.url,
-            mode: opts.mode,
-        };
-        emit_state(&app, &inner);
-    }
-
-    Ok(())
 }
 
 /// Reparent the webview to the window matching `mode`. Creates target window if needed.
@@ -489,7 +523,11 @@ pub async fn browser_navigate(
         NavAction::Back => {
             let target = {
                 let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
-                inner.history.go_back().map(|s| s.to_string())
+                let t = inner.history.go_back().map(|s| s.to_string());
+                if t.is_some() {
+                    inner.programmatic_nav = true;
+                }
+                t
             };
             if let Some(target) = target {
                 let parsed = parse_url(&target)?;
@@ -502,7 +540,11 @@ pub async fn browser_navigate(
         NavAction::Forward => {
             let target = {
                 let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
-                inner.history.go_forward().map(|s| s.to_string())
+                let t = inner.history.go_forward().map(|s| s.to_string());
+                if t.is_some() {
+                    inner.programmatic_nav = true;
+                }
+                t
             };
             if let Some(target) = target {
                 let parsed = parse_url(&target)?;
@@ -572,6 +614,8 @@ pub async fn browser_close(
         inner.history = History::default();
         inner.suppress_count = 0;
         inner.last_docked_bounds = None;
+        inner.creating = false;
+        inner.programmatic_nav = false;
         emit_state(&app, &inner);
     }
     Ok(())
@@ -616,10 +660,29 @@ pub async fn browser_unsuppress(
 
 #[tauri::command]
 pub async fn browser_reset_suppress(
-    _app: AppHandle,
+    app: AppHandle,
     store: State<'_, BrowserStore>,
 ) -> Result<(), String> {
-    let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
-    inner.suppress_count = 0;
+    // Snapshot suppression state and bounds, then drop the lock before
+    // touching the webview to avoid holding the mutex across IPC calls.
+    let (was_suppressed, bounds) = {
+        let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
+        let was_suppressed = inner.suppress_count > 0;
+        inner.suppress_count = 0;
+        (was_suppressed, inner.last_docked_bounds)
+    };
+
+    if was_suppressed {
+        if let Some(wv) = app.get_webview(BROWSER_LABEL) {
+            let _ = wv.show();
+            if let Some(b) = bounds {
+                let _ = wv.set_position(tauri::Position::Logical(LogicalPosition::new(b.x, b.y)));
+                let _ = wv.set_size(tauri::Size::Logical(LogicalSize::new(b.width, b.height)));
+            }
+        }
+    }
+
+    let inner = store.inner.lock().map_err(|e| e.to_string())?;
+    emit_state(&app, &inner);
     Ok(())
 }
