@@ -2,12 +2,11 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::{
     AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, State, Url, WebviewUrl,
-    WebviewWindowBuilder,
 };
 use tauri::webview::WebviewBuilder;
+use tauri::window::WindowBuilder;
 
 const BROWSER_LABEL: &str = "browser-panel";
-const FLOAT_LABEL: &str = "browser-float";
 const PIP_LABEL: &str = "browser-pip";
 const MAIN_LABEL: &str = "main";
 
@@ -118,6 +117,10 @@ struct BrowserStoreInner {
     /// Set true before a programmatic Back/Forward navigate so the on_navigation
     /// callback skips pushing to history (cursor was already moved).
     programmatic_nav: bool,
+    /// Set true while `browser_close` is in progress so the window close event
+    /// handler (`handle_window_close`) knows it's a programmatic close and
+    /// skips its own re-entrant cleanup that would race against browser_close.
+    closing: bool,
 }
 
 impl BrowserStore {
@@ -130,6 +133,7 @@ impl BrowserStore {
                 last_docked_bounds: None,
                 creating: false,
                 programmatic_nav: false,
+                closing: false,
             }),
         }
     }
@@ -324,29 +328,18 @@ fn create_child_in_main(app: &AppHandle, url: &str, bounds: Bounds) -> Result<()
     Ok(())
 }
 
-/// Ensure float window exists, return its handle.
-fn ensure_float_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
-    if let Some(w) = app.get_webview_window(FLOAT_LABEL) {
-        return Ok(w);
-    }
-    WebviewWindowBuilder::new(app, FLOAT_LABEL, WebviewUrl::App("about:blank".into()))
-        .title("OpenACP Browser")
-        .inner_size(800.0, 600.0)
-        .min_inner_size(400.0, 300.0)
-        .resizable(true)
-        .decorations(true)
-        .always_on_top(false)
-        .visible(false)
-        .build()
-        .map_err(|e| format!("float window build failed: {e}"))
-}
-
 /// Ensure PiP window exists, return its handle.
-fn ensure_pip_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
-    if let Some(w) = app.get_webview_window(PIP_LABEL) {
+///
+/// Uses `WindowBuilder` (not `WebviewWindowBuilder`) so the window is created
+/// WITHOUT a default child webview. This matters because reparenting the
+/// browser-panel webview into a window that already has its own embedded
+/// webview produces two overlapping webviews, which breaks rendering and
+/// causes close-time races.
+fn ensure_pip_window(app: &AppHandle) -> Result<tauri::Window, String> {
+    if let Some(w) = app.get_window(PIP_LABEL) {
         return Ok(w);
     }
-    WebviewWindowBuilder::new(app, PIP_LABEL, WebviewUrl::App("about:blank".into()))
+    WindowBuilder::new(app, PIP_LABEL)
         .title("Browser (PiP)")
         .inner_size(380.0, 240.0)
         .min_inner_size(280.0, 180.0)
@@ -360,17 +353,18 @@ fn ensure_pip_window(app: &AppHandle) -> Result<tauri::WebviewWindow, String> {
         .map_err(|e| format!("pip window build failed: {e}"))
 }
 
-/// Hide a sibling float/pip window without destroying it. Used during mode switches
-/// so that closing the window does NOT trigger `handle_window_close` (the user-initiated
-/// close handler) which would destroy the browser webview we just reparented.
+/// Hide a sibling window without destroying it. Used during mode switches
+/// so that closing the window does NOT trigger `handle_window_close` (the
+/// user-initiated close handler) which would destroy the browser webview
+/// we just reparented.
 fn hide_window_if_exists(app: &AppHandle, label: &str) {
-    if let Some(w) = app.get_webview_window(label) {
+    if let Some(w) = app.get_window(label) {
         let _ = w.hide();
     }
 }
 
 fn close_window_if_exists(app: &AppHandle, label: &str) {
-    if let Some(w) = app.get_webview_window(label) {
+    if let Some(w) = app.get_window(label) {
         let _ = w.close();
     }
 }
@@ -470,7 +464,11 @@ fn reparent_to_mode(
         .ok_or("webview not created")?;
 
     match mode {
-        BrowserMode::Docked => {
+        BrowserMode::Docked | BrowserMode::Floating => {
+            // Both Docked and Floating (in-app mini player) host the webview
+            // inside the main window. The only difference is position/size:
+            // Docked fills the sidebar panel slot, Floating hovers in a corner.
+            // Bounds are computed and supplied by React.
             let main = app.get_window(MAIN_LABEL).ok_or("main window not found")?;
             wv.reparent(&main).map_err(|e| e.to_string())?;
             if let Some(b) = bounds {
@@ -480,42 +478,24 @@ fn reparent_to_mode(
                     .map_err(|e| e.to_string())?;
             }
             let _ = wv.show();
-            // Hide (don't close) sibling windows so the close event doesn't
+            // Hide (don't close) the PiP window so the close event doesn't
             // fire `handle_window_close` and destroy the webview we just moved.
-            hide_window_if_exists(app, FLOAT_LABEL);
-            hide_window_if_exists(app, PIP_LABEL);
-        }
-        BrowserMode::Floating => {
-            let float = ensure_float_window(app)?;
-            let float_win = app
-                .get_window(FLOAT_LABEL)
-                .ok_or("float window not found after create")?;
-            wv.reparent(&float_win).map_err(|e| e.to_string())?;
-            float.show().map_err(|e| e.to_string())?;
-            // Resize the reparented webview to fill the float window's client area.
-            // Without this, it keeps the old docked panel bounds (x/y/size) which
-            // places it outside the float window's visible area → blank window.
-            fill_window(&wv, &float_win)?;
-            let _ = wv.show();
             hide_window_if_exists(app, PIP_LABEL);
         }
         BrowserMode::Pip => {
+            // PiP = desktop always-on-top separate window.
             let pip = ensure_pip_window(app)?;
-            let pip_win = app
-                .get_window(PIP_LABEL)
-                .ok_or("pip window not found after create")?;
-            wv.reparent(&pip_win).map_err(|e| e.to_string())?;
+            wv.reparent(&pip).map_err(|e| e.to_string())?;
             pip.show().map_err(|e| e.to_string())?;
-            fill_window(&wv, &pip_win)?;
+            fill_window(&wv, &pip)?;
             let _ = wv.show();
-            hide_window_if_exists(app, FLOAT_LABEL);
         }
     }
     Ok(())
 }
 
 /// Position and size the webview to fill the given window's client area.
-/// Used after reparenting to float/PiP so the webview is visible in the new parent.
+/// Used after reparenting to PiP so the webview is visible in the new parent.
 fn fill_window<R: tauri::Runtime>(
     wv: &tauri::Webview<R>,
     win: &tauri::Window<R>,
@@ -633,16 +613,24 @@ pub async fn browser_close(
     app: AppHandle,
     store: State<'_, BrowserStore>,
 ) -> Result<(), String> {
+    // Set the `closing` guard so any WindowEvent::CloseRequested that fires
+    // for the PiP window (as a side-effect of close_window_if_exists below)
+    // will short-circuit handle_window_close instead of racing with us.
     {
         let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
+        if inner.closing {
+            return Ok(()); // already in progress
+        }
+        inner.closing = true;
         inner.state = BrowserState::Closing;
         emit_state(&app, &inner);
     }
+
     if let Some(wv) = app.get_webview(BROWSER_LABEL) {
         let _ = wv.close();
     }
-    close_window_if_exists(&app, FLOAT_LABEL);
     close_window_if_exists(&app, PIP_LABEL);
+
     {
         let mut inner = store.inner.lock().map_err(|e| e.to_string())?;
         inner.state = BrowserState::Idle;
@@ -651,6 +639,7 @@ pub async fn browser_close(
         inner.last_docked_bounds = None;
         inner.creating = false;
         inner.programmatic_nav = false;
+        inner.closing = false;
         emit_state(&app, &inner);
     }
     Ok(())
@@ -706,12 +695,24 @@ pub async fn browser_unsuppress(
 }
 
 /// Called from lib.rs when the user clicks the native close button on
-/// the floating or PiP window. Destroys the webview and transitions back to Idle.
+/// the PiP window. Destroys the webview and transitions back to Idle.
+///
+/// Short-circuits if `browser_close` is already in progress (closing flag set),
+/// because that path already handles the full cleanup and we'd race against it.
 pub fn handle_window_close(app: &AppHandle) {
+    // Check closing guard first — if browser_close is already handling this,
+    // don't touch the webview or the store.
+    if let Some(store) = app.try_state::<BrowserStore>() {
+        if let Ok(inner) = store.inner.lock() {
+            if inner.closing {
+                return;
+            }
+        }
+    }
+
     if let Some(wv) = app.get_webview(BROWSER_LABEL) {
         let _ = wv.close();
     }
-    close_window_if_exists(app, FLOAT_LABEL);
     close_window_if_exists(app, PIP_LABEL);
     if let Some(store) = app.try_state::<BrowserStore>() {
         if let Ok(mut inner) = store.inner.lock() {
@@ -721,6 +722,7 @@ pub fn handle_window_close(app: &AppHandle) {
             inner.last_docked_bounds = None;
             inner.creating = false;
             inner.programmatic_nav = false;
+            inner.closing = false;
             emit_state(app, &inner);
         }
     }

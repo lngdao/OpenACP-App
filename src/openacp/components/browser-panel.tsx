@@ -6,9 +6,9 @@ import {
   ArrowClockwise,
   ArrowSquareOut,
   X,
-  ArrowsOutSimple,
   ArrowsInSimple,
   PictureInPicture,
+  Monitor,
   Warning,
   Globe,
 } from "@phosphor-icons/react"
@@ -235,8 +235,8 @@ export function BrowserPanel() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" title="Mode">
               {browser.mode === "docked" && <ArrowsInSimple size={14} />}
-              {browser.mode === "floating" && <ArrowsOutSimple size={14} />}
-              {browser.mode === "pip" && <PictureInPicture size={14} />}
+              {browser.mode === "floating" && <PictureInPicture size={14} />}
+              {browser.mode === "pip" && <Monitor size={14} />}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -244,10 +244,10 @@ export function BrowserPanel() {
               <ArrowsInSimple size={14} className="mr-2" /> Docked
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => handleSetMode("floating")}>
-              <ArrowsOutSimple size={14} className="mr-2" /> Floating
+              <PictureInPicture size={14} className="mr-2" /> Floating (in-app)
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => handleSetMode("pip")}>
-              <PictureInPicture size={14} className="mr-2" /> Picture in Picture
+              <Monitor size={14} className="mr-2" /> Picture in Picture (desktop)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

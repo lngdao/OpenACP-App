@@ -41,6 +41,7 @@ import { FileTreePanel } from "./components/file-tree-panel";
 import { BrowserPanel } from "./components/browser-panel";
 import { BrowserPanelProvider, useBrowserPanel } from "./context/browser-panel";
 import { BrowserOverlayProvider } from "./context/browser-overlay";
+import { FloatingBrowserFrame } from "./components/floating-browser-frame";
 import type { ServerInfo } from "./types";
 
 function NoServerScreen({ directory, isRemote, errorMessage, onStart, onReconnect, onRemove }: { directory: string; isRemote?: boolean; errorMessage?: string | null; onStart: () => void; onReconnect: () => void; onRemove?: () => void }) {
@@ -218,7 +219,7 @@ function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, set
         )}
       </AnimatePresence>
       <AnimatePresence initial={false}>
-        {browser.isVisible && browserPanelEnabled && (
+        {browser.isVisible && browserPanelEnabled && browser.mode !== "floating" && (
           <motion.div
             className="shrink-0 h-full overflow-hidden"
             initial={{ width: 0, opacity: 0 }}
@@ -239,6 +240,7 @@ export function OpenACPApp() {
     <BrowserOverlayProvider>
       <BrowserPanelProvider>
         <OpenACPAppInner />
+        <FloatingBrowserFrame />
       </BrowserPanelProvider>
     </BrowserOverlayProvider>
   );

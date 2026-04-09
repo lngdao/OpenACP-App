@@ -123,7 +123,7 @@ pub fn run() {
                 label,
                 event: tauri::WindowEvent::CloseRequested { .. },
                 ..
-            } if label == "browser-float" || label == "browser-pip" => {
+            } if label == "browser-pip" => {
                 core::browser::handle_window_close(app);
             }
             _ => {}
