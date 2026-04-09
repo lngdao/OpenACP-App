@@ -166,6 +166,78 @@ pub async fn remove_instance_registration(instance_id: String) -> Result<(), Str
     Ok(())
 }
 
+/// Check if an OpenACP daemon is alive for a workspace by reading its PID file
+#[tauri::command]
+pub async fn check_workspace_server_alive(directory: String) -> Result<bool, String> {
+    let pid_path = std::path::PathBuf::from(&directory).join(".openacp").join("openacp.pid");
+    if !pid_path.exists() {
+        return Ok(false);
+    }
+    let pid_str = std::fs::read_to_string(&pid_path).map_err(|e| e.to_string())?;
+    let pid: i32 = pid_str.trim().parse().map_err(|_| "Invalid PID".to_string())?;
+
+    // Check if process is alive (signal 0 = check existence)
+    let alive = std::process::Command::new("kill")
+        .args(["-0", &pid.to_string()])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+    Ok(alive)
+}
+
+/// Read comprehensive workspace status from filesystem (no CLI needed)
+#[derive(Clone, serde::Serialize)]
+pub struct WorkspaceStatus {
+    pub has_config: bool,
+    pub has_pid: bool,
+    pub server_alive: bool,
+    pub port: Option<u16>,
+    pub instance_name: Option<String>,
+}
+
+#[tauri::command]
+pub async fn get_workspace_status(directory: String) -> Result<WorkspaceStatus, String> {
+    let openacp_dir = std::path::PathBuf::from(&directory).join(".openacp");
+
+    let has_config = openacp_dir.join("config.json").exists();
+
+    // Read instance name from config
+    let instance_name = std::fs::read_to_string(openacp_dir.join("config.json"))
+        .ok()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .and_then(|v| v.get("instanceName")?.as_str().map(String::from));
+
+    // Check PID
+    let mut has_pid = false;
+    let mut server_alive = false;
+    if let Ok(pid_str) = std::fs::read_to_string(openacp_dir.join("openacp.pid")) {
+        has_pid = true;
+        if let Ok(pid) = pid_str.trim().parse::<i32>() {
+            #[cfg(unix)]
+            {
+                server_alive = std::process::Command::new("kill")
+                .args(["-0", &pid.to_string()])
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false);
+            }
+        }
+    }
+
+    // Read port
+    let port = std::fs::read_to_string(openacp_dir.join("api.port"))
+        .ok()
+        .and_then(|s| s.trim().parse::<u16>().ok());
+
+    Ok(WorkspaceStatus {
+        has_config,
+        has_pid,
+        server_alive,
+        port,
+        instance_name,
+    })
+}
+
 #[tauri::command]
 pub async fn start_server(state: tauri::State<'_, AppState>) -> Result<ServerInfo, String> {
     let mut mgr = state.sidecar.lock().await;
