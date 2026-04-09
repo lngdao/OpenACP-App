@@ -47,6 +47,9 @@ Remove the `instances list + path comparison` block. Parse UUID from `run_openac
 const jsonStr = await invoke<string>('run_openacp_setup', { workspace, agent: selectedAgent })
 setSetupStatus('starting')
 
+// Node.js 'path' is not available in the browser/Tauri frontend — use inline basename
+const dirBasename = (p: string) => p.replace(/\\/g, '/').split('/').filter(Boolean).pop() ?? p
+
 let instanceData: { id: string; name: string; directory: string } | null = null
 try {
   const parsed = JSON.parse(jsonStr)
@@ -56,7 +59,7 @@ try {
     instanceData = {
       id: data.id,
       // name fallback chain: CLI name → dirname of directory → id (last resort)
-      name: data.name ?? path.basename(dir) ?? data.id,
+      name: data.name ?? dirBasename(dir) ?? data.id,
       directory: dir,
     }
   }
@@ -73,7 +76,7 @@ if (!instanceData?.id) {
     const data = createParsed?.data ?? createParsed
     if (data?.id) {
       const dir = data.directory ?? workspace
-      instanceData = { id: data.id, name: data.name ?? path.basename(dir) ?? data.id, directory: dir }
+      instanceData = { id: data.id, name: data.name ?? dirBasename(dir) ?? data.id, directory: dir }
     }
   } catch { /* ignored */ }
 }
