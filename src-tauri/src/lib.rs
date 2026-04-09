@@ -83,21 +83,20 @@ pub fn run() {
             core::filesystem::commands::read_file_content,
             core::filesystem::commands::get_workspace_changes,
             // Browser panel commands
-            core::browser::browser_open,
-            core::browser::browser_navigate,
-            core::browser::browser_eval,
-            core::browser::browser_close,
-            core::browser::browser_set_bounds,
             core::browser::browser_show,
-            core::browser::browser_hide,
-            core::browser::browser_float,
-            core::browser::browser_dock,
+            core::browser::browser_navigate,
+            core::browser::browser_set_mode,
+            core::browser::browser_close,
+            core::browser::browser_suppress,
+            core::browser::browser_unsuppress,
+            core::browser::browser_reset_suppress,
             toggle_devtools,
         ])
         .setup(move |app| {
             app.manage(AppState {
                 sidecar: sidecar.clone(),
             });
+            app.manage(core::browser::BrowserStore::new());
 
             // Auto-start: try to detect already-running OpenACP server
             let sidecar_clone = sidecar.clone();
