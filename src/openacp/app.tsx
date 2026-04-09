@@ -133,20 +133,18 @@ function ChatArea() {
   );
 }
 
-function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, setReviewOpen, fileTreeOpen, workspacePath, browserOpen, browserUrl, onCloseBrowser, onBrowserUrlChange }: {
+function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, setReviewOpen, fileTreeOpen, workspacePath, browserPanelEnabled }: {
   sidebarCollapsed: boolean
   reviewOpen: boolean
   onToggleReview: () => void
   setReviewOpen: (open: boolean) => void
   fileTreeOpen: boolean
   workspacePath: string
-  browserOpen: boolean
-  browserUrl: string | null
-  onCloseBrowser: () => void
-  onBrowserUrlChange: (url: string) => void
+  browserPanelEnabled: boolean
 }) {
   const permissions = usePermissions();
   const workspaceCtx = useWorkspace();
+  const browser = useBrowserPanel();
   const isRemote = workspaceCtx.workspace.type === "remote";
   const [openFiles, setOpenFiles] = useState<import("./components/review-panel").OpenFile[]>([]);
   const [requestedTab, setRequestedTab] = useState<string | null>(null);
@@ -219,7 +217,7 @@ function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, set
         )}
       </AnimatePresence>
       <AnimatePresence initial={false}>
-        {browserOpen && (
+        {browser.isVisible && browserPanelEnabled && (
           <motion.div
             className="shrink-0 h-full overflow-hidden"
             initial={{ width: 0, opacity: 0 }}
@@ -227,11 +225,7 @@ function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, set
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
           >
-            <BrowserPanel
-              url={browserUrl}
-              onClose={onCloseBrowser}
-              onUrlChange={onBrowserUrlChange}
-            />
+            <BrowserPanel />
           </motion.div>
         )}
       </AnimatePresence>
@@ -720,10 +714,7 @@ function OpenACPAppInner() {
                     setReviewOpen={setReviewOpen}
                     fileTreeOpen={fileTreeOpen}
                     workspacePath={activeWorkspace?.directory ?? ""}
-                    browserOpen={browser.isVisible && browserPanelEnabled}
-                    browserUrl={browser.url}
-                    onCloseBrowser={() => void browser.close()}
-                    onBrowserUrlChange={(url) => void browser.navigate(url)}
+                    browserPanelEnabled={browserPanelEnabled}
                   />
                 </PermissionsProvider>
               </SessionsProvider>
