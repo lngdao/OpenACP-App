@@ -642,11 +642,11 @@ function OpenACPAppInner() {
         onToggleBrowser={() => {
           if (browser.isVisible) {
             void browser.close()
-          } else if (browser.url) {
-            // Reopen with last URL — recreates webview in Rust
+          } else if (browser.url && /^https?:\/\//i.test(browser.url)) {
+            // Reopen with last valid URL — recreates webview in Rust
             void browser.open(browser.url)
           } else {
-            // Fresh session — just show the empty panel; user types a URL
+            // Fresh session or stale/invalid URL — just show the empty panel
             browser.show()
           }
         }}

@@ -74,7 +74,15 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "state-changed": {
       const s = action.payload.state
-      const url = s.kind === "navigating" ? s.to ?? state.url : s.url ?? state.url
+      // On Idle, clear url — otherwise stale URLs (including any accidentally
+      // captured "about:blank") persist and the titlebar toggle tries to
+      // reopen them, which Rust's parse_url rejects.
+      const url =
+        s.kind === "idle"
+          ? null
+          : s.kind === "navigating"
+            ? s.to ?? state.url
+            : s.url ?? state.url
       return {
         ...state,
         kind: s.kind,
@@ -87,6 +95,10 @@ function reducer(state: State, action: Action): State {
       }
     }
     case "url-changed":
+      // Filter out non-http(s) URLs defensively. Rust on_navigation already
+      // skips these, but belt-and-suspenders — if any leak through, don't
+      // corrupt the address bar state.
+      if (!/^https?:\/\//i.test(action.url)) return state
       return { ...state, url: action.url }
     case "nav-error":
       return { ...state, error: action.message, kind: "error" }

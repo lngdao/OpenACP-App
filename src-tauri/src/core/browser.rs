@@ -297,6 +297,15 @@ fn create_child_in_main(app: &AppHandle, url: &str, bounds: Bounds) -> Result<()
         .initialization_script(INIT_SCRIPT)
         .auto_resize()
         .on_navigation(move |url| {
+            // Skip internal schemes (about:, data:, chrome:, file:, etc.).
+            // These fire on initial webview creation and intermediate loading
+            // states. Pushing them to history and emitting them as the current
+            // URL pollutes the React state — the address bar ends up showing
+            // "about:blank" and Back goes to an unloadable page. Only track
+            // real http(s) navigations.
+            if !matches!(url.scheme(), "http" | "https") {
+                return true;
+            }
             // Track Rust-side history on top-level navigation. If the navigation
             // was triggered programmatically by a Back/Forward command, skip
             // pushing — the cursor was already moved by go_back/go_forward and
@@ -317,7 +326,11 @@ fn create_child_in_main(app: &AppHandle, url: &str, bounds: Bounds) -> Result<()
         .on_page_load(move |_wv, payload| {
             use tauri::webview::PageLoadEvent;
             if matches!(payload.event(), PageLoadEvent::Finished) {
-                emit_page_loaded(&app_for_load, payload.url().as_str());
+                let url = payload.url();
+                // Same filter as on_navigation — skip about:/data:/etc.
+                if matches!(url.scheme(), "http" | "https") {
+                    emit_page_loaded(&app_for_load, url.as_str());
+                }
             }
         });
 
