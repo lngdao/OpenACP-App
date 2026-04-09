@@ -64,7 +64,7 @@ export function SettingsGeneral({ workspacePath }: { workspacePath: string }) {
         </SettingRow>
       </SettingCard>
 
-      <SettingCard title="Browser">
+      <SettingCard title="Browser (Experimental)">
         <SettingRow label="In-app browser" description="Open links in a built-in browser panel instead of the system browser">
           <button
             type="button"
