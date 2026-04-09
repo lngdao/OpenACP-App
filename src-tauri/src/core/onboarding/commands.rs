@@ -15,7 +15,7 @@ pub async fn get_openacp_binary_path() -> Result<Option<String>, String> {
     Ok(find_openacp_binary().map(|(path, _)| path.to_string_lossy().to_string()))
 }
 
-/// Returns true if ~/.openacp/config.json exists.
+/// Returns true if at least one OpenACP instance is registered.
 #[tauri::command]
 pub async fn check_openacp_config() -> Result<bool, String> {
     setup::check_config()
@@ -38,7 +38,7 @@ pub async fn run_install_script(app: tauri::AppHandle) -> Result<(), String> {
     installer::run_install(&app).await
 }
 
-/// Runs `openacp setup --global --workspace <workspace> --agent <agent>
+/// Runs `openacp setup --dir <workspace> --agent <agent>
 ///   --run-mode daemon --json` and streams output via "setup-output" event.
 /// Returns the JSON result string from the CLI on success.
 #[tauri::command]
