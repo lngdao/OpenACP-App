@@ -10,6 +10,7 @@ import {
   ArrowsInSimple,
   PictureInPicture,
   Warning,
+  Globe,
 } from "@phosphor-icons/react"
 import { openUrl } from "@tauri-apps/plugin-opener"
 import { Button } from "./ui/button"
@@ -134,7 +135,9 @@ export function BrowserPanel() {
           finalUrl = `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`
         }
       }
-      void browser.navigate(finalUrl)
+      // Use open() — it handles both create-webview (idle state) and navigate-existing.
+      // Rust browser_show command internally checks if webview exists and routes accordingly.
+      void browser.open(finalUrl)
     },
     [inputUrl, browser],
   )
@@ -171,6 +174,7 @@ export function BrowserPanel() {
 
   const isLoading = browser.kind === "opening" || browser.kind === "navigating"
   const showError = browser.kind === "error" && browser.error
+  const isEmpty = browser.kind === "idle" && !isLoading && !showError
 
   return (
     <div
@@ -297,6 +301,15 @@ export function BrowserPanel() {
               <Button variant="outline" size="sm" onClick={handleOpenExternal}>
                 Open externally
               </Button>
+            </div>
+          </div>
+        )}
+        {isEmpty && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background p-6 pointer-events-none">
+            <Globe size={32} className="text-muted-foreground/60" />
+            <div className="text-sm text-muted-foreground">In-app browser</div>
+            <div className="text-xs text-muted-foreground/70 max-w-[260px] text-center">
+              Type a URL or search query above, or click a link in chat to begin.
             </div>
           </div>
         )}

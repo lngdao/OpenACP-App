@@ -641,9 +641,12 @@ function OpenACPAppInner() {
           if (browser.isVisible) {
             void browser.close()
           } else if (browser.url) {
+            // Reopen with last URL — recreates webview in Rust
             void browser.open(browser.url)
+          } else {
+            // Fresh session — just show the empty panel; user types a URL
+            browser.show()
           }
-          // else: no URL to show yet — noop
         }}
         hideFileTree={activeWorkspace?.type === "remote"}
         hideBrowser={!browserPanelEnabled}
