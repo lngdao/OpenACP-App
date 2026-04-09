@@ -58,7 +58,8 @@ export function SetupWizard(props: Props) {
       const jsonStr = await invoke<string>('run_openacp_setup', { workspace: workspace, agent: selectedAgent });
       setSetupStatus('starting');
 
-      // 1. Register the instance (setup --global does NOT do this)
+      // 1. Register the instance and create plugins.json (setup already handles this,
+      //    but instances create is a fallback in case of partial failures)
       let instanceData: { id: string; name: string; directory: string } | null = null;
       try {
         const createStr = await invoke<string>('invoke_cli', { args: ['instances', 'create', '--dir', workspace, '--no-interactive', '--json'] });
@@ -74,7 +75,7 @@ export function SetupWizard(props: Props) {
 
       // 2. Start server at the workspace directory
       try {
-        await invoke<string>('invoke_cli', { args: ['start', '--dir', workspace, '--daemon'] });
+        await invoke<string>('invoke_cli', { args: ['start', '--dir', workspace] });
       } catch (startErr) {
         const msg = String(startErr).toLowerCase();
         if (!msg.includes('already running')) throw startErr;

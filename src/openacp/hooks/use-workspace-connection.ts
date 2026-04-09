@@ -180,7 +180,7 @@ export function useWorkspaceConnection(
     autoStartAttemptedRef.current = true
     console.log('[workspace-connection] auto-starting server for', ws.directory)
     try {
-      await invoke<string>('invoke_cli', { args: ['start', '--dir', ws.directory, '--daemon'] })
+      await invoke<string>('invoke_cli', { args: ['start', '--dir', ws.directory] })
       // Give server time to boot
       await new Promise(r => setTimeout(r, 3000))
     } catch (err) {
@@ -263,7 +263,7 @@ export function useWorkspaceConnection(
     setState(prev => ({ ...prev, status: 'connecting', error: null }))
     try {
       await invoke<string>('invoke_cli', {
-        args: ['start', '--dir', workspace.directory, '--daemon'],
+        args: ['start', '--dir', workspace.directory],
       })
       // Wait for server to boot
       await new Promise(r => setTimeout(r, 2000))

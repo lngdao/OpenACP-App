@@ -181,10 +181,10 @@ export async function createWorkspace(
 
 /**
  * Start the OpenACP server daemon for a workspace.
- * CLI: `openacp start --dir <path> --daemon`
+ * CLI: `openacp start --dir <path>`
  */
 export async function startWorkspaceServer(directory: string): Promise<void> {
-  await invokeCli(['start', '--dir', directory, '--daemon'])
+  await invokeCli(['start', '--dir', directory])
 }
 
 /**
@@ -202,8 +202,8 @@ export async function stopWorkspaceServer(directory: string): Promise<void> {
 
 /**
  * Restart the OpenACP server daemon.
- * CLI: `openacp restart --dir <path> --daemon`
+ * CLI: `openacp restart --dir <path>`
  */
 export async function restartWorkspaceServer(directory: string): Promise<void> {
-  await invokeCli(['restart', '--dir', directory, '--daemon'])
+  await invokeCli(['restart', '--dir', directory])
 }

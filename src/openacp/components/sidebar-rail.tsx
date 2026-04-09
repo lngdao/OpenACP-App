@@ -370,7 +370,7 @@ export function SidebarRail(props: {
             onStart={async () => {
               try {
                 showToast({ description: "Starting server..." })
-                await invoke<string>('invoke_cli', { args: ['start', '--dir', ws.directory, '--daemon'] })
+                await invoke<string>('invoke_cli', { args: ['start', '--dir', ws.directory] })
                 showToast({ description: "Server started", variant: "success" })
                 props.onSwitchWorkspace(contextMenu.id)
               } catch (e: any) {
