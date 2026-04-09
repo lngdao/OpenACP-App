@@ -332,22 +332,47 @@ fn create_child_in_main(app: &AppHandle, url: &str, bounds: Bounds) -> Result<()
             }
             match payload.event() {
                 PageLoadEvent::Started => {
-                    // Emit url-changed as a fallback for navigations that
-                    // on_navigation misses (e.g., server-side redirects that
-                    // don't trigger a pre-navigation hook, or navigations
-                    // that fire before our on_navigation closure can observe
-                    // them). Also push to history.
-                    if let Some(store) = app_for_load.try_state::<BrowserStore>() {
-                        if let Ok(mut inner) = store.inner.lock() {
-                            if inner.programmatic_nav {
-                                inner.programmatic_nav = false;
-                            } else {
-                                inner.history.push(url.to_string());
-                            }
-                            emit_state(&app_for_load, &inner);
+                    // Fallback for navigations that on_navigation misses
+                    // (e.g., server-side redirects). BUT only emit when the
+                    // URL is actually different from the currently-tracked
+                    // URL — Tauri may fire Started spuriously on window focus
+                    // / activation with the initial-load URL, which would
+                    // otherwise roll the address bar back to the first URL
+                    // whenever the user presses the Pop-out window title bar.
+                    let should_track = if let Some(store) =
+                        app_for_load.try_state::<BrowserStore>()
+                    {
+                        if let Ok(inner) = store.inner.lock() {
+                            let current = match &inner.state {
+                                BrowserState::Ready { url: u, .. }
+                                | BrowserState::Opening { url: u, .. }
+                                | BrowserState::Error { url: u, .. } => u.clone(),
+                                BrowserState::Navigating { to, .. } => to.clone(),
+                                _ => String::new(),
+                            };
+                            current.as_str() != url.as_str()
+                        } else {
+                            false
                         }
+                    } else {
+                        false
+                    };
+
+                    if should_track {
+                        if let Some(store) =
+                            app_for_load.try_state::<BrowserStore>()
+                        {
+                            if let Ok(mut inner) = store.inner.lock() {
+                                if inner.programmatic_nav {
+                                    inner.programmatic_nav = false;
+                                } else {
+                                    inner.history.push(url.to_string());
+                                }
+                                emit_state(&app_for_load, &inner);
+                            }
+                        }
+                        emit_url(&app_for_load, url.as_str());
                     }
-                    emit_url(&app_for_load, url.as_str());
                 }
                 PageLoadEvent::Finished => {
                     emit_page_loaded(&app_for_load, url.as_str());
