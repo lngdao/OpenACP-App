@@ -160,8 +160,10 @@ export function FloatingBrowserFrame() {
     [size.w, size.h, clampPos, beginInteraction, endInteraction],
   )
 
+  type Edge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw"
+
   const handleResizeStart = useCallback(
-    (e: React.MouseEvent) => {
+    (edge: Edge) => (e: React.MouseEvent) => {
       if (e.button !== 0) return
       e.preventDefault()
       e.stopPropagation()
@@ -176,6 +178,11 @@ export function FloatingBrowserFrame() {
       const startMouseX = e.clientX
       const startMouseY = e.clientY
 
+      const affectsTop = edge.includes("n")
+      const affectsBottom = edge.includes("s")
+      const affectsLeft = edge.includes("w")
+      const affectsRight = edge.includes("e")
+
       // Materialize pos so resizing doesn't fight the bottom-right default.
       setPos({ x: startX, y: startY })
       void beginInteraction()
@@ -183,9 +190,31 @@ export function FloatingBrowserFrame() {
       const onMove = (ev: MouseEvent) => {
         const dx = ev.clientX - startMouseX
         const dy = ev.clientY - startMouseY
-        const newW = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, startW + dx))
-        const newH = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startH + dy))
+
+        let newX = startX
+        let newY = startY
+        let newW = startW
+        let newH = startH
+
+        if (affectsRight) {
+          newW = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, startW + dx))
+        }
+        if (affectsLeft) {
+          newW = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, startW - dx))
+          // When resizing from the left edge, the position shifts so the
+          // right edge stays anchored.
+          newX = startX + (startW - newW)
+        }
+        if (affectsBottom) {
+          newH = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startH + dy))
+        }
+        if (affectsTop) {
+          newH = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, startH - dy))
+          newY = startY + (startH - newH)
+        }
+
         setSize({ w: newW, h: newH })
+        setPos({ x: newX, y: newY })
       }
       const onUp = () => {
         window.removeEventListener("mousemove", onMove)
@@ -248,15 +277,62 @@ export function FloatingBrowserFrame() {
         )}
       </div>
 
-      {/* Bottom-right resize handle */}
+      {/* Resize handles — 4 edges + 4 corners. Edges are 4px thin strips,
+          corners are 10x10 squares rendered last so they sit on top of the
+          edge handles at overlaps. All handles stop propagation so they don't
+          trigger the chrome drag when clicked at the top. */}
+      {/* North edge */}
       <div
-        className="absolute bottom-0 right-0 w-3 h-3 cursor-nwse-resize"
-        onMouseDown={handleResizeStart}
-        title="Resize"
+        className="absolute top-0 left-0 right-0 cursor-ns-resize"
+        style={{ height: 4 }}
+        onMouseDown={handleResizeStart("n")}
+      />
+      {/* South edge */}
+      <div
+        className="absolute bottom-0 left-0 right-0 cursor-ns-resize"
+        style={{ height: 4 }}
+        onMouseDown={handleResizeStart("s")}
+      />
+      {/* West edge */}
+      <div
+        className="absolute top-0 bottom-0 left-0 cursor-ew-resize"
+        style={{ width: 4 }}
+        onMouseDown={handleResizeStart("w")}
+      />
+      {/* East edge */}
+      <div
+        className="absolute top-0 bottom-0 right-0 cursor-ew-resize"
+        style={{ width: 4 }}
+        onMouseDown={handleResizeStart("e")}
+      />
+      {/* NW corner */}
+      <div
+        className="absolute top-0 left-0 cursor-nwse-resize"
+        style={{ width: 10, height: 10 }}
+        onMouseDown={handleResizeStart("nw")}
+      />
+      {/* NE corner */}
+      <div
+        className="absolute top-0 right-0 cursor-nesw-resize"
+        style={{ width: 10, height: 10 }}
+        onMouseDown={handleResizeStart("ne")}
+      />
+      {/* SW corner */}
+      <div
+        className="absolute bottom-0 left-0 cursor-nesw-resize"
+        style={{ width: 10, height: 10 }}
+        onMouseDown={handleResizeStart("sw")}
+      />
+      {/* SE corner — with subtle visual indicator */}
+      <div
+        className="absolute bottom-0 right-0 cursor-nwse-resize"
         style={{
+          width: 12,
+          height: 12,
           background:
-            "linear-gradient(135deg, transparent 50%, var(--border) 50%, var(--border) 60%, transparent 60%, transparent 70%, var(--border) 70%, var(--border) 80%, transparent 80%)",
+            "linear-gradient(135deg, transparent 55%, var(--border) 55%, var(--border) 65%, transparent 65%, transparent 75%, var(--border) 75%, var(--border) 85%, transparent 85%)",
         }}
+        onMouseDown={handleResizeStart("se")}
       />
     </div>
   )
