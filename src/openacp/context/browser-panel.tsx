@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
-  useRef,
 } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen, type UnlistenFn } from "@tauri-apps/api/event"
@@ -74,10 +73,11 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "state-changed": {
       const s = action.payload.state
+      const url = s.kind === "navigating" ? s.to ?? state.url : s.url ?? state.url
       return {
         ...state,
         kind: s.kind,
-        url: s.url ?? state.url,
+        url,
         mode: s.mode ?? state.mode,
         canGoBack: action.payload.can_go_back,
         canGoForward: action.payload.can_go_forward,
@@ -115,40 +115,41 @@ const Ctx = createContext<BrowserPanelContextValue | null>(null)
 
 export function BrowserPanelProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial)
-  const unlistenersRef = useRef<UnlistenFn[]>([])
 
   useEffect(() => {
     let active = true
+    let unlisten: UnlistenFn[] = []
+
     async function wire() {
-      const u1 = await listen<BrowserStateChangedPayload>(
-        "browser://state-changed",
-        (e) => {
+      const fns = await Promise.all([
+        listen<BrowserStateChangedPayload>("browser://state-changed", (e) => {
           if (!active) return
           dispatch({ type: "state-changed", payload: e.payload })
-        },
-      )
-      const u2 = await listen<{ url: string }>("browser://url-changed", (e) => {
-        if (!active) return
-        dispatch({ type: "url-changed", url: e.payload.url })
-      })
-      const u3 = await listen<{ url: string; message: string }>(
-        "browser://nav-error",
-        (e) => {
+        }),
+        listen<{ url: string }>("browser://url-changed", (e) => {
+          if (!active) return
+          dispatch({ type: "url-changed", url: e.payload.url })
+        }),
+        listen<{ url: string; message: string }>("browser://nav-error", (e) => {
           if (!active) return
           dispatch({
             type: "nav-error",
             url: e.payload.url,
             message: e.payload.message,
           })
-        },
-      )
-      unlistenersRef.current = [u1, u2, u3]
+        }),
+      ])
+      if (!active) {
+        fns.forEach((u) => u())
+      } else {
+        unlisten = fns
+      }
     }
+
     void wire()
     return () => {
       active = false
-      unlistenersRef.current.forEach((u) => u())
-      unlistenersRef.current = []
+      unlisten.forEach((u) => u())
     }
   }, [])
 
@@ -156,7 +157,12 @@ export function BrowserPanelProvider({ children }: { children: React.ReactNode }
     async (url: string, bounds?: BrowserBounds, mode: BrowserMode = "docked") => {
       dispatch({ type: "set-visible", value: true })
       dispatch({ type: "clear-error" })
-      await invoke("browser_show", { opts: { url, mode, bounds: bounds ?? null } })
+      try {
+        await invoke("browser_show", { opts: { url, mode, bounds: bounds ?? null } })
+      } catch (e) {
+        dispatch({ type: "set-visible", value: false })
+        throw e
+      }
     },
     [],
   )

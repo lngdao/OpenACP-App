@@ -605,12 +605,13 @@ function OpenACPAppInner() {
   }, [active, touchLastActive])
 
   // Listen for open-in-browser events (from link interceptor)
+  const openBrowser = browser.open
   useEffect(() => {
     function handleOpenInBrowser(e: Event) {
       const { url } = (e as CustomEvent).detail;
       if (!url) return;
       if (browserPanelEnabled) {
-        void browser.open(url);
+        void openBrowser(url);
       } else {
         import("@tauri-apps/plugin-opener")
           .then(({ openUrl }) => openUrl(url))
@@ -619,7 +620,7 @@ function OpenACPAppInner() {
     }
     window.addEventListener("open-in-browser-panel", handleOpenInBrowser);
     return () => window.removeEventListener("open-in-browser-panel", handleOpenInBrowser);
-  }, [browserPanelEnabled, browser]);
+  }, [browserPanelEnabled, openBrowser]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background text-foreground-weak select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
@@ -631,11 +632,14 @@ function OpenACPAppInner() {
         fileTreeOpen={fileTreeOpen}
         onToggleFileTree={() => setFileTreeOpen((v) => !v)}
         browserOpen={browser.isVisible}
-        onToggleBrowser={() =>
-          browser.isVisible
-            ? void browser.close()
-            : void browser.open(browser.url ?? "about:blank")
-        }
+        onToggleBrowser={() => {
+          if (browser.isVisible) {
+            void browser.close()
+          } else if (browser.url) {
+            void browser.open(browser.url)
+          }
+          // else: no URL to show yet — noop
+        }}
         hideFileTree={activeWorkspace?.type === "remote"}
         hideBrowser={!browserPanelEnabled}
         disabled={!isConnected}
