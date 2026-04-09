@@ -133,3 +133,70 @@ impl Default for BrowserStore {
         Self::new()
     }
 }
+
+// ── Event payloads ──────────────────────────────────────────────────────────
+
+#[derive(Clone, Serialize)]
+struct StateChangedPayload<'a> {
+    state: &'a BrowserState,
+    can_go_back: bool,
+    can_go_forward: bool,
+    suppressed: bool,
+}
+
+#[derive(Clone, Serialize)]
+struct UrlChangedPayload {
+    url: String,
+}
+
+#[derive(Clone, Serialize)]
+struct NavErrorPayload {
+    url: String,
+    message: String,
+}
+
+const EVT_STATE_CHANGED: &str = "browser://state-changed";
+const EVT_URL_CHANGED: &str = "browser://url-changed";
+const EVT_NAV_ERROR: &str = "browser://nav-error";
+const EVT_PAGE_LOADED: &str = "browser://page-loaded";
+
+/// Emit a `browser://state-changed` event with current derived flags.
+fn emit_state(app: &AppHandle, inner: &BrowserStoreInner) {
+    let payload = StateChangedPayload {
+        state: &inner.state,
+        can_go_back: inner.history.can_go_back(),
+        can_go_forward: inner.history.can_go_forward(),
+        suppressed: inner.suppress_count > 0,
+    };
+    if let Err(e) = app.emit(EVT_STATE_CHANGED, payload) {
+        tracing::warn!("failed to emit browser state: {e}");
+    }
+}
+
+fn emit_url(app: &AppHandle, url: &str) {
+    let _ = app.emit(
+        EVT_URL_CHANGED,
+        UrlChangedPayload {
+            url: url.to_string(),
+        },
+    );
+}
+
+fn emit_nav_error(app: &AppHandle, url: &str, message: &str) {
+    let _ = app.emit(
+        EVT_NAV_ERROR,
+        NavErrorPayload {
+            url: url.to_string(),
+            message: message.to_string(),
+        },
+    );
+}
+
+fn emit_page_loaded(app: &AppHandle, url: &str) {
+    let _ = app.emit(
+        EVT_PAGE_LOADED,
+        UrlChangedPayload {
+            url: url.to_string(),
+        },
+    );
+}
