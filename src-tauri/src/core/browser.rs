@@ -200,3 +200,59 @@ fn emit_page_loaded(app: &AppHandle, url: &str) {
         },
     );
 }
+
+/// JS injected into every page — hooks history/SPA navigation, error events,
+/// and forwards to the Tauri event bus via the `window.__TAURI__` IPC.
+const INIT_SCRIPT: &str = r#"
+(function() {
+  if (window.__openacpBrowserHooked) return;
+  window.__openacpBrowserHooked = true;
+
+  function post(name, payload) {
+    try {
+      if (window.__TAURI_INTERNALS__) {
+        window.__TAURI_INTERNALS__.invoke('plugin:event|emit', {
+          event: name,
+          payload: JSON.stringify(payload),
+        }).catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  // Track SPA navigation via pushState/replaceState/popstate/hashchange
+  function notifyUrl() {
+    post('browser-nav-internal', { url: location.href });
+  }
+  var origPush = history.pushState;
+  history.pushState = function() {
+    var r = origPush.apply(this, arguments);
+    notifyUrl();
+    return r;
+  };
+  var origReplace = history.replaceState;
+  history.replaceState = function() {
+    var r = origReplace.apply(this, arguments);
+    notifyUrl();
+    return r;
+  };
+  window.addEventListener('popstate', notifyUrl);
+  window.addEventListener('hashchange', notifyUrl);
+
+  // Forward uncaught errors
+  window.addEventListener('error', function(e) {
+    post('browser-page-error', {
+      url: location.href,
+      message: (e && e.message) || 'Unknown error',
+    });
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    post('browser-page-error', {
+      url: location.href,
+      message: 'Unhandled rejection: ' + (e && e.reason && e.reason.toString ? e.reason.toString() : String(e && e.reason)),
+    });
+  });
+
+  // Alive heartbeat — parent can poll via eval
+  window.__browserAlive = true;
+})();
+"#;
