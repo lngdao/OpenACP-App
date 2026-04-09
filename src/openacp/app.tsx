@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { invoke } from "@tauri-apps/api/core";
 import { WorkspaceProvider, useWorkspace } from "./context/workspace";
@@ -272,6 +272,16 @@ function OpenACPAppInner() {
   );
 
   const activeWorkspace = active ? (findWorkspace(active) ?? null) : null;
+
+  // Auto-close browser panel when the active workspace changes
+  const { close: closeBrowser, isVisible: browserIsVisible } = browser;
+  const prevActiveRef = useRef(active);
+  useEffect(() => {
+    if (prevActiveRef.current !== active && browserIsVisible) {
+      void closeBrowser();
+    }
+    prevActiveRef.current = active;
+  }, [active, closeBrowser, browserIsVisible]);
 
   // ── Connection state machine ───────────────────────────────────────────
 
