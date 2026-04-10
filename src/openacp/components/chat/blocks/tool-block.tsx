@@ -1,4 +1,4 @@
-import React, { memo, useState, useMemo } from "react"
+import React, { memo, useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "motion/react"
 import { ArrowsOut, CaretRight } from "@phosphor-icons/react"
 import { TextShimmer } from "../../ui/text-shimmer"
@@ -39,6 +39,14 @@ interface ToolBlockProps {
 export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason }: ToolBlockProps) {
   const [expanded, setExpanded] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [bodyMounted, setBodyMounted] = useState(false)
+
+  // Defer body rendering to next event loop tick so the title bar mounts
+  // synchronously during scroll, keeping the scroll frame lightweight.
+  useEffect(() => {
+    const id = setTimeout(() => setBodyMounted(true), 0)
+    return () => clearTimeout(id)
+  }, [])
   const isPending = block.status === "pending" || block.status === "running"
   const isRejected = isRejectionOutput(block.output)
 
@@ -115,7 +123,7 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
       )}
 
       <AnimatePresence initial={false}>
-        {hasBody && !reason && expanded && (
+        {hasBody && !reason && expanded && bodyMounted && (
           <motion.div
             key="body"
             initial={{ height: 0, opacity: 0 }}

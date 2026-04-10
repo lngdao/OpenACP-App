@@ -5,7 +5,7 @@ import { useChat } from "../../context/chat";
 import { useSessions } from "../../context/sessions";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { UserMessage } from "./user-message";
-import { MessageTurn } from "./message-turn";
+import { AssistantBlockRow, AssistantEmptyRow, groupBlocks, type RenderItem } from "./message-turn";
 import { PermissionRequestCard } from "./permission-request";
 import { showToast } from "../../lib/toast";
 import type { Message } from "../../types";
@@ -73,9 +73,13 @@ function ScrollToBottomButton({
   );
 }
 
+// Each assistant message is flattened into one FlatItem per RenderItem (block/noise-group).
+// This allows Virtuoso to virtualize at the block level — a message with 200+ blocks only
+// mounts the blocks currently in view instead of all at once.
 type FlatItem =
-  | { type: "user"; message: Message; topSpacing: number }
-  | { type: "assistant"; message: Message; topSpacing: number; isLastMsg: boolean }
+  | { key: string; type: "user"; message: Message; topSpacing: number }
+  | { key: string; type: "assistant-block"; message: Message; renderItem: RenderItem; isFirstBlock: boolean; isLastBlock: boolean; isLastMsg: boolean; topSpacing: number }
+  | { key: string; type: "assistant-empty"; message: Message; isLastMsg: boolean; topSpacing: number }
 
 
 // Footer rendered by Virtuoso below the last message item.
@@ -121,22 +125,63 @@ export function ChatView() {
   const messages = chat.messages()
   const streaming = chat.streaming()
 
+  // Cache groupBlocks results per Message object reference so we only recompute
+  // when a message actually changes (during streaming only the last message changes).
+  const groupBlocksCacheRef = useRef(new WeakMap<Message, RenderItem[]>())
+
   const flatItems = useMemo<FlatItem[]>(() => {
+    const cache = groupBlocksCacheRef.current
     const items: FlatItem[] = []
 
     for (const msg of messages) {
       if (msg.role === "user") {
-        items.push({ type: "user", message: msg, topSpacing: items.length === 0 ? 12 : 28 })
+        items.push({ key: `u-${msg.id}`, type: "user", message: msg, topSpacing: items.length === 0 ? 12 : 28 })
       } else {
-        items.push({ type: "assistant", message: msg, topSpacing: items.length === 0 ? 12 : 20, isLastMsg: false })
+        const topSpacing = items.length === 0 ? 12 : 20
+
+        if (!cache.has(msg)) {
+          cache.set(msg, groupBlocks(msg.blocks ?? []))
+        }
+        const renderItems = cache.get(msg)!
+
+        if (renderItems.length === 0) {
+          items.push({ key: `ae-${msg.id}`, type: "assistant-empty", message: msg, isLastMsg: false, topSpacing })
+        } else {
+          for (let i = 0; i < renderItems.length; i++) {
+            items.push({
+              key: `ab-${msg.id}-${i}`,
+              type: "assistant-block",
+              message: msg,
+              renderItem: renderItems[i],
+              isFirstBlock: i === 0,
+              isLastBlock: i === renderItems.length - 1,
+              isLastMsg: false,
+              // Only the first block in a message gets the top spacing; the rest
+              // have topSpacing=0 so block-level items within a message are adjacent
+              // (needed for timeline connecting lines to render correctly).
+              topSpacing: i === 0 ? topSpacing : 0,
+            })
+          }
+        }
       }
     }
 
-    // Mark the last assistant message so MessageTurn receives the correct streaming prop
+    // Mark isLastMsg on every item belonging to the last assistant message
     for (let i = items.length - 1; i >= 0; i--) {
       const item = items[i]
-      if (item.type === "assistant") {
-        items[i] = { ...item, isLastMsg: true }
+      if (item.type === "assistant-block" || item.type === "assistant-empty") {
+        // Mark all items in this message
+        const lastMsgId = item.message.id
+        for (let j = i; j >= 0; j--) {
+          const it = items[j]
+          if ((it.type === "assistant-block" || it.type === "assistant-empty") && it.message.id === lastMsgId) {
+            items[j] = { ...it, isLastMsg: true }
+          } else if (it.type !== "assistant-block" && it.type !== "assistant-empty") {
+            break
+          } else {
+            break
+          }
+        }
         break
       }
     }
@@ -257,7 +302,7 @@ export function ChatView() {
               ref={virtuosoRef}
               className="h-full no-scrollbar"
               data={flatItems}
-              computeItemKey={(_, item) => item.message.id}
+              computeItemKey={(_, item) => item.key}
               itemContent={(_, item) => (
                 <div
                   className="px-6 md:max-w-180 md:mx-auto 2xl:max-w-220"
@@ -265,8 +310,16 @@ export function ChatView() {
                 >
                   {item.type === "user" ? (
                     <UserMessage message={item.message} />
+                  ) : item.type === "assistant-empty" ? (
+                    <AssistantEmptyRow streaming={streaming && item.isLastMsg} />
                   ) : (
-                    <MessageTurn message={item.message} streaming={streaming && item.isLastMsg} />
+                    <AssistantBlockRow
+                      message={item.message}
+                      renderItem={item.renderItem}
+                      isFirstBlock={item.isFirstBlock}
+                      isLastBlock={item.isLastBlock}
+                      streaming={streaming && item.isLastMsg && item.isLastBlock}
+                    />
                   )}
                 </div>
               )}
@@ -274,7 +327,7 @@ export function ChatView() {
               atBottomStateChange={setAtBottom}
               components={{ Footer: ChatFooter }}
               increaseViewportBy={{ top: 800, bottom: 400 }}
-              defaultItemHeight={100}
+              defaultItemHeight={80}
             />
             <ScrollToBottomButton
               visible={!atBottom}
