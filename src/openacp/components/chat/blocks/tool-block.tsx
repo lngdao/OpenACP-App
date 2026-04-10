@@ -1,5 +1,5 @@
 import React, { memo, useState, useMemo } from "react"
-import { AnimatePresence } from "motion/react"
+import { motion, AnimatePresence } from "motion/react"
 import { ArrowsOut, CaretRight } from "@phosphor-icons/react"
 import { TextShimmer } from "../../ui/text-shimmer"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../ui/dialog"
