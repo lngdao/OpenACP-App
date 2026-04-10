@@ -77,6 +77,12 @@ type FlatItem =
   | { type: "user"; message: Message; topSpacing: number }
   | { type: "assistant"; message: Message; topSpacing: number; isLastMsg: boolean }
 
+// Lightweight placeholder shown during fast scroll — prevents mounting heavy
+// message components (Shiki, tool useMemos) while the user is scrolling quickly.
+function MessagePlaceholder({ height }: { height: number }) {
+  return <div style={{ height }} />
+}
+
 // Footer rendered by Virtuoso below the last message item.
 // Reads from context directly because Virtuoso's Footer receives no props.
 function ChatFooter() {
@@ -268,9 +274,13 @@ export function ChatView() {
                   )}
                 </div>
               )}
+              scrollSeekConfiguration={{
+                enter: (velocity) => Math.abs(velocity) > 800,
+                exit: (velocity) => Math.abs(velocity) < 100,
+              }}
               followOutput={streaming ? "smooth" : false}
               atBottomStateChange={setAtBottom}
-              components={{ Footer: ChatFooter }}
+              components={{ ScrollSeekPlaceholder: MessagePlaceholder, Footer: ChatFooter }}
               increaseViewportBy={{ top: 200, bottom: 400 }}
               defaultItemHeight={200}
             />

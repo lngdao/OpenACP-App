@@ -146,9 +146,15 @@ function MessageFooter({ usage, textContent }: { usage?: import("../../types").U
   )
 }
 
-export const MessageTurn = React.memo(function MessageTurn({ message, streaming }: MessageTurnProps) {
+// Isolated wrapper so only this component re-renders on permissions context changes,
+// not the entire MessageTurn tree.
+function ToolBlockWithFeedback({ block, sessionID }: { block: ToolBlock; sessionID: string }) {
   const permissions = usePermissions()
-  const feedbackReason = permissions.lastFeedback(message.sessionID)
+  const feedbackReason = permissions.lastFeedback(sessionID)
+  return <ToolBlockView block={block} feedbackReason={feedbackReason} />
+}
+
+export const MessageTurn = React.memo(function MessageTurn({ message, streaming }: MessageTurnProps) {
   const blocks = useMemo(() => message.blocks ?? [], [message.blocks])
   const isEmpty = blocks.length === 0
   const renderItems = useMemo(() => groupBlocks(blocks), [blocks])
@@ -190,7 +196,7 @@ export const MessageTurn = React.memo(function MessageTurn({ message, streaming 
               ) : block.type === "thinking" ? (
                 <ThinkingBlockView block={block as ThinkingBlock} sessionID={message.sessionID} />
               ) : block.type === "tool" ? (
-                <ToolBlockView block={block as ToolBlock} feedbackReason={feedbackReason} />
+                <ToolBlockWithFeedback block={block as ToolBlock} sessionID={message.sessionID} />
               ) : block.type === "plan" ? (
                 <PlanBlockView block={block as PlanBlock} />
               ) : block.type === "error" ? (
