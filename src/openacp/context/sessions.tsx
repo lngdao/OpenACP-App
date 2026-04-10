@@ -40,16 +40,24 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
   const sessionsRef = useRef(sessions)
   sessionsRef.current = sessions
 
+  // Track archived session IDs locally (server still returns them in listSessions)
+  const archivedIdsRef = useRef<Set<string>>(new Set())
+
   // Persist sessions to cache whenever they change (including empty list)
   useEffect(() => {
     void cacheSessions(workspace.directory, sessions)
   }, [sessions, workspace.directory])
 
-  /** Fetch authoritative session list from server */
+  /** Fetch authoritative session list from server.
+   *  Filters out cancelled sessions (archived sessions are cancelled on server)
+   *  and any locally-archived IDs not yet cancelled. */
   const fetchFromServer = useCallback(async (): Promise<Session[] | null> => {
     try {
       const result = await workspace.client.listSessions()
-      return sortSessions(result)
+      const archived = archivedIdsRef.current
+      return sortSessions(
+        result.filter((s) => s.status !== "cancelled" && !archived.has(s.id))
+      )
     } catch {
       return null
     }
@@ -89,21 +97,14 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [workspace.client])
 
+  /** Cancel = interrupt the running agent, session stays in list */
   const remove = useCallback(async (id: string) => {
-    // Optimistic: remove from UI immediately
-    setSessions((prev) => prev.filter((s) => s.id !== id))
-
-    // Call server
     try {
       await workspace.client.deleteSession(id)
     } catch (e) {
-      console.error("[sessions] delete API failed:", e)
+      console.error("[sessions] cancel API failed:", e)
     }
-
-    // Clean up message cache for this session
-    void clearCachedMessages(id).catch(() => {})
-
-    // Re-fetch from server to ensure consistency (server is truth)
+    // Re-fetch to get updated status
     const serverList = await fetchFromServer()
     if (serverList !== null) {
       setSessions(serverList)
@@ -127,7 +128,11 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [workspace.client])
 
+  /** Archive = server cancels agent + removes session, then remove from UI */
   const archive = useCallback(async (id: string) => {
+    // Track archived IDs locally (server still returns them in list)
+    archivedIdsRef.current.add(id)
+
     // Optimistic: remove from UI
     setSessions((prev) => prev.filter((s) => s.id !== id))
 
@@ -135,19 +140,17 @@ export function SessionsProvider({ children }: { children: React.ReactNode }) {
       await workspace.client.archiveSession(id)
     } catch (e) {
       console.error("[sessions] archive failed:", e)
+      showToast({ description: "Failed to archive session" })
+      archivedIdsRef.current.delete(id)
     }
 
-    // Clean up message cache
+    // Clean up local message cache
     void clearCachedMessages(id).catch(() => {})
-
-    // Re-fetch to reconcile
-    const serverList = await fetchFromServer()
-    if (serverList !== null) {
-      setSessions(serverList)
-    }
-  }, [workspace.client, fetchFromServer])
+  }, [workspace.client])
 
   const upsert = useCallback((session: Session) => {
+    // Ignore archived/cancelled sessions
+    if (archivedIdsRef.current.has(session.id) || session.status === "cancelled") return
     setSessions((prev) => {
       const idx = prev.findIndex((s) => s.id === session.id)
       if (idx >= 0) {
