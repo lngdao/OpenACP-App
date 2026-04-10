@@ -1,11 +1,8 @@
 import React, { useMemo, useState, useEffect, useCallback, useRef } from "react";
-import { DotsThree, GitBranch } from "@phosphor-icons/react";
-import { invoke } from "@tauri-apps/api/core";
+import { DotsThree } from "@phosphor-icons/react";
 import { BrandIcon } from "../brand-loader";
 import { useChat } from "../../context/chat";
 import { useSessions } from "../../context/sessions";
-import { useWorkspace } from "../../context/workspace";
-import { usePermissions } from "../../context/permissions";
 import { Virtuoso, type VirtuosoHandle } from "react-virtuoso";
 import { UserMessage } from "./user-message";
 import { MessageTurn } from "./message-turn";
@@ -154,7 +151,6 @@ function ChatFooter() {
 
 export function ChatView() {
   const chat = useChat();
-  const permissions = usePermissions();
   const activeSessionId = chat.activeSession();
 
   const virtuosoRef = useRef<VirtuosoHandle>(null)
