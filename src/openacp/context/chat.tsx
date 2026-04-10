@@ -367,6 +367,8 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     if (name === "write" && input.content != null) {
       return { path, after: String(input.content) }
     }
+    // apply_patch diff stores the raw patch text as `after`; it surfaces in the Review panel
+    // but is never shown in the inline ToolDiffView (which only activates for edit/write kinds)
     if (name === "apply_patch" && input.patch != null) {
       return { path: input.file_path || input.path || "patch", after: String(input.patch) }
     }
