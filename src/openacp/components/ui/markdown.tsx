@@ -102,7 +102,7 @@ function sanitize(html: string) {
 }
 
 const cache = new Map<string, { hash: string; html: string }>()
-const MAX_CACHE = 200
+const MAX_CACHE = 2000
 
 function hashString(s: string): string {
   let h = 0
