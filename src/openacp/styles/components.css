@@ -592,40 +592,45 @@
 /* ── Diff view ───────────────────────────────────────────────────────────── */
 
 .oac-diff-view {
-  /* Constrained to parent width so overflow-x: auto creates a scroll container.
-     Lines inside use min-width: max-content to push past this boundary. */
+  /* display: table ensures all rows share the same width (the widest row),
+     so colored backgrounds extend uniformly across the full scrollable area.
+     The scroll container is the parent wrapper, not this element. */
+  display: table;
   min-width: 100%;
   line-height: 20px;
+  border-collapse: collapse;
 }
 
 .oac-diff-line {
-  display: flex;
-  /* At least 100% of the scroll container (fills background), wider if content demands. */
-  min-width: max(100%, max-content);
-  min-height: 20px;
+  display: table-row;
   white-space: pre;
 }
 
 .oac-diff-gutter {
-  flex-shrink: 0;
+  display: table-cell;
   width: 40px;
   text-align: right;
   padding-right: 8px;
   color: var(--foreground-weaker);
   user-select: none;
   opacity: 0.6;
+  vertical-align: middle;
 }
 
 .oac-diff-sign {
-  flex-shrink: 0;
+  display: table-cell;
   width: 16px;
   text-align: center;
   user-select: none;
+  vertical-align: middle;
 }
 
 .oac-diff-content {
-  flex: 1;
+  display: table-cell;
+  /* width: 100% makes this the greedy column that absorbs all remaining space */
+  width: 100%;
   padding-right: 12px;
+  vertical-align: middle;
 }
 
 .oac-diff-add {
@@ -653,7 +658,13 @@
 .oac-diff-hunk {
   background: rgba(100, 100, 100, 0.08);
   color: var(--foreground-weaker);
-  padding: 2px 0;
+  /* padding on table-row doesn't work — applied to cells below */
+}
+.oac-diff-hunk .oac-diff-gutter,
+.oac-diff-hunk .oac-diff-sign,
+.oac-diff-hunk .oac-diff-content {
+  padding-top: 2px;
+  padding-bottom: 2px;
 }
 .oac-diff-hunk .oac-diff-content {
   padding-left: 4px;

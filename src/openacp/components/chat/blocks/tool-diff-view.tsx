@@ -13,6 +13,7 @@ interface ToolDiffViewProps {
 export function ToolDiffView({ diff, forceExpanded = false }: ToolDiffViewProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [hasOverflow, setHasOverflow] = useState(false)
+  // Ref on the scroll container (parent of the table), not the table itself
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const allLines = useMemo(
@@ -45,27 +46,29 @@ export function ToolDiffView({ diff, forceExpanded = false }: ToolDiffViewProps)
   return (
     <div>
       <div className="relative">
-        <div ref={scrollRef} className="oac-diff-view font-mono overflow-x-auto no-scrollbar text-xs">
-          {visibleLines.map((line, i) => (
-            <div
-              key={`${line.type}-${line.oldNum ?? "x"}-${line.newNum ?? "x"}-${i}`}
-              className={`oac-diff-line ${
-                line.type === "add" ? "oac-diff-add"
-                : line.type === "del" ? "oac-diff-del"
-                : line.type === "hunk" ? "oac-diff-hunk"
-                : ""
-              }`}
-            >
-              <span className="oac-diff-gutter oac-diff-gutter-old">{line.oldNum ?? ""}</span>
-              <span className="oac-diff-gutter oac-diff-gutter-new">{line.newNum ?? ""}</span>
-              <span className="oac-diff-sign">
-                {line.type === "add" ? "+" : line.type === "del" ? "-" : line.type === "hunk" ? "" : " "}
-              </span>
-              <span className="oac-diff-content">{line.content}</span>
-            </div>
-          ))}
+        {/* Scroll container — overflow-x here; .oac-diff-view inside is display:table */}
+        <div ref={scrollRef} className="font-mono overflow-x-auto no-scrollbar text-xs">
+          <div className="oac-diff-view">
+            {visibleLines.map((line, i) => (
+              <div
+                key={`${line.type}-${line.oldNum ?? "x"}-${line.newNum ?? "x"}-${i}`}
+                className={`oac-diff-line ${
+                  line.type === "add" ? "oac-diff-add"
+                  : line.type === "del" ? "oac-diff-del"
+                  : line.type === "hunk" ? "oac-diff-hunk"
+                  : ""
+                }`}
+              >
+                <span className="oac-diff-gutter oac-diff-gutter-old">{line.oldNum ?? ""}</span>
+                <span className="oac-diff-gutter oac-diff-gutter-new">{line.newNum ?? ""}</span>
+                <span className="oac-diff-sign">
+                  {line.type === "add" ? "+" : line.type === "del" ? "-" : line.type === "hunk" ? "" : " "}
+                </span>
+                <span className="oac-diff-content">{line.content}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        {/* Fade gradient signals that content extends beyond the visible area */}
         {hasOverflow && (
           <div
             className="absolute top-0 right-0 bottom-0 w-12 pointer-events-none"

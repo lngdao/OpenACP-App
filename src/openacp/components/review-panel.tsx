@@ -68,30 +68,33 @@ function DiffView({
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="oac-diff-view font-mono overflow-x-auto no-scrollbar" style={{ fontSize: "12px" }}>
-        {lines.map((line, i) => (
-          <div
-            key={i}
-            className={`oac-diff-line ${line.type === "add" ? "oac-diff-add" : line.type === "del" ? "oac-diff-del" : line.type === "hunk" ? "oac-diff-hunk" : ""}`}
-          >
-            <span className="oac-diff-gutter oac-diff-gutter-old">
-              {line.oldNum ?? ""}
-            </span>
-            <span className="oac-diff-gutter oac-diff-gutter-new">
-              {line.newNum ?? ""}
-            </span>
-            <span className="oac-diff-sign">
-              {line.type === "add"
-                ? "+"
-                : line.type === "del"
-                  ? "-"
-                  : line.type === "hunk"
-                    ? ""
-                    : " "}
-            </span>
-            <span className="oac-diff-content">{line.content}</span>
-          </div>
-        ))}
+      {/* Scroll container — ref here for overflow detection; .oac-diff-view inside is display:table */}
+      <div ref={containerRef} className="font-mono overflow-x-auto no-scrollbar" style={{ fontSize: "12px" }}>
+        <div className="oac-diff-view">
+          {lines.map((line, i) => (
+            <div
+              key={i}
+              className={`oac-diff-line ${line.type === "add" ? "oac-diff-add" : line.type === "del" ? "oac-diff-del" : line.type === "hunk" ? "oac-diff-hunk" : ""}`}
+            >
+              <span className="oac-diff-gutter oac-diff-gutter-old">
+                {line.oldNum ?? ""}
+              </span>
+              <span className="oac-diff-gutter oac-diff-gutter-new">
+                {line.newNum ?? ""}
+              </span>
+              <span className="oac-diff-sign">
+                {line.type === "add"
+                  ? "+"
+                  : line.type === "del"
+                    ? "-"
+                    : line.type === "hunk"
+                      ? ""
+                      : " "}
+              </span>
+              <span className="oac-diff-content">{line.content}</span>
+            </div>
+          ))}
+        </div>
       </div>
       {hasOverflowRight && (
         <div className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none" style={{ background: "linear-gradient(to left, var(--card), transparent)" }} />
