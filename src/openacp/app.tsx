@@ -44,6 +44,7 @@ import { BrowserOverlayProvider } from "./context/browser-overlay";
 import { FloatingBrowserFrame } from "./components/floating-browser-frame";
 import { TerminalProvider } from "./context/terminal";
 import { TerminalPanel } from "./components/terminal-panel";
+import { ToolDisplayProvider } from "./context/tool-display";
 import type { ServerInfo } from "./types";
 
 function NoServerScreen({ directory, isRemote, errorMessage, onStart, onReconnect, onRemove }: { directory: string; isRemote?: boolean; errorMessage?: string | null; onStart: () => void; onReconnect: () => void; onRemove?: () => void }) {
@@ -250,12 +251,14 @@ function ChatWithPermissions({ sidebarCollapsed, reviewOpen, onToggleReview, set
 
 export function OpenACPApp() {
   return (
-    <BrowserOverlayProvider>
-      <BrowserPanelProvider>
-        <OpenACPAppInner />
-        <FloatingBrowserFrame />
-      </BrowserPanelProvider>
-    </BrowserOverlayProvider>
+    <ToolDisplayProvider>
+      <BrowserOverlayProvider>
+        <BrowserPanelProvider>
+          <OpenACPAppInner />
+          <FloatingBrowserFrame />
+        </BrowserPanelProvider>
+      </BrowserOverlayProvider>
+    </ToolDisplayProvider>
   );
 }
 
