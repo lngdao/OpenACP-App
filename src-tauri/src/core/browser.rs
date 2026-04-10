@@ -402,17 +402,34 @@ fn ensure_pip_window(app: &AppHandle) -> Result<tauri::Window, String> {
     if let Some(w) = app.get_window(PIP_LABEL) {
         return Ok(w);
     }
-    WindowBuilder::new(app, PIP_LABEL)
-        .title("Browser (PiP)")
-        .inner_size(420.0, 300.0)
-        .min_inner_size(280.0, 180.0)
+    let pip = WindowBuilder::new(app, PIP_LABEL)
+        .title("Browser (Pop-out)")
+        .inner_size(1024.0, 720.0)
+        .min_inner_size(400.0, 300.0)
         .resizable(true)
         .decorations(true)
         .always_on_top(true)
         .skip_taskbar(true)
         .visible(false)
         .build()
-        .map_err(|e| format!("pip window build failed: {e}"))
+        .map_err(|e| format!("pip window build failed: {e}"))?;
+
+    // Register a resize listener so the webview fills the window when the
+    // user drags the edges. `auto_resize()` on the WebviewBuilder doesn't
+    // survive reparent, and `set_position(0,0)` in fill_window disables it
+    // entirely (Tauri #9611). Manual tracking is the only reliable approach.
+    let app_for_resize = app.clone();
+    pip.on_window_event(move |event| {
+        if let tauri::WindowEvent::Resized(_) = event {
+            if let Some(wv) = app_for_resize.get_webview(BROWSER_LABEL) {
+                if let Some(win) = app_for_resize.get_window(PIP_LABEL) {
+                    let _ = fill_window(&wv, &win);
+                }
+            }
+        }
+    });
+
+    Ok(pip)
 }
 
 /// Hide a sibling window without destroying it. Used during mode switches
