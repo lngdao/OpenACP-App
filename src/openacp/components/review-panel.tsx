@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { X, CaretRight, CaretDown, CaretLeft } from "@phosphor-icons/react";
-import { structuredPatch } from "diff";
+import { computeDiffLines, type DiffLine } from "./chat/diff-utils";
 import { ResizeHandle } from "./ui/resize-handle";
 import { useChat } from "../context/chat";
 import type { ToolCallPart, FileDiff as FileDiffData } from "../types";
@@ -11,58 +11,17 @@ const DEFAULT_WIDTH = 480;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 800;
 
-interface DiffLine {
-  type: "add" | "del" | "normal" | "hunk";
-  content: string;
-  oldNum?: number;
-  newNum?: number;
-}
-
-function computeDiffLines(
-  before: string,
-  after: string,
-  path: string,
-): DiffLine[] {
-  const patch = structuredPatch(path, path, before, after, "", "", {
-    context: 3,
-  });
-  const lines: DiffLine[] = [];
-  for (const hunk of patch.hunks) {
-    lines.push({
-      type: "hunk",
-      content: `@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`,
-    });
-    let oldNum = hunk.oldStart;
-    let newNum = hunk.newStart;
-    for (const line of hunk.lines) {
-      if (line.startsWith("+"))
-        lines.push({ type: "add", content: line.slice(1), newNum: newNum++ });
-      else if (line.startsWith("-"))
-        lines.push({ type: "del", content: line.slice(1), oldNum: oldNum++ });
-      else
-        lines.push({
-          type: "normal",
-          content: line.slice(1),
-          oldNum: oldNum++,
-          newNum: newNum++,
-        });
-    }
-  }
-  return lines;
-}
-
 function DiffStats({ before, after }: { before: string; after: string }) {
   const stats = useMemo(() => {
-    const patch = structuredPatch("", "", before, after);
-    let add = 0,
-      del = 0;
-    for (const hunk of patch.hunks) {
-      for (const line of hunk.lines) {
-        if (line.startsWith("+")) add++;
-        else if (line.startsWith("-")) del++;
-      }
-    }
-    return { add, del };
+    const lines = computeDiffLines(before, after, "");
+    return lines.reduce(
+      (acc, l) => {
+        if (l.type === "add") acc.add++;
+        else if (l.type === "del") acc.del++;
+        return acc;
+      },
+      { add: 0, del: 0 },
+    );
   }, [before, after]);
   return (
     <span className="flex items-center gap-1.5 text-sm leading-lg font-mono">
@@ -109,30 +68,33 @@ function DiffView({
 
   return (
     <div className="relative">
-      <div ref={containerRef} className="oac-diff-view font-mono overflow-x-auto no-scrollbar" style={{ fontSize: "12px" }}>
-        {lines.map((line, i) => (
-          <div
-            key={i}
-            className={`oac-diff-line ${line.type === "add" ? "oac-diff-add" : line.type === "del" ? "oac-diff-del" : line.type === "hunk" ? "oac-diff-hunk" : ""}`}
-          >
-            <span className="oac-diff-gutter oac-diff-gutter-old">
-              {line.oldNum ?? ""}
-            </span>
-            <span className="oac-diff-gutter oac-diff-gutter-new">
-              {line.newNum ?? ""}
-            </span>
-            <span className="oac-diff-sign">
-              {line.type === "add"
-                ? "+"
-                : line.type === "del"
-                  ? "-"
-                  : line.type === "hunk"
-                    ? ""
-                    : " "}
-            </span>
-            <span className="oac-diff-content">{line.content}</span>
-          </div>
-        ))}
+      {/* Scroll container — ref here for overflow detection; .oac-diff-view inside is display:table */}
+      <div ref={containerRef} className="font-mono overflow-x-auto no-scrollbar" style={{ fontSize: "12px" }}>
+        <div className="oac-diff-view">
+          {lines.map((line, i) => (
+            <div
+              key={i}
+              className={`oac-diff-line ${line.type === "add" ? "oac-diff-add" : line.type === "del" ? "oac-diff-del" : line.type === "hunk" ? "oac-diff-hunk" : ""}`}
+            >
+              <span className="oac-diff-gutter oac-diff-gutter-old">
+                {line.oldNum ?? ""}
+              </span>
+              <span className="oac-diff-gutter oac-diff-gutter-new">
+                {line.newNum ?? ""}
+              </span>
+              <span className="oac-diff-sign">
+                {line.type === "add"
+                  ? "+"
+                  : line.type === "del"
+                    ? "-"
+                    : line.type === "hunk"
+                      ? ""
+                      : " "}
+              </span>
+              <span className="oac-diff-content">{line.content}</span>
+            </div>
+          ))}
+        </div>
       </div>
       {hasOverflowRight && (
         <div className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none" style={{ background: "linear-gradient(to left, var(--card), transparent)" }} />

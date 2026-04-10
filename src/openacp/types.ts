@@ -78,6 +78,7 @@ export interface ToolBlock {
   input: Record<string, unknown> | null
   output: string | null
   diffStats: { added: number; removed: number } | null
+  diff?: FileDiff | null
   isNoise: boolean
   isHidden: boolean
 }
@@ -207,7 +208,7 @@ export interface HistoryTurn {
 export type HistoryStep =
   | { type: "thinking"; content: string }
   | { type: "text"; content: string }
-  | { type: "tool_call"; id: string; name: string; status: string; input?: unknown; output?: unknown; kind?: string }
+  | { type: "tool_call"; id: string; name: string; status: string; input?: unknown; output?: unknown; kind?: string; diff?: { path?: string; oldText?: string; newText?: string } | null }
   | { type: "plan"; entries: unknown[] }
   | { type: "mode_change"; modeId: string }
   | { type: "config_change"; configId: string; value: string }
