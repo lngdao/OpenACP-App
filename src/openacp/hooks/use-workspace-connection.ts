@@ -81,7 +81,7 @@ async function checkHealth(server: ServerInfo): Promise<boolean> {
   }
 }
 
-// ── Server resolution: UUID → instances.json ────────────────────────────────
+// ── Server resolution: UUID → instances.json, fallback → filesystem ─────────
 
 async function resolveServer(workspace: WorkspaceEntry): Promise<ServerInfo> {
   if (workspace.type === 'remote') {
@@ -90,9 +90,22 @@ async function resolveServer(workspace: WorkspaceEntry): Promise<ServerInfo> {
     return { url: workspace.host ?? '', token: jwt }
   }
 
-  // Local: UUID → instances.json → read api.port + api-secret
+  // Primary: UUID → instances.json → read api.port + api-secret
   const info = await resolveWorkspaceServer(workspace.id)
   if (info) return info
+
+  // Fallback: read directly from the workspace directory.
+  // Used when instances.json is missing/stale (e.g. first run, registry deleted).
+  // Identity stays UUID (workspace.id) — directory is only a filesystem pointer here.
+  if (workspace.directory) {
+    const { invoke } = await import('@tauri-apps/api/core')
+    try {
+      const dirInfo = await invoke<ServerInfo>('get_workspace_server_info_from_dir', {
+        directory: workspace.directory,
+      })
+      if (dirInfo) return dirInfo
+    } catch { /* fall through */ }
+  }
 
   throw new Error(`Cannot resolve server for "${workspace.name || workspace.id}" — is the server running?`)
 }
