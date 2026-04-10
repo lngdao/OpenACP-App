@@ -323,6 +323,7 @@ export function ChatView() {
               )}
               followOutput={streaming ? "smooth" : false}
               atBottomStateChange={setAtBottom}
+              atBottomThreshold={100}
               components={{ Footer: ChatFooter }}
               increaseViewportBy={{ top: 1200, bottom: 600 }}
               defaultItemHeight={80}
