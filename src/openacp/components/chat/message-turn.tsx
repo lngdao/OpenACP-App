@@ -170,7 +170,7 @@ interface AssistantBlockRowProps {
   /** True when the parent message is actively streaming (any block). Suppresses the footer
    *  and interrupted banner while the message is still being built to prevent height jumps
    *  as blocks are added and isLastBlock shifts between items. */
-  messageStreaming?: boolean
+  messageStreaming: boolean
 }
 
 export function AssistantBlockRow({ message, renderItem, isFirstBlock, isLastBlock, streaming, messageStreaming }: AssistantBlockRowProps) {

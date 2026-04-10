@@ -211,17 +211,23 @@ export function ChatView() {
     const el = scrollerRef.current
     if (!el) return
 
-    // Wheel (mouse + trackpad) is the reliable cross-platform signal for user scroll intent
-    // on Tauri desktop. Touch-based input is out of scope for now.
-    // Note: only upward wheel disables auto-follow; re-enabling happens via
+    // Wheel (mouse + trackpad) and keyboard navigation are the reliable signals for
+    // user scroll intent on Tauri desktop. Touch-based input is out of scope for now.
+    // Note: only upward input disables auto-follow; re-enabling happens via
     // atBottomStateChange when the user scrolls back within atBottomThreshold (100px).
-    const onWheelUp = (e: WheelEvent) => {
-      if (e.deltaY < 0) {
-        atBottomRef.current = false
-        setAtBottom(false)
-      }
+    const disableAutoFollow = () => {
+      atBottomRef.current = false
+      setAtBottom(false)
     }
+
+    const onWheelUp = (e: WheelEvent) => { if (e.deltaY < 0) disableAutoFollow() }
+    // Keyboard: ArrowUp / PageUp / Home scroll the list upward — snap-back would be jarring
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "Home") disableAutoFollow()
+    }
+
     el.addEventListener("wheel", onWheelUp, { passive: true })
+    el.addEventListener("keydown", onKeyDown)
 
     let rafId: number
     const tick = () => {
@@ -238,6 +244,7 @@ export function ChatView() {
     return () => {
       cancelAnimationFrame(rafId)
       el.removeEventListener("wheel", onWheelUp)
+      el.removeEventListener("keydown", onKeyDown)
     }
   }, [streaming])
 
