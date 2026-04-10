@@ -119,9 +119,8 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
 
     /** Archive a session */
     async archiveSession(sessionId: string): Promise<void> {
-      await api(`/sessions/${encodeURIComponent(sessionId)}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: "archived" }),
+      await api(`/sessions/${encodeURIComponent(sessionId)}/archive`, {
+        method: "POST",
       })
     },
 
