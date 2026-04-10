@@ -96,7 +96,7 @@ export function SettingsAppearance() {
           </Tabs>
         </SettingRow>
         {TOOL_KINDS.map((kind) => (
-          <SettingRow key={kind} label={TOOL_KIND_LABELS[kind]} description="">
+          <SettingRow key={kind} label={TOOL_KIND_LABELS[kind]}>
             <Switch
               checked={toolAutoExpand[kind] ?? false}
               onCheckedChange={(v) => void handleKindToggle(kind, v)}
