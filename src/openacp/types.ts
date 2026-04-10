@@ -78,6 +78,7 @@ export interface ToolBlock {
   input: Record<string, unknown> | null
   output: string | null
   diffStats: { added: number; removed: number } | null
+  diff?: FileDiff | null
   isNoise: boolean
   isHidden: boolean
 }
