@@ -600,8 +600,8 @@
 
 .oac-diff-line {
   display: flex;
-  /* Force each line to its natural content width so long lines create scroll. */
-  min-width: max-content;
+  /* At least 100% of the scroll container (fills background), wider if content demands. */
+  min-width: max(100%, max-content);
   min-height: 20px;
   white-space: pre;
 }
