@@ -81,7 +81,7 @@ async function checkHealth(server: ServerInfo): Promise<boolean> {
   }
 }
 
-// ── Server resolution: CLI-first, filesystem-fallback ────────────────────────
+// ── Server resolution: UUID → instances.json ────────────────────────────────
 
 async function resolveServer(workspace: WorkspaceEntry): Promise<ServerInfo> {
   if (workspace.type === 'remote') {
@@ -90,22 +90,9 @@ async function resolveServer(workspace: WorkspaceEntry): Promise<ServerInfo> {
     return { url: workspace.host ?? '', token: jwt }
   }
 
-  // CLI-first: try Tauri command (reads instances.json + filesystem)
-  try {
-    const info = await resolveWorkspaceServer(workspace.id, workspace.directory)
-    if (info) return info
-  } catch {
-    // CLI path failed, try direct filesystem
-  }
-
-  // Filesystem fallback: read .openacp/ directly
-  if (workspace.directory) {
-    try {
-      return await invoke<ServerInfo>('get_workspace_server_info_from_dir', { directory: workspace.directory })
-    } catch {
-      // Both paths failed
-    }
-  }
+  // Local: UUID → instances.json → read api.port + api-secret
+  const info = await resolveWorkspaceServer(workspace.id)
+  if (info) return info
 
   throw new Error(`Cannot resolve server for "${workspace.name || workspace.id}" — is the server running?`)
 }
