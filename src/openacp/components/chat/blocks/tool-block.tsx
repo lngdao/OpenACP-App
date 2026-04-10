@@ -1,5 +1,5 @@
 import React, { memo, useState, useMemo } from "react"
-import { motion, AnimatePresence } from "motion/react"
+import { AnimatePresence } from "motion/react"
 import { ArrowsOut, CaretRight } from "@phosphor-icons/react"
 import { TextShimmer } from "../../ui/text-shimmer"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../ui/dialog"
@@ -51,11 +51,7 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
   const hasBody = !!inputText || (!!block.output && !isRejected) || !!reason
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-    >
+    <div>
       <div
         className={`oac-tool-card-title${isPending ? " oac-tool-card-shimmer" : ""}`}
         onClick={() => hasBody && setExpanded(!expanded)}
@@ -140,7 +136,7 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
                       {truncatedInput.hiddenCount > 0 && (
                         <button
                           type="button"
-                          className="block mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          className="inline-flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
                         >
                           + {truncatedInput.hiddenCount} more lines <ArrowsOut size={10} />
@@ -157,7 +153,7 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
                       {truncatedOutput.hiddenCount > 0 && (
                         <button
                           type="button"
-                          className="block mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          className="inline-flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
                         >
                           + {truncatedOutput.hiddenCount} more lines <ArrowsOut size={10} />
@@ -199,6 +195,6 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
           </div>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   )
 })
