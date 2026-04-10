@@ -326,7 +326,7 @@ export function ChatView() {
               followOutput={streaming ? "smooth" : false}
               atBottomStateChange={setAtBottom}
               components={{ Footer: ChatFooter }}
-              increaseViewportBy={{ top: 800, bottom: 400 }}
+              increaseViewportBy={{ top: 1200, bottom: 600 }}
               defaultItemHeight={80}
             />
             <ScrollToBottomButton
