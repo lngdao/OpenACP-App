@@ -77,7 +77,7 @@ export function SettingsDialog({
         </VisuallyHidden.Root>
 
         {/* Sidebar */}
-        <div className="w-50 shrink-0 bg-background-base border-r border-border-weak flex flex-col px-3 py-4">
+        <div className="w-50 shrink-0 bg-bg-base border-r border-border-weak flex flex-col px-3 py-4">
           <nav className="flex flex-col gap-1 flex-1">
             {NAV_GROUPS.map((group, gi) => (
               <div key={group.label} className={gi > 0 ? "mt-4" : ""}>

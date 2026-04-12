@@ -193,7 +193,7 @@ export function SetupWizard(props: Props) {
   }, [setupStatus, setupLog.length])
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center bg-background-base p-8">
+    <div className="flex h-screen w-screen flex-col items-center justify-center bg-bg-base p-8">
       <WindowDragBar />
       <div className="w-full max-w-[480px]">
         {/* Step indicator — minimal dots */}

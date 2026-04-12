@@ -62,7 +62,7 @@ function LoadingScreen() {
   }, [phase])
 
   return (
-    <div className="w-screen h-screen bg-background-base flex items-center justify-center">
+    <div className="w-screen h-screen bg-bg-base flex items-center justify-center">
       <div className="flex flex-col items-center gap-11">
         <div className="w-20 h-25 opacity-15 flex items-center justify-center text-4xl text-foreground">
           &#x2B21;

@@ -451,7 +451,7 @@ export function Composer() {
   return (
     <div className="w-full pb-3 flex flex-col justify-center items-center pointer-events-none [&>*]:pointer-events-auto">
       <div ref={composerRef} className={`w-full px-6 md:max-w-180 md:mx-auto 2xl:max-w-220 relative ${dragging ? "z-50" : ""}`}>
-        <div className={`w-full rounded-xl border bg-background-weak relative transition-colors ${
+        <div className={`w-full rounded-xl border bg-bg-weak relative transition-colors ${
           dragging
             ? "border-dashed border-2 border-primary/60 bg-primary/5"
             : "border-border"
@@ -611,7 +611,7 @@ export function Composer() {
                   disabled={
                     !text.trim() && !attachments.length && !snippets.length && !chat.streaming()
                   }
-                  className="bg-text-strong text-background-stronger hover:bg-text-strong/90"
+                  className="bg-text-strong text-bg-strong hover:bg-text-strong/90"
                   onClick={
                     chat.streaming()
                       ? (e: React.MouseEvent) => {

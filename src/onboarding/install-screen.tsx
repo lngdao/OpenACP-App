@@ -92,7 +92,7 @@ export function InstallScreen(props: Props) {
     status === "success" ? 100 : status === "error" ? Math.min(95, lines.length * 3) : Math.min(95, lines.length * 3)
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center bg-background-base p-8">
+    <div className="flex h-screen w-screen flex-col items-center justify-center bg-bg-base p-8">
       <WindowDragBar />
       <div className="flex w-full max-w-[480px] flex-col items-center gap-5">
         {/* Header */}

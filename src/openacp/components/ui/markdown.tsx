@@ -19,7 +19,7 @@ function ensureTheme() {
     return Promise.resolve({
       name: "OpenACP",
       colors: {
-        "editor.background": "var(--color-background-stronger)",
+        "editor.background": "var(--bg-strong)",
         "editor.foreground": "var(--foreground-weak)",
         "gitDecoration.addedResourceForeground": "var(--syntax-diff-add)",
         "gitDecoration.deletedResourceForeground": "var(--syntax-diff-delete)",

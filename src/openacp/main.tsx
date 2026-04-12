@@ -129,7 +129,7 @@ function RepairScreen({ onRepaired, onReset }: { onRepaired: () => void; onReset
   }
 
   return (
-    <div className="flex h-screen w-screen flex-col items-center justify-center gap-5 bg-background-base">
+    <div className="flex h-screen w-screen flex-col items-center justify-center gap-5 bg-bg-base">
       <WindowDragBar />
       <div className="flex flex-col items-center gap-3 max-w-sm text-center">
         <div className="text-lg font-medium text-foreground">Workspace needs repair</div>
