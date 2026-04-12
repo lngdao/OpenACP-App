@@ -37,15 +37,57 @@ export interface DemoEntry {
 // ── Helper ──────────────────────────────────────────────────────────────────
 
 function ColorSwatch({ name, variable }: { name: string; variable: string }) {
+  const ref = React.useRef<HTMLDivElement>(null)
+  const [value, setValue] = React.useState<string>("")
+
+  React.useEffect(() => {
+    if (!ref.current) return
+    const read = () => {
+      const v = getComputedStyle(ref.current!).backgroundColor
+      setValue(rgbToHex(v))
+    }
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] })
+    return () => observer.disconnect()
+  }, [variable])
+
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2.5 min-w-0">
       <div
-        className="size-10 rounded-md border border-border-weak shrink-0"
+        ref={ref}
+        className="size-9 rounded-md border border-border-weak shrink-0"
         style={{ backgroundColor: `var(${variable})` }}
       />
-      <div>
-        <div className="text-sm font-normal text-foreground">{name}</div>
-        <div className="text-sm font-normal text-muted-foreground font-mono">{variable}</div>
+      <div className="min-w-0">
+        <div className="text-sm font-normal text-foreground truncate">{name}</div>
+        <div className="text-2xs font-normal text-muted-foreground font-mono truncate">{variable}</div>
+        <div className="text-2xs font-normal text-foreground-weaker font-mono truncate">{value || "—"}</div>
+      </div>
+    </div>
+  )
+}
+
+function rgbToHex(rgb: string): string {
+  const m = rgb.match(/rgba?\(([^)]+)\)/)
+  if (!m) return rgb
+  const parts = m[1].split(",").map((s) => s.trim())
+  if (parts.length < 3) return rgb
+  const [r, g, b] = parts.slice(0, 3).map((n) => parseInt(n, 10))
+  const a = parts[3] !== undefined ? parseFloat(parts[3]) : 1
+  if ([r, g, b].some((n) => Number.isNaN(n))) return rgb
+  const hex = "#" + [r, g, b].map((n) => n.toString(16).padStart(2, "0")).join("").toUpperCase()
+  return a < 1 ? `${hex} · ${Math.round(a * 100)}%` : hex
+}
+
+function ColorGroup({ title, tokens }: { title: string; tokens: [string, string][] }) {
+  return (
+    <div>
+      <h3 className="text-base font-medium text-foreground mb-3">{title}</h3>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {tokens.map(([name, variable]) => (
+          <ColorSwatch key={variable} name={name} variable={variable} />
+        ))}
       </div>
     </div>
   )
@@ -635,68 +677,379 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
     id: "colors",
     name: "Colors",
     group: "Tokens",
-    description: "Design system color tokens — shadcn core + extensions.",
+    description: "Full color token catalog — shadcn aliases + semantic surface, text, border, icon, button, syntax, markdown, and avatar tokens.",
     type: "token",
     render: () => (
-      <div className="space-y-8">
+      <div className="space-y-10">
+        <ColorGroup
+          title="shadcn — Core"
+          tokens={[
+            ["Background", "--background"],
+            ["Background Weak", "--background-weak"],
+            ["Foreground", "--foreground"],
+            ["Card", "--card"],
+            ["Card Foreground", "--card-foreground"],
+            ["Popover", "--popover"],
+            ["Popover Foreground", "--popover-foreground"],
+          ]}
+        />
+        <ColorGroup
+          title="shadcn — Semantic"
+          tokens={[
+            ["Primary", "--primary"],
+            ["Primary Foreground", "--primary-foreground"],
+            ["Secondary", "--secondary"],
+            ["Secondary Foreground", "--secondary-foreground"],
+            ["Muted", "--muted"],
+            ["Muted Foreground", "--muted-foreground"],
+            ["Accent", "--accent"],
+            ["Accent Foreground", "--accent-foreground"],
+            ["Destructive", "--destructive"],
+            ["Destructive Foreground", "--destructive-foreground"],
+          ]}
+        />
+        <ColorGroup
+          title="shadcn — Form"
+          tokens={[
+            ["Border", "--border"],
+            ["Border Weak", "--border-weak"],
+            ["Input", "--input"],
+            ["Ring", "--ring"],
+            ["Foreground Weak", "--foreground-weak"],
+            ["Foreground Weaker", "--foreground-weaker"],
+          ]}
+        />
+        <ColorGroup
+          title="Sidebar"
+          tokens={[
+            ["Background", "--sidebar-background"],
+            ["Foreground", "--sidebar-foreground"],
+            ["Primary", "--sidebar-primary"],
+            ["Primary Foreground", "--sidebar-primary-foreground"],
+            ["Accent", "--sidebar-accent"],
+            ["Accent Foreground", "--sidebar-accent-foreground"],
+            ["Border", "--sidebar-border"],
+            ["Ring", "--sidebar-ring"],
+          ]}
+        />
+        <ColorGroup
+          title="Surface — base"
+          tokens={[
+            ["Base", "--surface-base"],
+            ["Base Hover", "--surface-base-hover"],
+            ["Base Active", "--surface-base-active"],
+            ["Base Interactive Active", "--surface-base-interactive-active"],
+            ["Weak", "--surface-weak"],
+            ["Weaker", "--surface-weaker"],
+            ["Strong", "--surface-strong"],
+          ]}
+        />
+        <ColorGroup
+          title="Surface — raised / float / inset"
+          tokens={[
+            ["Raised Base", "--surface-raised-base"],
+            ["Raised Base Hover", "--surface-raised-base-hover"],
+            ["Raised Base Active", "--surface-raised-base-active"],
+            ["Raised Strong", "--surface-raised-strong"],
+            ["Raised Strong Hover", "--surface-raised-strong-hover"],
+            ["Raised Stronger", "--surface-raised-stronger"],
+            ["Raised Stronger Hover", "--surface-raised-stronger-hover"],
+            ["Float Base", "--surface-float-base"],
+            ["Float Base Hover", "--surface-float-base-hover"],
+            ["Inset Base", "--surface-inset-base"],
+            ["Inset Base Hover", "--surface-inset-base-hover"],
+            ["Inset Strong", "--surface-inset-strong"],
+            ["Inset Strong Hover", "--surface-inset-strong-hover"],
+          ]}
+        />
+        <ColorGroup
+          title="Surface — semantic"
+          tokens={[
+            ["Brand Base", "--surface-brand-base"],
+            ["Brand Hover", "--surface-brand-hover"],
+            ["Interactive Base", "--surface-interactive-base"],
+            ["Interactive Hover", "--surface-interactive-hover"],
+            ["Interactive Weak", "--surface-interactive-weak"],
+            ["Interactive Weak Hover", "--surface-interactive-weak-hover"],
+            ["Success Base", "--surface-success-base"],
+            ["Success Weak", "--surface-success-weak"],
+            ["Success Strong", "--surface-success-strong"],
+            ["Warning Base", "--surface-warning-base"],
+            ["Warning Weak", "--surface-warning-weak"],
+            ["Warning Strong", "--surface-warning-strong"],
+            ["Critical Base", "--surface-critical-base"],
+            ["Critical Weak", "--surface-critical-weak"],
+            ["Critical Strong", "--surface-critical-strong"],
+            ["Info Base", "--surface-info-base"],
+            ["Info Weak", "--surface-info-weak"],
+            ["Info Strong", "--surface-info-strong"],
+          ]}
+        />
+        <ColorGroup
+          title="Surface — diff"
+          tokens={[
+            ["Unchanged", "--surface-diff-unchanged-base"],
+            ["Skip", "--surface-diff-skip-base"],
+            ["Hidden Base", "--surface-diff-hidden-base"],
+            ["Hidden Weak", "--surface-diff-hidden-weak"],
+            ["Hidden Weaker", "--surface-diff-hidden-weaker"],
+            ["Hidden Strong", "--surface-diff-hidden-strong"],
+            ["Hidden Stronger", "--surface-diff-hidden-stronger"],
+            ["Add Base", "--surface-diff-add-base"],
+            ["Add Weak", "--surface-diff-add-weak"],
+            ["Add Weaker", "--surface-diff-add-weaker"],
+            ["Add Strong", "--surface-diff-add-strong"],
+            ["Add Stronger", "--surface-diff-add-stronger"],
+            ["Delete Base", "--surface-diff-delete-base"],
+            ["Delete Weak", "--surface-diff-delete-weak"],
+            ["Delete Weaker", "--surface-diff-delete-weaker"],
+            ["Delete Strong", "--surface-diff-delete-strong"],
+            ["Delete Stronger", "--surface-diff-delete-stronger"],
+          ]}
+        />
+        <ColorGroup
+          title="Input states"
+          tokens={[
+            ["Base", "--input-base"],
+            ["Hover", "--input-hover"],
+            ["Active", "--input-active"],
+            ["Selected", "--input-selected"],
+            ["Focus", "--input-focus"],
+            ["Disabled", "--input-disabled"],
+          ]}
+        />
+        <ColorGroup
+          title="Text — scale"
+          tokens={[
+            ["Base", "--color-text-base"],
+            ["Weak", "--color-text-weak"],
+            ["Weaker", "--color-text-weaker"],
+            ["Strong", "--color-text-strong"],
+            ["Stronger", "--color-text-stronger"],
+            ["Invert Base", "--color-text-invert-base"],
+            ["Invert Weak", "--color-text-invert-weak"],
+            ["Invert Weaker", "--color-text-invert-weaker"],
+            ["Invert Strong", "--color-text-invert-strong"],
+          ]}
+        />
+        <ColorGroup
+          title="Text — on semantic"
+          tokens={[
+            ["Interactive", "--color-text-interactive-base"],
+            ["On Interactive", "--color-text-on-interactive-base"],
+            ["On Interactive Weak", "--color-text-on-interactive-weak"],
+            ["On Brand Base", "--color-text-on-brand-base"],
+            ["On Brand Weak", "--color-text-on-brand-weak"],
+            ["On Brand Weaker", "--color-text-on-brand-weaker"],
+            ["On Brand Strong", "--color-text-on-brand-strong"],
+            ["On Success Base", "--color-text-on-success-base"],
+            ["On Success Weak", "--color-text-on-success-weak"],
+            ["On Success Strong", "--color-text-on-success-strong"],
+            ["On Warning Base", "--color-text-on-warning-base"],
+            ["On Warning Weak", "--color-text-on-warning-weak"],
+            ["On Warning Strong", "--color-text-on-warning-strong"],
+            ["On Critical Base", "--color-text-on-critical-base"],
+            ["On Critical Weak", "--color-text-on-critical-weak"],
+            ["On Critical Strong", "--color-text-on-critical-strong"],
+            ["On Info Base", "--color-text-on-info-base"],
+            ["On Info Weak", "--color-text-on-info-weak"],
+            ["On Info Strong", "--color-text-on-info-strong"],
+          ]}
+        />
+        <ColorGroup
+          title="Text — diff"
+          tokens={[
+            ["Add Base", "--color-text-diff-add-base"],
+            ["Add Strong", "--color-text-diff-add-strong"],
+            ["Delete Base", "--color-text-diff-delete-base"],
+            ["Delete Strong", "--color-text-diff-delete-strong"],
+          ]}
+        />
+        <ColorGroup
+          title="Border — base"
+          tokens={[
+            ["Base", "--border-base"],
+            ["Hover", "--border-hover"],
+            ["Active", "--border-active"],
+            ["Selected", "--border-selected"],
+            ["Disabled", "--border-disabled"],
+            ["Focus", "--border-focus"],
+          ]}
+        />
+        <ColorGroup
+          title="Border — strong / weak / weaker"
+          tokens={[
+            ["Strong Base", "--border-strong-base"],
+            ["Strong Hover", "--border-strong-hover"],
+            ["Strong Selected", "--border-strong-selected"],
+            ["Weak Base", "--border-weak-base"],
+            ["Weak Hover", "--border-weak-hover"],
+            ["Weak Selected", "--border-weak-selected"],
+            ["Weaker Base", "--border-weaker-base"],
+            ["Weaker Hover", "--border-weaker-hover"],
+            ["Weaker Selected", "--border-weaker-selected"],
+          ]}
+        />
+        <ColorGroup
+          title="Border — semantic"
+          tokens={[
+            ["Interactive Base", "--border-interactive-base"],
+            ["Interactive Hover", "--border-interactive-hover"],
+            ["Interactive Active", "--border-interactive-active"],
+            ["Interactive Selected", "--border-interactive-selected"],
+            ["Success Base", "--border-success-base"],
+            ["Success Hover", "--border-success-hover"],
+            ["Success Selected", "--border-success-selected"],
+            ["Warning Base", "--border-warning-base"],
+            ["Warning Hover", "--border-warning-hover"],
+            ["Warning Selected", "--border-warning-selected"],
+            ["Critical Base", "--border-critical-base"],
+            ["Critical Hover", "--border-critical-hover"],
+            ["Critical Selected", "--border-critical-selected"],
+            ["Info Base", "--border-info-base"],
+            ["Info Hover", "--border-info-hover"],
+            ["Info Selected", "--border-info-selected"],
+          ]}
+        />
+        <ColorGroup
+          title="Icon — base / strong / weak"
+          tokens={[
+            ["Base", "--icon-base"],
+            ["Hover", "--icon-hover"],
+            ["Active", "--icon-active"],
+            ["Selected", "--icon-selected"],
+            ["Disabled", "--icon-disabled"],
+            ["Focus", "--icon-focus"],
+            ["Strong Base", "--icon-strong-base"],
+            ["Strong Hover", "--icon-strong-hover"],
+            ["Strong Active", "--icon-strong-active"],
+            ["Weak Base", "--icon-weak-base"],
+            ["Weak Hover", "--icon-weak-hover"],
+            ["Weak Active", "--icon-weak-active"],
+            ["Invert Base", "--icon-invert-base"],
+          ]}
+        />
+        <ColorGroup
+          title="Icon — semantic"
+          tokens={[
+            ["Brand", "--icon-brand-base"],
+            ["Interactive", "--icon-interactive-base"],
+            ["Success Base", "--icon-success-base"],
+            ["Success Hover", "--icon-success-hover"],
+            ["Success Active", "--icon-success-active"],
+            ["Warning Base", "--icon-warning-base"],
+            ["Warning Hover", "--icon-warning-hover"],
+            ["Warning Active", "--icon-warning-active"],
+            ["Critical Base", "--icon-critical-base"],
+            ["Critical Hover", "--icon-critical-hover"],
+            ["Critical Active", "--icon-critical-active"],
+            ["Info Base", "--icon-info-base"],
+            ["Info Hover", "--icon-info-hover"],
+            ["Info Active", "--icon-info-active"],
+          ]}
+        />
+        <ColorGroup
+          title="Icon — on semantic"
+          tokens={[
+            ["On Interactive", "--icon-on-interactive-base"],
+            ["On Brand Base", "--icon-on-brand-base"],
+            ["On Brand Hover", "--icon-on-brand-hover"],
+            ["On Success Base", "--icon-on-success-base"],
+            ["On Success Hover", "--icon-on-success-hover"],
+            ["On Warning Base", "--icon-on-warning-base"],
+            ["On Warning Hover", "--icon-on-warning-hover"],
+            ["On Critical Base", "--icon-on-critical-base"],
+            ["On Critical Hover", "--icon-on-critical-hover"],
+            ["On Info Base", "--icon-on-info-base"],
+            ["On Info Hover", "--icon-on-info-hover"],
+          ]}
+        />
+        <ColorGroup
+          title="Icon — agent"
+          tokens={[
+            ["Plan", "--icon-agent-plan-base"],
+            ["Docs", "--icon-agent-docs-base"],
+            ["Ask", "--icon-agent-ask-base"],
+            ["Build", "--icon-agent-build-base"],
+          ]}
+        />
+        <ColorGroup
+          title="Icon — diff"
+          tokens={[
+            ["Add Base", "--icon-diff-add-base"],
+            ["Add Hover", "--icon-diff-add-hover"],
+            ["Delete Base", "--icon-diff-delete-base"],
+            ["Delete Hover", "--icon-diff-delete-hover"],
+            ["Modified", "--icon-diff-modified-base"],
+          ]}
+        />
+        <ColorGroup
+          title="Button"
+          tokens={[
+            ["Primary Base", "--button-primary-base"],
+            ["Secondary Base", "--button-secondary-base"],
+            ["Secondary Hover", "--button-secondary-hover"],
+            ["Ghost Hover", "--button-ghost-hover"],
+            ["Ghost Hover 2", "--button-ghost-hover2"],
+          ]}
+        />
+        <ColorGroup
+          title="Syntax"
+          tokens={[
+            ["Comment", "--syntax-comment"],
+            ["Regexp", "--syntax-regexp"],
+            ["String", "--syntax-string"],
+            ["Keyword", "--syntax-keyword"],
+            ["Primitive", "--syntax-primitive"],
+            ["Operator", "--syntax-operator"],
+            ["Variable", "--syntax-variable"],
+            ["Property", "--syntax-property"],
+            ["Type", "--syntax-type"],
+            ["Constant", "--syntax-constant"],
+            ["Punctuation", "--syntax-punctuation"],
+            ["Object", "--syntax-object"],
+            ["Success", "--syntax-success"],
+            ["Warning", "--syntax-warning"],
+            ["Critical", "--syntax-critical"],
+            ["Info", "--syntax-info"],
+            ["Diff Add", "--syntax-diff-add"],
+            ["Diff Delete", "--syntax-diff-delete"],
+          ]}
+        />
+        <ColorGroup
+          title="Markdown"
+          tokens={[
+            ["Heading", "--markdown-heading"],
+            ["Text", "--markdown-text"],
+            ["Link", "--markdown-link"],
+            ["Link Text", "--markdown-link-text"],
+            ["Code", "--markdown-code"],
+            ["Block Quote", "--markdown-block-quote"],
+            ["Emph", "--markdown-emph"],
+            ["Strong", "--markdown-strong"],
+            ["Horizontal Rule", "--markdown-horizontal-rule"],
+            ["List Item", "--markdown-list-item"],
+            ["List Enumeration", "--markdown-list-enumeration"],
+            ["Image", "--markdown-image"],
+            ["Image Text", "--markdown-image-text"],
+            ["Code Block", "--markdown-code-block"],
+          ]}
+        />
         <div>
-          <h3 className="text-base font-medium text-foreground mb-3">Core</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <ColorSwatch name="Background" variable="--background" />
-            <ColorSwatch name="Foreground" variable="--foreground" />
-            <ColorSwatch name="Card" variable="--card" />
-            <ColorSwatch name="Card Foreground" variable="--card-foreground" />
-            <ColorSwatch name="Popover" variable="--popover" />
-            <ColorSwatch name="Popover Foreground" variable="--popover-foreground" />
-          </div>
-        </div>
-        <div>
-          <h3 className="text-base font-medium text-foreground mb-3">Semantic</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <ColorSwatch name="Primary" variable="--primary" />
-            <ColorSwatch name="Primary Foreground" variable="--primary-foreground" />
-            <ColorSwatch name="Secondary" variable="--secondary" />
-            <ColorSwatch name="Secondary Foreground" variable="--secondary-foreground" />
-            <ColorSwatch name="Muted" variable="--muted" />
-            <ColorSwatch name="Muted Foreground" variable="--muted-foreground" />
-            <ColorSwatch name="Accent" variable="--accent" />
-            <ColorSwatch name="Accent Foreground" variable="--accent-foreground" />
-            <ColorSwatch name="Destructive" variable="--destructive" />
-            <ColorSwatch name="Destructive Foreground" variable="--destructive-foreground" />
-          </div>
-        </div>
-        <div>
-          <h3 className="text-base font-medium text-foreground mb-3">Extensions</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <ColorSwatch name="Border" variable="--border" />
-            <ColorSwatch name="Border Weak" variable="--border-weak" />
-            <ColorSwatch name="Input" variable="--input" />
-            <ColorSwatch name="Ring" variable="--ring" />
-            <ColorSwatch name="Foreground Weak" variable="--foreground-weak" />
-            <ColorSwatch name="Foreground Weaker" variable="--foreground-weaker" />
-          </div>
-        </div>
-        <div>
-          <h3 className="text-base font-medium text-foreground mb-3">Sidebar</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <ColorSwatch name="Sidebar Background" variable="--sidebar-background" />
-            <ColorSwatch name="Sidebar Foreground" variable="--sidebar-foreground" />
-            <ColorSwatch name="Sidebar Accent" variable="--sidebar-accent" />
-            <ColorSwatch name="Sidebar Border" variable="--sidebar-border" />
-          </div>
-        </div>
-        <div>
-          <h3 className="text-base font-medium text-foreground mb-3">Avatar</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <h3 className="text-base font-medium text-foreground mb-3">Avatar — paired bg + text</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {["pink", "mint", "orange", "purple", "cyan", "lime"].map((c) => (
-              <div key={c} className="flex items-center gap-2">
+              <div key={c} className="flex items-center gap-3 min-w-0">
                 <div
-                  className="size-8 rounded-full flex items-center justify-center text-sm font-medium"
+                  className="size-9 rounded-full flex items-center justify-center text-sm font-medium shrink-0"
                   style={{ background: `var(--avatar-background-${c})`, color: `var(--avatar-text-${c})` }}
                 >
                   {c[0].toUpperCase()}
                 </div>
-                <span className="text-sm font-normal text-muted-foreground capitalize">{c}</span>
+                <div className="min-w-0">
+                  <div className="text-sm font-normal text-foreground capitalize truncate">{c}</div>
+                  <div className="text-2xs font-normal text-muted-foreground font-mono truncate">--avatar-*-{c}</div>
+                </div>
               </div>
             ))}
           </div>
