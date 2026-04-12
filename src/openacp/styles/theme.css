@@ -68,11 +68,12 @@
   --fg-weaker: #8f8f8f;
   --fg-weakest: #c7c7c7;
 
-  /* Border — 4 levels */
+  /* Border — 4 levels + 1 strong (high contrast for focus/active) */
   --border-base: rgba(0, 0, 0, 0.16);
   --border-weak: #e5e5e5;
   --border-weaker: #f0f0f0;
   --border-weakest: #f5f5f5;
+  --border-strong: rgba(0, 0, 0, 0.32);
 
   /* Semantic — flat palette (5 colors × 2 weights) */
   --color-success: #12c905;
@@ -194,6 +195,7 @@
     --border-weak: #282828;
     --border-weaker: #202020;
     --border-weakest: #1a1a1a;
+    --border-strong: rgba(255, 255, 255, 0.42);
 
     /* Semantic */
     --color-success: #12c905;
@@ -282,6 +284,7 @@
   --border-weak: #282828;
   --border-weaker: #202020;
   --border-weakest: #1a1a1a;
+  --border-strong: rgba(255, 255, 255, 0.42);
 
   /* Semantic */
   --color-success: #12c905;

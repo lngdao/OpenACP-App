@@ -1,5 +1,5 @@
 import React from "react"
-import { Plus, ArrowRight, ArrowLeft, Trash, GearSix, MagnifyingGlass, PencilSimple } from "@phosphor-icons/react"
+import { Plus, ArrowRight, ArrowLeft, Trash, GearSix, MagnifyingGlass, PencilSimple, FolderOpen, EnvelopeSimple, Lock, User } from "@phosphor-icons/react"
 import { Button } from "../openacp/components/ui/button"
 import { Badge } from "../openacp/components/ui/badge"
 import { Input } from "../openacp/components/ui/input"
@@ -254,22 +254,103 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
     id: "input",
     name: "Input",
     group: "General",
-    description: "Text input field.",
+    description: "Text input field — thin border-weak default, border-strong on focus (no ring).",
     type: "component",
     render: () => (
-      <div className="space-y-3 max-w-sm">
-        <Input placeholder="Default input" />
-        <Input placeholder="Disabled" disabled />
-        <Input type="password" placeholder="Password" />
+      <div className="space-y-8 max-w-sm">
+        <div>
+          <div className="text-sm font-medium text-fg-weak mb-2">States</div>
+          <div className="space-y-2.5">
+            <Input placeholder="Default — click to focus" />
+            <Input defaultValue="With value" />
+            <Input placeholder="Disabled" disabled />
+            <Input placeholder="Invalid input" aria-invalid />
+          </div>
+        </div>
+        <div>
+          <div className="text-sm font-medium text-fg-weak mb-2">Types</div>
+          <div className="space-y-2.5">
+            <Input type="text" placeholder="Text" />
+            <Input type="email" placeholder="you@example.com" />
+            <Input type="password" placeholder="Password" />
+            <Input type="number" placeholder="0" />
+            <Input type="search" placeholder="Search" />
+            <Input type="url" placeholder="https://" />
+          </div>
+        </div>
+        <div>
+          <div className="text-sm font-medium text-fg-weak mb-2">With leading icon</div>
+          <div className="space-y-2.5">
+            <div className="relative flex items-center">
+              <MagnifyingGlass size={14} className="pointer-events-none absolute left-3 text-fg-weaker" />
+              <Input placeholder="Search workspaces..." className="pl-9" />
+            </div>
+            <div className="relative flex items-center">
+              <EnvelopeSimple size={14} className="pointer-events-none absolute left-3 text-fg-weaker" />
+              <Input type="email" placeholder="you@example.com" className="pl-9" />
+            </div>
+            <div className="relative flex items-center">
+              <Lock size={14} className="pointer-events-none absolute left-3 text-fg-weaker" />
+              <Input type="password" placeholder="Password" className="pl-9" />
+            </div>
+            <div className="relative flex items-center">
+              <User size={14} className="pointer-events-none absolute left-3 text-fg-weaker" />
+              <Input placeholder="Username" className="pl-9" />
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="text-sm font-medium text-fg-weak mb-2">With trailing action</div>
+          <div className="space-y-2.5">
+            <div className="relative flex items-center">
+              <FolderOpen size={14} className="pointer-events-none absolute left-3 text-fg-weaker" />
+              <Input defaultValue="~/openacp-workspace" className="pl-9 pr-20" />
+              <Button variant="ghost" size="xs" className="absolute right-1.5">Browse</Button>
+            </div>
+            <div className="relative flex items-center">
+              <Input defaultValue="secret-api-key-123" type="password" className="pr-16" />
+              <Button variant="ghost" size="xs" className="absolute right-1.5">Show</Button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className="text-sm font-medium text-fg-weak mb-2">Labeled field</div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-fg-base">Workspace name</label>
+            <Input placeholder="my-project" />
+            <p className="text-xs text-fg-weaker">Use lowercase letters, numbers, and dashes.</p>
+          </div>
+        </div>
       </div>
     ),
     code: `import { Input } from "@/components/ui/input"
+import { MagnifyingGlass } from "@phosphor-icons/react"
 
-<Input placeholder="Enter text..." />`,
+// Basic
+<Input placeholder="Enter text..." />
+
+// Disabled
+<Input placeholder="Disabled" disabled />
+
+// Invalid (error border, no ring)
+<Input aria-invalid />
+
+// With leading icon
+<div className="relative flex items-center">
+  <MagnifyingGlass size={14} className="absolute left-3 text-fg-weaker" />
+  <Input placeholder="Search..." className="pl-9" />
+</div>
+
+// With trailing action button
+<div className="relative flex items-center">
+  <Input className="pr-16" />
+  <Button variant="ghost" size="xs" className="absolute right-1.5">Show</Button>
+</div>`,
     props: [
       { name: "type", type: "string", default: '"text"' },
       { name: "placeholder", type: "string", default: '""' },
       { name: "disabled", type: "boolean", default: "false" },
+      { name: "aria-invalid", type: "boolean", default: "false" },
     ],
   },
   {
@@ -701,12 +782,13 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           ]}
         />
         <ColorGroup
-          title="Border — 4 levels"
+          title="Border — 4 levels + 1 strong"
           tokens={[
             ["Base", "--border-base"],
             ["Weak", "--border-weak"],
             ["Weaker", "--border-weaker"],
             ["Weakest", "--border-weakest"],
+            ["Strong (focus/active)", "--border-strong"],
           ]}
         />
         <ColorGroup

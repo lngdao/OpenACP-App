@@ -133,11 +133,12 @@
   --color-fg-weaker: var(--fg-weaker);
   --color-fg-weakest: var(--fg-weakest);
 
-  /* Border — 4 levels */
+  /* Border — 4 levels + 1 strong */
   --color-border-base: var(--border-base);
   --color-border-weak: var(--border-weak);
   --color-border-weaker: var(--border-weaker);
   --color-border-weakest: var(--border-weakest);
+  --color-border-strong: var(--border-strong);
 
   /* Semantic — flat palette */
   --color-success: var(--color-success);

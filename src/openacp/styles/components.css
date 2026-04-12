@@ -1,9 +1,33 @@
 /* ── Active component styles ──────────────────────────────────────────────── */
 /* Merged from components/ — only styles referenced by current React components */
 
+/* ── Interactive cursor (Tailwind v4 no longer sets this by default) ──────── */
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([aria-disabled="true"]),
+[role="option"]:not([aria-disabled="true"]),
+[role="tab"]:not([aria-disabled="true"]),
+summary {
+  cursor: pointer;
+}
+
+/* ── Soften default button/anchor transitions (fallback for non-shadcn) ──── */
+/* Overrides Tailwind's 150ms default on elements using `transition` classes.
+   Tailwind utility classes like `duration-*` still win via source order.     */
+
+button,
+a,
+[role="button"],
+[role="menuitem"],
+[role="option"],
+[role="tab"] {
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 /* ── Global scrollbar ──────────────────────────────────────────────────────── */
-/* Thin, themed scrollbar consistent across light/dark/platforms.              */
-/* Track transparent, thumb fades in on hover (auto-hide via transparent).     */
+/* Thin, themed scrollbar with smooth fade-in on hover.                         */
 
 * {
   scrollbar-width: thin;
@@ -15,8 +39,8 @@
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 *::-webkit-scrollbar-track {
@@ -24,21 +48,25 @@
 }
 
 *::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 8px;
-  border: 2px solid transparent;
+  background-color: transparent;
+  border-radius: 999px;
+  border: 3px solid transparent;
   background-clip: padding-box;
-  transition: background-color 0.15s ease;
+  transition: background-color 300ms ease, border-color 300ms ease;
 }
 
 *:hover::-webkit-scrollbar-thumb {
-  background: var(--border-base);
-  background-clip: padding-box;
+  background-color: color-mix(in oklab, var(--border-base) 85%, transparent);
+  transition: background-color 300ms ease 120ms, border-color 300ms ease 120ms;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--fg-weaker);
-  background-clip: padding-box;
+  background-color: var(--fg-weaker);
+  transition: background-color 150ms ease;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--fg-weak);
 }
 
 *::-webkit-scrollbar-corner {
