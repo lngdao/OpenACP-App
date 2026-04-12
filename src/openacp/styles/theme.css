@@ -306,42 +306,37 @@
   --avatar-text-lime: #5d770d;
   --color-text-stronger: #171717;
 
-  /* ── shadcn/ui tokens (source of truth) ──────────────────────────────── */
-  --background: #f8f8f8;
-  --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: var(--foreground);
-  --popover: #fcfcfc;
-  --popover-foreground: var(--foreground);
-  --primary: #171717;
-  --primary-foreground: #fcfcfc;
-  --secondary: rgba(0, 0, 0, 0.031);
-  --secondary-foreground: var(--foreground);
-  --muted: rgba(0, 0, 0, 0.051);
-  --muted-foreground: #8f8f8f;
-  --accent: rgba(0, 0, 0, 0.051);
-  --accent-foreground: var(--foreground);
-  --destructive: #fc533a;
-  --destructive-foreground: #fcfcfc;
-  --border: rgba(0, 0, 0, 0.162);
-  --input: rgba(0, 0, 0, 0.162);
-  --ring: rgba(3, 76, 255, 0.99);
+  /* ── shadcn/ui aliases (point at new --bg-/--fg-/--color-* tokens) ───── */
+  --background: var(--bg-base);
+  --foreground: var(--fg-base);
+  --card: var(--bg-strong);
+  --card-foreground: var(--fg-base);
+  --popover: var(--bg-strong);
+  --popover-foreground: var(--fg-base);
+  --primary: var(--fg-base);
+  --primary-foreground: var(--bg-strong);
+  --secondary: var(--bg-weak);
+  --secondary-foreground: var(--fg-base);
+  --muted: var(--bg-weak);
+  --muted-foreground: var(--fg-weaker);
+  --accent: var(--bg-weak);
+  --accent-foreground: var(--fg-base);
+  --destructive: var(--color-critical);
+  --destructive-foreground: var(--bg-strong);
+  --border: var(--border-base);
+  --input: var(--border-base);
+  --ring: var(--color-interactive);
   --radius: 0.5rem;
 
-  /* Extensions */
-  --border-weak: #e5e5e5;
-  --fg-weak: #6f6f6f;
-  --fg-weakest: #c7c7c7;
-
   /* Sidebar */
-  --sidebar-background: var(--background);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--foreground);
-  --sidebar-primary-foreground: var(--background-strong);
-  --sidebar-accent: var(--secondary);
-  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-background: var(--bg-base);
+  --sidebar-foreground: var(--fg-base);
+  --sidebar-primary: var(--fg-base);
+  --sidebar-primary-foreground: var(--bg-base);
+  --sidebar-accent: var(--bg-weak);
+  --sidebar-accent-foreground: var(--fg-base);
   --sidebar-border: var(--border-weak);
-  --sidebar-ring: var(--border-interactive-base);
+  --sidebar-ring: var(--color-interactive);
 
   /* ── New color scheme (additive — Phase 1 of color refactor) ─────────── */
   /* Background — 4 levels + 1 elevated */
@@ -636,42 +631,36 @@
     --avatar-text-lime: #c4f042;
     --color-text-stronger: rgba(255, 255, 255, 0.936);
 
-    /* ── shadcn/ui tokens (source of truth) ──────────────────────────── */
-    --background: #101010;
-    --foreground: rgba(255, 255, 255, 0.936);
-    --card: #151515;
-    --card-foreground: var(--foreground);
-    --popover: #151515;
-    --popover-foreground: var(--foreground);
-    --primary: #ededed;
-    --primary-foreground: #171717;
-    --secondary: rgba(255, 255, 255, 0.059);
-    --secondary-foreground: var(--foreground);
-    --muted: rgba(255, 255, 255, 0.078);
-    --muted-foreground: rgba(255, 255, 255, 0.422);
-    --accent: rgba(255, 255, 255, 0.078);
-    --accent-foreground: var(--foreground);
-    --destructive: #fc533a;
-    --destructive-foreground: #ededed;
-    --border: rgba(255, 255, 255, 0.195);
-    --input: rgba(255, 255, 255, 0.195);
-    --ring: #9dbefe;
+    /* ── shadcn/ui aliases (point at new --bg-/--fg-/--color-* tokens) ── */
+    --background: var(--bg-base);
+    --foreground: var(--fg-base);
+    --card: var(--bg-strong);
+    --card-foreground: var(--fg-base);
+    --popover: var(--bg-strong);
+    --popover-foreground: var(--fg-base);
+    --primary: var(--fg-base);
+    --primary-foreground: var(--bg-strong);
+    --secondary: var(--bg-weak);
+    --secondary-foreground: var(--fg-base);
+    --muted: var(--bg-weak);
+    --muted-foreground: var(--fg-weaker);
+    --accent: var(--bg-weak);
+    --accent-foreground: var(--fg-base);
+    --destructive-foreground: var(--bg-strong);
+    --border: var(--border-base);
+    --input: var(--border-base);
+    --ring: var(--color-interactive);
     --radius: 0.5rem;
 
-    /* Extensions */
-    --border-weak: #282828;
-    --fg-weak: rgba(255, 255, 255, 0.618);
-    --fg-weakest: rgba(255, 255, 255, 0.284);
-
     /* Sidebar */
-    --sidebar-background: var(--background);
-    --sidebar-foreground: var(--foreground);
-    --sidebar-primary: var(--foreground);
-    --sidebar-primary-foreground: var(--background-strong);
-    --sidebar-accent: var(--secondary);
-    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-background: var(--bg-base);
+    --sidebar-foreground: var(--fg-base);
+    --sidebar-primary: var(--fg-base);
+    --sidebar-primary-foreground: var(--bg-base);
+    --sidebar-accent: var(--bg-weak);
+    --sidebar-accent-foreground: var(--fg-base);
     --sidebar-border: var(--border-weak);
-    --sidebar-ring: var(--border-interactive-base);
+    --sidebar-ring: var(--color-interactive);
 
     /* ── New color scheme (additive — Phase 1 of color refactor) ───────── */
     --bg-base: #101010;
@@ -961,42 +950,37 @@
   --avatar-text-lime: #c4f042;
   --color-text-stronger: rgba(255, 255, 255, 0.936);
 
-  /* ── shadcn/ui tokens (source of truth) ──────────────────────────── */
-  --background: #101010;
-  --foreground: rgba(255, 255, 255, 0.936);
-  --card: #151515;
-  --card-foreground: var(--foreground);
-  --popover: #151515;
-  --popover-foreground: var(--foreground);
-  --primary: #ededed;
-  --primary-foreground: #171717;
-  --secondary: rgba(255, 255, 255, 0.059);
-  --secondary-foreground: var(--foreground);
-  --muted: rgba(255, 255, 255, 0.078);
-  --muted-foreground: rgba(255, 255, 255, 0.422);
-  --accent: rgba(255, 255, 255, 0.078);
-  --accent-foreground: var(--foreground);
-  --destructive: #fc533a;
-  --destructive-foreground: #ededed;
-  --border: rgba(255, 255, 255, 0.195);
-  --input: rgba(255, 255, 255, 0.195);
-  --ring: #9dbefe;
+  /* ── shadcn/ui aliases (point at new --bg-/--fg-/--color-* tokens) ── */
+  --background: var(--bg-base);
+  --foreground: var(--fg-base);
+  --card: var(--bg-strong);
+  --card-foreground: var(--fg-base);
+  --popover: var(--bg-strong);
+  --popover-foreground: var(--fg-base);
+  --primary: var(--fg-base);
+  --primary-foreground: var(--bg-strong);
+  --secondary: var(--bg-weak);
+  --secondary-foreground: var(--fg-base);
+  --muted: var(--bg-weak);
+  --muted-foreground: var(--fg-weaker);
+  --accent: var(--bg-weak);
+  --accent-foreground: var(--fg-base);
+  --destructive: var(--color-critical);
+  --destructive-foreground: var(--bg-strong);
+  --border: var(--border-base);
+  --input: var(--border-base);
+  --ring: var(--color-interactive);
   --radius: 0.5rem;
 
-  /* Extensions */
-  --border-weak: #282828;
-  --fg-weak: rgba(255, 255, 255, 0.618);
-  --fg-weakest: rgba(255, 255, 255, 0.284);
-
   /* Sidebar */
-  --sidebar-background: var(--background);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--foreground);
-  --sidebar-primary-foreground: var(--background-strong);
-  --sidebar-accent: var(--secondary);
-  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-background: var(--bg-base);
+  --sidebar-foreground: var(--fg-base);
+  --sidebar-primary: var(--fg-base);
+  --sidebar-primary-foreground: var(--bg-base);
+  --sidebar-accent: var(--bg-weak);
+  --sidebar-accent-foreground: var(--fg-base);
   --sidebar-border: var(--border-weak);
-  --sidebar-ring: var(--border-interactive-base);
+  --sidebar-ring: var(--color-interactive);
 
   /* ── New color scheme (additive — Phase 1 of color refactor) ─────────── */
   --bg-base: #101010;
