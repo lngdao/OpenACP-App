@@ -132,9 +132,11 @@ The two sets resolve to the same pixel values — this rule is about consistency
 
 ### Theming
 
-- Light/dark via `data-theme="light|dark"` on `<html>`
-- Falls back to `prefers-color-scheme` when no `data-theme` is set
-- shadcn aliases are pointers → new `--bg-*` / `--fg-*` / `--color-*` tokens auto-resolve per theme
+- Light/dark via `data-theme="light|dark"` on `<html>` — the only theme selector in CSS (no `@media (prefers-color-scheme)` fallback block)
+- Pre-paint init: inline script in `index.html` sets `data-theme` before CSS paint using a `localStorage` hint (mirrored by `applyTheme`) or `prefers-color-scheme` on first launch — prevents flash-of-wrong-theme
+- Runtime: `applyTheme(theme)` in `lib/settings-store.ts` resolves `"system"` via `matchMedia`, sets the attribute, and mirrors the value to `localStorage.theme-hint`
+- Tailwind `dark:` variant: bound to `[data-theme="dark"]` via `@custom-variant dark` in `index.css` — follows the explicit attribute, not `prefers-color-scheme`
+- shadcn aliases (`--card`, `--primary`, …) are declared once in `:root`, pointing at `--bg-*` / `--fg-*` / `--color-*` — raw tokens get overridden per theme and aliases auto-resolve via `var()` at use-time
 
 ### Tailwind Integration
 

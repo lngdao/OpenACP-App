@@ -1,48 +1,35 @@
 /* ── Design tokens ────────────────────────────────────────────────────────── */
-/* Theme switching: set data-theme="light|dark" on <html>.                    */
-/* Falls back to system preference when no data-theme is set.                 */
+/* Theme switching: set data-theme="light|dark" on <html> (handled by the     */
+/* pre-paint script in index.html + applyTheme in settings-store.ts).         */
 /* To add a new theme, add [data-theme="<name>"] and override semantic vars.  */
 
 :root {
   --shadow-xxs-border: 0 0 0 0.5px var(--border-weak);
   --shadow-xs-border:
-    0 0 0 1px var(--border-base),
-    0 1px 2px -1px rgba(19, 16, 16, 0.04),
-    0 1px 2px 0 rgba(19, 16, 16, 0.06),
-    0 1px 3px 0 rgba(19, 16, 16, 0.08);
+    0 0 0 1px var(--border-base), 0 1px 2px -1px rgba(19, 16, 16, 0.04),
+    0 1px 2px 0 rgba(19, 16, 16, 0.06), 0 1px 3px 0 rgba(19, 16, 16, 0.08);
   --shadow-xs-border-base:
-    0 0 0 1px var(--border-weak),
-    0 1px 2px -1px rgba(19, 16, 16, 0.04),
-    0 1px 2px 0 rgba(19, 16, 16, 0.06),
-    0 1px 3px 0 rgba(19, 16, 16, 0.08);
+    0 0 0 1px var(--border-weak), 0 1px 2px -1px rgba(19, 16, 16, 0.04),
+    0 1px 2px 0 rgba(19, 16, 16, 0.06), 0 1px 3px 0 rgba(19, 16, 16, 0.08);
   --shadow-xs-border-select:
     0 0 0 3px color-mix(in oklab, var(--color-interactive) 24%, transparent),
-    0 0 0 1px var(--color-interactive),
-    0 1px 2px -1px rgba(19, 16, 16, 0.25),
-    0 1px 2px 0 rgba(19, 16, 16, 0.08),
-    0 1px 3px 0 rgba(19, 16, 16, 0.12);
+    0 0 0 1px var(--color-interactive), 0 1px 2px -1px rgba(19, 16, 16, 0.25),
+    0 1px 2px 0 rgba(19, 16, 16, 0.08), 0 1px 3px 0 rgba(19, 16, 16, 0.12);
   --shadow-xs-border-focus:
-    0 0 0 1px var(--border-base),
-    0 1px 2px -1px rgba(19, 16, 16, 0.25),
-    0 1px 2px 0 rgba(19, 16, 16, 0.08),
-    0 1px 3px 0 rgba(19, 16, 16, 0.12),
-    0 0 0 2px var(--bg-weak),
-    0 0 0 3px var(--color-interactive);
+    0 0 0 1px var(--border-base), 0 1px 2px -1px rgba(19, 16, 16, 0.25),
+    0 1px 2px 0 rgba(19, 16, 16, 0.08), 0 1px 3px 0 rgba(19, 16, 16, 0.12),
+    0 0 0 2px var(--bg-weak), 0 0 0 3px var(--color-interactive);
   --shadow-xs-border-hover:
     0 0 0 1px color-mix(in oklab, var(--color-interactive) 22%, transparent),
-    0 1px 2px -1px rgba(19, 16, 16, 0.04),
-    0 1px 2px 0 rgba(19, 16, 16, 0.06),
+    0 1px 2px -1px rgba(19, 16, 16, 0.04), 0 1px 2px 0 rgba(19, 16, 16, 0.06),
     0 1px 3px 0 rgba(19, 16, 16, 0.08);
   --shadow-xs-border-critical-base: 0 0 0 1px var(--color-critical);
   --shadow-xs-border-critical-focus:
-    0 0 0 3px var(--color-critical-weak),
-    0 0 0 1px var(--color-critical),
-    0 1px 2px -1px rgba(19, 16, 16, 0.25),
-    0 1px 2px 0 rgba(19, 16, 16, 0.08),
+    0 0 0 3px var(--color-critical-weak), 0 0 0 1px var(--color-critical),
+    0 1px 2px -1px rgba(19, 16, 16, 0.25), 0 1px 2px 0 rgba(19, 16, 16, 0.08),
     0 1px 3px 0 rgba(19, 16, 16, 0.12);
   --shadow-lg-border-base:
-    0 0 0 1px var(--border-weak),
-    0 36px 80px 0 rgba(0, 0, 0, 0.03),
+    0 0 0 1px var(--border-weak), 0 36px 80px 0 rgba(0, 0, 0, 0.03),
     0 13.141px 29.201px 0 rgba(0, 0, 0, 0.04),
     0 6.38px 14.177px 0 rgba(0, 0, 0, 0.05),
     0 3.127px 6.95px 0 rgba(0, 0, 0, 0.06),
@@ -88,24 +75,24 @@
   color-scheme: light;
 
   /* Background — 4 levels + 1 elevated */
-  --bg-base: #f8f8f8;
-  --bg-weak: #f3f3f3;
-  --bg-weaker: #ededed;
-  --bg-weakest: #e5e5e5;
+  --bg-base: #f7f7f7;
+  --bg-weak: #f0f0f0;
+  --bg-weaker: #e8e8e8;
+  --bg-weakest: #dedede;
   --bg-strong: #ffffff;
 
   /* Foreground — 4 levels */
   --fg-base: #171717;
-  --fg-weak: #6f6f6f;
-  --fg-weaker: #8f8f8f;
-  --fg-weakest: #c7c7c7;
+  --fg-weak: #525252;
+  --fg-weaker: #737373;
+  --fg-weakest: #a3a3a3;
 
   /* Border — 4 levels + 1 strong (high contrast for focus/active) */
-  --border-base: rgba(0, 0, 0, 0.16);
-  --border-weak: #e5e5e5;
-  --border-weaker: #f0f0f0;
-  --border-weakest: #f5f5f5;
-  --border-strong: rgba(0, 0, 0, 0.32);
+  --border-base: rgba(0, 0, 0, 0.12);
+  --border-weak: rgba(0, 0, 0, 0.08);
+  --border-weaker: rgba(0, 0, 0, 0.05);
+  --border-weakest: rgba(0, 0, 0, 0.03);
+  --border-strong: rgba(0, 0, 0, 0.24);
 
   /* Semantic — flat palette (5 colors × 2 weights) */
   --color-success: #12c905;
@@ -172,119 +159,31 @@
 }
 
 /* ── Dark theme ────────────────────────────────────────────────────────────── */
+/* Flash-of-wrong-theme prevention is handled by an inline script in index.html */
+/* that sets [data-theme] before CSS paint — no @media fallback needed.          */
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]) {
-    color-scheme: dark;
-
-    /* Background */
-    --bg-base: #101010;
-    --bg-weak: #181818;
-    --bg-weaker: #1e1e1e;
-    --bg-weakest: #252525;
-    --bg-strong: #1c1c1c;
-
-    /* Foreground */
-    --fg-base: rgba(255, 255, 255, 0.94);
-    --fg-weak: rgba(255, 255, 255, 0.62);
-    --fg-weaker: rgba(255, 255, 255, 0.42);
-    --fg-weakest: rgba(255, 255, 255, 0.28);
-
-    /* Border */
-    --border-base: rgba(255, 255, 255, 0.20);
-    --border-weak: #282828;
-    --border-weaker: #202020;
-    --border-weakest: #1a1a1a;
-    --border-strong: rgba(255, 255, 255, 0.42);
-
-    /* Semantic */
-    --color-success: #12c905;
-    --color-success-weak: #062d04;
-    --color-warning: #fcd53a;
-    --color-warning-weak: #fdf3cf;
-    --color-critical: #fc533a;
-    --color-critical-weak: #1f0603;
-    --color-info: #edb2f1;
-    --color-info-weak: #feecfe;
-    --color-interactive: #9dbefe;
-    --color-interactive-weak: #091f52;
-
-    /* Avatar */
-    --avatar-background-pink: #501b3f;
-    --avatar-background-mint: #033a34;
-    --avatar-background-orange: #5f2a06;
-    --avatar-background-purple: #432155;
-    --avatar-background-cyan: #0f3058;
-    --avatar-background-lime: #2b3711;
-    --avatar-text-pink: #e34ba9;
-    --avatar-text-mint: #95f3d9;
-    --avatar-text-orange: #ff802b;
-    --avatar-text-purple: #9d5bd2;
-    --avatar-text-cyan: #369eff;
-    --avatar-text-lime: #c4f042;
-
-    /* Syntax */
-    --syntax-comment: var(--fg-weaker);
-    --syntax-regexp: var(--fg-weak);
-    --syntax-string: #00ceb9;
-    --syntax-keyword: var(--fg-weaker);
-    --syntax-primitive: #ffba92;
-    --syntax-operator: var(--fg-weak);
-    --syntax-variable: var(--fg-base);
-    --syntax-property: #ff9ae2;
-    --syntax-type: #ecf58c;
-    --syntax-constant: #93e9f6;
-    --syntax-punctuation: var(--fg-weak);
-    --syntax-object: var(--fg-base);
-    --syntax-success: #35c02d;
-    --syntax-warning: #f5b238;
-    --syntax-critical: #f54f36;
-    --syntax-info: #93e9f6;
-    --syntax-diff-add: #9bcd97;
-    --syntax-diff-delete: #faa494;
-    --syntax-diff-unknown: #ff0000;
-
-    /* Markdown */
-    --markdown-heading: #9d7cd8;
-    --markdown-text: #eeeeee;
-    --markdown-link: #fab283;
-    --markdown-link-text: #56b6c2;
-    --markdown-code: #7fd88f;
-    --markdown-block-quote: #e5c07b;
-    --markdown-emph: #e5c07b;
-    --markdown-strong: #f5a742;
-    --markdown-horizontal-rule: #808080;
-    --markdown-list-item: #fab283;
-    --markdown-list-enumeration: #56b6c2;
-    --markdown-image: #fab283;
-    --markdown-image-text: #56b6c2;
-    --markdown-code-block: #eeeeee;
-  }
-}
-
-/* Explicit dark override — always wins regardless of system preference */
 [data-theme="dark"] {
   color-scheme: dark;
 
   /* Background */
-  --bg-base: #101010;
-  --bg-weak: #181818;
-  --bg-weaker: #1e1e1e;
-  --bg-weakest: #252525;
-  --bg-strong: #1c1c1c;
+  --bg-base: #0a0a0a;
+  --bg-weak: #171717;
+  --bg-weaker: #1c1c1c;
+  --bg-weakest: #242424;
+  --bg-strong: #141414;
 
   /* Foreground */
-  --fg-base: rgba(255, 255, 255, 0.94);
-  --fg-weak: rgba(255, 255, 255, 0.62);
-  --fg-weaker: rgba(255, 255, 255, 0.42);
-  --fg-weakest: rgba(255, 255, 255, 0.28);
+  --fg-base: #fafafa;
+  --fg-weak: #a3a3a3;
+  --fg-weaker: #737373;
+  --fg-weakest: #525252;
 
   /* Border */
-  --border-base: rgba(255, 255, 255, 0.20);
-  --border-weak: #282828;
-  --border-weaker: #202020;
-  --border-weakest: #1a1a1a;
-  --border-strong: rgba(255, 255, 255, 0.42);
+  --border-base: rgba(255, 255, 255, 0.14);
+  --border-weak: rgba(255, 255, 255, 0.08);
+  --border-weaker: rgba(255, 255, 255, 0.05);
+  --border-weakest: rgba(255, 255, 255, 0.03);
+  --border-strong: rgba(255, 255, 255, 0.24);
 
   /* Semantic */
   --color-success: #12c905;
@@ -350,8 +249,8 @@
   --markdown-code-block: #eeeeee;
 }
 
-/* ── Font size scaling ──────────────────────────────────────────────────────── */
-/* Applied on app container (not html root) to preserve rem = 16px for Tailwind */
+/* ── Interface scale ────────────────────────────────────────────────────────── */
+/* Applied on :root — all rem-based tokens scale with this (UI zoom level).     */
 
 [data-font-size="small"] {
   font-size: 14px;

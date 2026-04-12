@@ -38,8 +38,8 @@ export function SettingsAppearance() {
           </Tabs>
         </SettingRow>
       </SettingCard>
-      <SettingCard title="Typography">
-        <SettingRow label="Font size" description="Adjust the interface font size">
+      <SettingCard title="Display">
+        <SettingRow label="Interface scale" description="Scale the entire interface">
           <Tabs value={fontSize} onValueChange={(v) => void handleFontSizeChange(v as AppSettings["fontSize"])}>
             <TabsList>
               <TabsTrigger value="small">Small</TabsTrigger>
