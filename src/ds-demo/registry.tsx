@@ -677,25 +677,62 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
     id: "colors",
     name: "Colors",
     group: "Tokens",
-    description: "Full color token catalog — shadcn aliases + semantic surface, text, border, icon, button, syntax, markdown, and avatar tokens.",
+    description: "Flat token catalog — 3 core families (bg/fg/border) × 4 levels + 10 semantic + shadcn aliases + syntax/markdown/avatar.",
     type: "token",
     render: () => (
       <div className="space-y-10">
         <ColorGroup
-          title="shadcn — Core"
+          title="Background — 4 levels + 1 elevated"
+          tokens={[
+            ["Base", "--bg-base"],
+            ["Weak", "--bg-weak"],
+            ["Weaker", "--bg-weaker"],
+            ["Weakest", "--bg-weakest"],
+            ["Strong (elevated)", "--bg-strong"],
+          ]}
+        />
+        <ColorGroup
+          title="Foreground — 4 levels"
+          tokens={[
+            ["Base", "--fg-base"],
+            ["Weak", "--fg-weak"],
+            ["Weaker", "--fg-weaker"],
+            ["Weakest", "--fg-weakest"],
+          ]}
+        />
+        <ColorGroup
+          title="Border — 4 levels"
+          tokens={[
+            ["Base", "--border-base"],
+            ["Weak", "--border-weak"],
+            ["Weaker", "--border-weaker"],
+            ["Weakest", "--border-weakest"],
+          ]}
+        />
+        <ColorGroup
+          title="Semantic — flat palette"
+          tokens={[
+            ["Success", "--color-success"],
+            ["Success Weak", "--color-success-weak"],
+            ["Warning", "--color-warning"],
+            ["Warning Weak", "--color-warning-weak"],
+            ["Critical", "--color-critical"],
+            ["Critical Weak", "--color-critical-weak"],
+            ["Info", "--color-info"],
+            ["Info Weak", "--color-info-weak"],
+            ["Interactive", "--color-interactive"],
+            ["Interactive Weak", "--color-interactive-weak"],
+          ]}
+        />
+        <ColorGroup
+          title="shadcn/ui aliases (compat layer)"
           tokens={[
             ["Background", "--background"],
-            ["Background Weak", "--background-weak"],
             ["Foreground", "--foreground"],
             ["Card", "--card"],
             ["Card Foreground", "--card-foreground"],
             ["Popover", "--popover"],
             ["Popover Foreground", "--popover-foreground"],
-          ]}
-        />
-        <ColorGroup
-          title="shadcn — Semantic"
-          tokens={[
             ["Primary", "--primary"],
             ["Primary Foreground", "--primary-foreground"],
             ["Secondary", "--secondary"],
@@ -706,17 +743,9 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
             ["Accent Foreground", "--accent-foreground"],
             ["Destructive", "--destructive"],
             ["Destructive Foreground", "--destructive-foreground"],
-          ]}
-        />
-        <ColorGroup
-          title="shadcn — Form"
-          tokens={[
             ["Border", "--border"],
-            ["Border Weak", "--border-weak"],
             ["Input", "--input"],
             ["Ring", "--ring"],
-            ["Foreground Weak", "--fg-weak"],
-            ["Foreground Weaker", "--fg-weakest"],
           ]}
         />
         <ColorGroup
@@ -733,268 +762,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           ]}
         />
         <ColorGroup
-          title="Surface — base"
-          tokens={[
-            ["Base", "--surface-base"],
-            ["Base Hover", "--surface-base-hover"],
-            ["Base Active", "--surface-base-active"],
-            ["Base Interactive Active", "--surface-base-interactive-active"],
-            ["Weak", "--surface-weak"],
-            ["Weaker", "--surface-weaker"],
-            ["Strong", "--surface-strong"],
-          ]}
-        />
-        <ColorGroup
-          title="Surface — raised / float / inset"
-          tokens={[
-            ["Raised Base", "--surface-raised-base"],
-            ["Raised Base Hover", "--surface-raised-base-hover"],
-            ["Raised Base Active", "--surface-raised-base-active"],
-            ["Raised Strong", "--surface-raised-strong"],
-            ["Raised Strong Hover", "--surface-raised-strong-hover"],
-            ["Raised Stronger", "--surface-raised-stronger"],
-            ["Raised Stronger Hover", "--surface-raised-stronger-hover"],
-            ["Float Base", "--surface-float-base"],
-            ["Float Base Hover", "--surface-float-base-hover"],
-            ["Inset Base", "--surface-inset-base"],
-            ["Inset Base Hover", "--surface-inset-base-hover"],
-            ["Inset Strong", "--surface-inset-strong"],
-            ["Inset Strong Hover", "--surface-inset-strong-hover"],
-          ]}
-        />
-        <ColorGroup
-          title="Surface — semantic"
-          tokens={[
-            ["Brand Base", "--surface-brand-base"],
-            ["Brand Hover", "--surface-brand-hover"],
-            ["Interactive Base", "--surface-interactive-base"],
-            ["Interactive Hover", "--surface-interactive-hover"],
-            ["Interactive Weak", "--surface-interactive-weak"],
-            ["Interactive Weak Hover", "--surface-interactive-weak-hover"],
-            ["Success Base", "--surface-success-base"],
-            ["Success Weak", "--surface-success-weak"],
-            ["Success Strong", "--surface-success-strong"],
-            ["Warning Base", "--surface-warning-base"],
-            ["Warning Weak", "--surface-warning-weak"],
-            ["Warning Strong", "--surface-warning-strong"],
-            ["Critical Base", "--surface-critical-base"],
-            ["Critical Weak", "--surface-critical-weak"],
-            ["Critical Strong", "--surface-critical-strong"],
-            ["Info Base", "--surface-info-base"],
-            ["Info Weak", "--surface-info-weak"],
-            ["Info Strong", "--surface-info-strong"],
-          ]}
-        />
-        <ColorGroup
-          title="Surface — diff"
-          tokens={[
-            ["Unchanged", "--surface-diff-unchanged-base"],
-            ["Skip", "--surface-diff-skip-base"],
-            ["Hidden Base", "--surface-diff-hidden-base"],
-            ["Hidden Weak", "--surface-diff-hidden-weak"],
-            ["Hidden Weaker", "--surface-diff-hidden-weaker"],
-            ["Hidden Strong", "--surface-diff-hidden-strong"],
-            ["Hidden Stronger", "--surface-diff-hidden-stronger"],
-            ["Add Base", "--surface-diff-add-base"],
-            ["Add Weak", "--surface-diff-add-weak"],
-            ["Add Weaker", "--surface-diff-add-weaker"],
-            ["Add Strong", "--surface-diff-add-strong"],
-            ["Add Stronger", "--surface-diff-add-stronger"],
-            ["Delete Base", "--surface-diff-delete-base"],
-            ["Delete Weak", "--surface-diff-delete-weak"],
-            ["Delete Weaker", "--surface-diff-delete-weaker"],
-            ["Delete Strong", "--surface-diff-delete-strong"],
-            ["Delete Stronger", "--surface-diff-delete-stronger"],
-          ]}
-        />
-        <ColorGroup
-          title="Input states"
-          tokens={[
-            ["Base", "--input-base"],
-            ["Hover", "--input-hover"],
-            ["Active", "--input-active"],
-            ["Selected", "--input-selected"],
-            ["Focus", "--input-focus"],
-            ["Disabled", "--input-disabled"],
-          ]}
-        />
-        <ColorGroup
-          title="Text — scale"
-          tokens={[
-            ["Base", "--color-text-base"],
-            ["Weak", "--color-text-weak"],
-            ["Weaker", "--color-text-weaker"],
-            ["Strong", "--color-text-strong"],
-            ["Stronger", "--color-text-stronger"],
-            ["Invert Base", "--color-text-invert-base"],
-            ["Invert Weak", "--color-text-invert-weak"],
-            ["Invert Weaker", "--color-text-invert-weaker"],
-            ["Invert Strong", "--color-text-invert-strong"],
-          ]}
-        />
-        <ColorGroup
-          title="Text — on semantic"
-          tokens={[
-            ["Interactive", "--color-text-interactive-base"],
-            ["On Interactive", "--color-text-on-interactive-base"],
-            ["On Interactive Weak", "--color-text-on-interactive-weak"],
-            ["On Brand Base", "--color-text-on-brand-base"],
-            ["On Brand Weak", "--color-text-on-brand-weak"],
-            ["On Brand Weaker", "--color-text-on-brand-weaker"],
-            ["On Brand Strong", "--color-text-on-brand-strong"],
-            ["On Success Base", "--color-text-on-success-base"],
-            ["On Success Weak", "--color-text-on-success-weak"],
-            ["On Success Strong", "--color-text-on-success-strong"],
-            ["On Warning Base", "--color-text-on-warning-base"],
-            ["On Warning Weak", "--color-text-on-warning-weak"],
-            ["On Warning Strong", "--color-text-on-warning-strong"],
-            ["On Critical Base", "--color-text-on-critical-base"],
-            ["On Critical Weak", "--color-text-on-critical-weak"],
-            ["On Critical Strong", "--color-text-on-critical-strong"],
-            ["On Info Base", "--color-text-on-info-base"],
-            ["On Info Weak", "--color-text-on-info-weak"],
-            ["On Info Strong", "--color-text-on-info-strong"],
-          ]}
-        />
-        <ColorGroup
-          title="Text — diff"
-          tokens={[
-            ["Add Base", "--color-text-diff-add-base"],
-            ["Add Strong", "--color-text-diff-add-strong"],
-            ["Delete Base", "--color-text-diff-delete-base"],
-            ["Delete Strong", "--color-text-diff-delete-strong"],
-          ]}
-        />
-        <ColorGroup
-          title="Border — base"
-          tokens={[
-            ["Base", "--border-base"],
-            ["Hover", "--border-hover"],
-            ["Active", "--border-active"],
-            ["Selected", "--border-selected"],
-            ["Disabled", "--border-disabled"],
-            ["Focus", "--border-focus"],
-          ]}
-        />
-        <ColorGroup
-          title="Border — strong / weak / weaker"
-          tokens={[
-            ["Strong Base", "--border-strong-base"],
-            ["Strong Hover", "--border-strong-hover"],
-            ["Strong Selected", "--border-strong-selected"],
-            ["Weak Base", "--border-weak-base"],
-            ["Weak Hover", "--border-weak-hover"],
-            ["Weak Selected", "--border-weak-selected"],
-            ["Weaker Base", "--border-weaker-base"],
-            ["Weaker Hover", "--border-weaker-hover"],
-            ["Weaker Selected", "--border-weaker-selected"],
-          ]}
-        />
-        <ColorGroup
-          title="Border — semantic"
-          tokens={[
-            ["Interactive Base", "--border-interactive-base"],
-            ["Interactive Hover", "--border-interactive-hover"],
-            ["Interactive Active", "--border-interactive-active"],
-            ["Interactive Selected", "--border-interactive-selected"],
-            ["Success Base", "--border-success-base"],
-            ["Success Hover", "--border-success-hover"],
-            ["Success Selected", "--border-success-selected"],
-            ["Warning Base", "--border-warning-base"],
-            ["Warning Hover", "--border-warning-hover"],
-            ["Warning Selected", "--border-warning-selected"],
-            ["Critical Base", "--border-critical-base"],
-            ["Critical Hover", "--border-critical-hover"],
-            ["Critical Selected", "--border-critical-selected"],
-            ["Info Base", "--border-info-base"],
-            ["Info Hover", "--border-info-hover"],
-            ["Info Selected", "--border-info-selected"],
-          ]}
-        />
-        <ColorGroup
-          title="Icon — base / strong / weak"
-          tokens={[
-            ["Base", "--icon-base"],
-            ["Hover", "--icon-hover"],
-            ["Active", "--icon-active"],
-            ["Selected", "--icon-selected"],
-            ["Disabled", "--icon-disabled"],
-            ["Focus", "--icon-focus"],
-            ["Strong Base", "--icon-strong-base"],
-            ["Strong Hover", "--icon-strong-hover"],
-            ["Strong Active", "--icon-strong-active"],
-            ["Weak Base", "--icon-weak-base"],
-            ["Weak Hover", "--icon-weak-hover"],
-            ["Weak Active", "--icon-weak-active"],
-            ["Invert Base", "--icon-invert-base"],
-          ]}
-        />
-        <ColorGroup
-          title="Icon — semantic"
-          tokens={[
-            ["Brand", "--icon-brand-base"],
-            ["Interactive", "--icon-interactive-base"],
-            ["Success Base", "--icon-success-base"],
-            ["Success Hover", "--icon-success-hover"],
-            ["Success Active", "--icon-success-active"],
-            ["Warning Base", "--icon-warning-base"],
-            ["Warning Hover", "--icon-warning-hover"],
-            ["Warning Active", "--icon-warning-active"],
-            ["Critical Base", "--icon-critical-base"],
-            ["Critical Hover", "--icon-critical-hover"],
-            ["Critical Active", "--icon-critical-active"],
-            ["Info Base", "--icon-info-base"],
-            ["Info Hover", "--icon-info-hover"],
-            ["Info Active", "--icon-info-active"],
-          ]}
-        />
-        <ColorGroup
-          title="Icon — on semantic"
-          tokens={[
-            ["On Interactive", "--icon-on-interactive-base"],
-            ["On Brand Base", "--icon-on-brand-base"],
-            ["On Brand Hover", "--icon-on-brand-hover"],
-            ["On Success Base", "--icon-on-success-base"],
-            ["On Success Hover", "--icon-on-success-hover"],
-            ["On Warning Base", "--icon-on-warning-base"],
-            ["On Warning Hover", "--icon-on-warning-hover"],
-            ["On Critical Base", "--icon-on-critical-base"],
-            ["On Critical Hover", "--icon-on-critical-hover"],
-            ["On Info Base", "--icon-on-info-base"],
-            ["On Info Hover", "--icon-on-info-hover"],
-          ]}
-        />
-        <ColorGroup
-          title="Icon — agent"
-          tokens={[
-            ["Plan", "--icon-agent-plan-base"],
-            ["Docs", "--icon-agent-docs-base"],
-            ["Ask", "--icon-agent-ask-base"],
-            ["Build", "--icon-agent-build-base"],
-          ]}
-        />
-        <ColorGroup
-          title="Icon — diff"
-          tokens={[
-            ["Add Base", "--icon-diff-add-base"],
-            ["Add Hover", "--icon-diff-add-hover"],
-            ["Delete Base", "--icon-diff-delete-base"],
-            ["Delete Hover", "--icon-diff-delete-hover"],
-            ["Modified", "--icon-diff-modified-base"],
-          ]}
-        />
-        <ColorGroup
-          title="Button"
-          tokens={[
-            ["Primary Base", "--button-primary-base"],
-            ["Secondary Base", "--button-secondary-base"],
-            ["Secondary Hover", "--button-secondary-hover"],
-            ["Ghost Hover", "--button-ghost-hover"],
-            ["Ghost Hover 2", "--button-ghost-hover2"],
-          ]}
-        />
-        <ColorGroup
-          title="Syntax"
+          title="Syntax highlighting"
           tokens={[
             ["Comment", "--syntax-comment"],
             ["Regexp", "--syntax-regexp"],
@@ -1036,7 +804,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           ]}
         />
         <div>
-          <h3 className="text-base font-medium text-foreground mb-3">Avatar — paired bg + text</h3>
+          <h3 className="text-base font-medium text-fg-base mb-3">Avatar — paired bg + text</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {["pink", "mint", "orange", "purple", "cyan", "lime"].map((c) => (
               <div key={c} className="flex items-center gap-3 min-w-0">
@@ -1047,7 +815,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
                   {c[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-normal text-foreground capitalize truncate">{c}</div>
+                  <div className="text-sm font-normal text-fg-base capitalize truncate">{c}</div>
                   <div className="text-2xs font-normal text-muted-foreground font-mono truncate">--avatar-*-{c}</div>
                 </div>
               </div>
