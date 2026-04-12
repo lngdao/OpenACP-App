@@ -1,7 +1,29 @@
 # Color System Refactor Plan
 
-**Status**: Approved, ready to execute
+**Status**: ✅ Completed 2026-04-13 across 10 commits on `develop` (2c37830 → 0dac582). Remaining work: visual smoke test in `pnpm tauri dev` and DESIGN.md update.
 **Goal**: Collapse the sprawling color token system into a tight, predictable scheme — 3 neutral families (background, foreground, border) × 4 levels each, plus a flat semantic palette and the existing avatar/syntax/markdown tokens.
+
+## Commit history
+
+| # | SHA | Commit |
+|---|---|---|
+| 1 | 2c37830 | feat(theme): add new bg/fg/border/semantic color tokens (additive) |
+| 2 | 4164338 | refactor(theme): migrate surface-* status colors to new --color-* |
+| 3 | c5c87ef | refactor(theme): migrate surface-* elevated/inset to bg-* |
+| 4 | d169817 | refactor(theme): migrate bg-background-* utilities to bg-bg-* |
+| 5 | b154dc6 | refactor(theme): migrate text-foreground-weak/weaker to text-fg-* |
+| 6 | 4c4cd02 | refactor(theme): point shadcn aliases at new bg/fg/color tokens |
+| 6.5 | 7213c8a | refactor(theme): migrate straggler --icon-* / --color-text-interactive-base / --border-weak-base refs |
+| 7 | f19d6a9 | chore(theme): rewrite theme.css with lean token surface (-680 lines) |
+| 8 | 486791d | chore(theme): prune index.css @theme color registrations (-200 lines) |
+| 9 | 0dac582 | refactor(ds-demo): rebuild Colors page for new flat token scheme |
+
+## Result
+
+- `src/openacp/styles/theme.css`: 1043 → 370 lines
+- `src/openacp/styles/index.css` @theme block: ~270 → ~30 entries
+- ds-demo Colors page: 23 sections / ~200 swatches → 9 sections / ~88 swatches
+- Zero circular `--border-base` refs, one source of truth per token.
 
 ---
 
