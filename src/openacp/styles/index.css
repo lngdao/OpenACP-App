@@ -121,6 +121,36 @@
 
 @theme {
 
+  /* ── New color scheme (Phase 1 of color refactor) ──────────────────── */
+  /* Background — 4 levels + 1 elevated */
+  --color-bg-base: var(--bg-base);
+  --color-bg-weak: var(--bg-weak);
+  --color-bg-weaker: var(--bg-weaker);
+  --color-bg-weakest: var(--bg-weakest);
+  --color-bg-strong: var(--bg-strong);
+
+  /* Foreground — 4 levels */
+  --color-fg-base: var(--fg-base);
+  --color-fg-weak: var(--fg-weak);
+  --color-fg-weaker: var(--fg-weaker);
+  --color-fg-weakest: var(--fg-weakest);
+
+  /* Border — 4 levels (base/weak already exist via legacy --border-base/--border-weak) */
+  --color-border-weaker: var(--border-weaker);
+  --color-border-weakest: var(--border-weakest);
+
+  /* Semantic — flat palette */
+  --color-success: var(--color-success);
+  --color-success-weak: var(--color-success-weak);
+  --color-warning: var(--color-warning);
+  --color-warning-weak: var(--color-warning-weak);
+  --color-critical: var(--color-critical);
+  --color-critical-weak: var(--color-critical-weak);
+  --color-info: var(--color-info);
+  --color-info-weak: var(--color-info-weak);
+  --color-interactive: var(--color-interactive);
+  --color-interactive-weak: var(--color-interactive-weak);
+
   /* shadcn/ui core */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
