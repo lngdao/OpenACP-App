@@ -89,7 +89,7 @@ function PlanBadge({ entries }: { entries: PlanEntry[] }) {
   const inProgress = entries.filter(e => e.status === "in_progress").length
   const total = entries.length
   const allDone = completed === total
-  const color = allDone ? "var(--surface-success-strong)" : inProgress > 0 ? "var(--primary)" : "var(--muted-foreground)"
+  const color = allDone ? "var(--color-success)" : inProgress > 0 ? "var(--primary)" : "var(--muted-foreground)"
 
   return (
     <TooltipProvider>

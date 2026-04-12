@@ -68,7 +68,7 @@ export function UpdateNotification({
         <div className="h-0.5 bg-secondary">
           <div
             className="h-full transition-all duration-300 ease-out"
-            style={{ width: `${progress}%`, background: 'var(--surface-success-strong)' }}
+            style={{ width: `${progress}%`, background: 'var(--color-success)' }}
           />
         </div>
       )}

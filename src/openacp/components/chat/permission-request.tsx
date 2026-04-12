@@ -93,7 +93,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
               className="w-full flex items-center gap-2 px-2.5 py-1.5 h-auto justify-start text-left"
               style={{
                 background: highlighted === idx
-                  ? "var(--surface-interactive-subtle, rgba(100,116,139,0.25))"
+                  ? "var(--color-interactive-weak)"
                   : "var(--surface-inset-base)",
                 border: "1px solid var(--border-weaker-base)",
               }}

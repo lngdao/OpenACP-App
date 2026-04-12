@@ -71,7 +71,7 @@ export function LocalTab(props: LocalTabProps) {
                     <span className="text-xs text-muted-foreground truncate block font-mono">{inst.directory}</span>
                   </div>
                   {isRunning && (
-                    <div className="size-2 rounded-full shrink-0" style={{ background: 'var(--surface-success-strong)' }} />
+                    <div className="size-2 rounded-full shrink-0" style={{ background: 'var(--color-success)' }} />
                   )}
                   {!alreadyAdded && !isRunning && (
                     <button

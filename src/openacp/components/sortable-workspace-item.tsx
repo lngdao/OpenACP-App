@@ -89,9 +89,9 @@ export function SortableWorkspaceItem(props: SortableWorkspaceItemProps) {
         className="absolute -bottom-1 -right-1 size-3 rounded-full border-2 border-background pointer-events-none"
         style={{
           background: props.hasError
-            ? "var(--surface-critical-strong)"
+            ? "var(--color-critical)"
             : props.isConnected
-              ? "var(--surface-success-strong)"
+              ? "var(--color-success)"
               : "var(--text-weaker)",
         }}
       />
