@@ -387,9 +387,15 @@ export function SetupWizard(props: Props) {
 
               {/* Summary card */}
               <div className="rounded-lg border border-border divide-y divide-border">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-muted-foreground">Directory</span>
-                  <span className="text-sm font-medium text-foreground">{workspace}</span>
+                <div className="flex items-center justify-between gap-4 px-4 py-3">
+                  <span className="text-sm text-muted-foreground shrink-0">Directory</span>
+                  <span
+                    className="text-sm font-medium text-foreground truncate min-w-0 flex-1"
+                    style={{ direction: "rtl", textAlign: "left" }}
+                    title={workspace}
+                  >
+                    {"\u200E" + workspace}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-sm text-muted-foreground">Agent</span>
