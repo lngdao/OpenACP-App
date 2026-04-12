@@ -20,7 +20,7 @@ function ensureTheme() {
       name: "OpenACP",
       colors: {
         "editor.background": "var(--bg-strong)",
-        "editor.foreground": "var(--foreground-weak)",
+        "editor.foreground": "var(--fg-weak)",
         "gitDecoration.addedResourceForeground": "var(--syntax-diff-add)",
         "gitDecoration.deletedResourceForeground": "var(--syntax-diff-delete)",
       },

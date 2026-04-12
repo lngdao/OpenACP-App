@@ -174,8 +174,8 @@
 
   /* Extensions */
   --color-border-weak: var(--border-weak);
-  --color-foreground-weak: var(--foreground-weak);
-  --color-foreground-weaker: var(--foreground-weaker);
+  --color-fg-weak: var(--fg-weak);
+  --color-fg-weakest: var(--fg-weakest);
 
   /* Sidebar */
   --color-sidebar-background: var(--sidebar-background);
@@ -258,7 +258,7 @@
   --color-input-focus: var(--input-focus);
   --color-input-disabled: var(--input-disabled);
   --color-text-weak: var(--muted-foreground);
-  --color-text-weaker: var(--foreground-weaker);
+  --color-text-weaker: var(--fg-weakest);
   --color-text-strong: var(--foreground);
   --color-text-interactive-base: var(--color-text-interactive-base);
   --color-text-on-brand-base: var(--color-text-on-brand-base);

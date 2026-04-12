@@ -72,7 +72,7 @@ export function SortableWorkspaceItem(props: SortableWorkspaceItemProps) {
       <button
         type="button"
         className={`flex items-center justify-center size-9 rounded-lg overflow-hidden transition-all cursor-default ${
-          props.isActive ? "ring-2 ring-foreground-weak ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100"
+          props.isActive ? "ring-2 ring-fg-weak ring-offset-1 ring-offset-background" : "opacity-60 hover:opacity-100"
         }`}
         onClick={() => props.hasError && props.onReconnect ? props.onReconnect() : props.onSwitch()}
       >

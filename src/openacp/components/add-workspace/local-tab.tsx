@@ -139,7 +139,7 @@ function BrowseResultView(props: {
         <div>
           <p className="text-md-medium text-foreground mb-1">Workspace found</p>
           <p className="text-sm-regular text-muted-foreground">
-            This folder is already set up as <strong className="text-foreground-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.
+            This folder is already set up as <strong className="text-fg-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.
           </p>
         </div>
         <div className="flex items-center gap-2">

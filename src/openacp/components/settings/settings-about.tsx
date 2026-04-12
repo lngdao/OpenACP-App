@@ -133,7 +133,7 @@ export function SettingsAbout() {
       <SettingCard title="Version">
         <SettingRow label="App" description="OpenACP Desktop application">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-foreground-weak font-mono">{APP_VERSION}</span>
+            <span className="text-sm text-fg-weak font-mono">{APP_VERSION}</span>
             {appUpdate ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">v{appUpdate.version} available</span>
@@ -160,7 +160,7 @@ export function SettingsAbout() {
         </SettingRow>
         <SettingRow label="Core" description="OpenACP CLI / server engine">
           <div className="flex items-center gap-3">
-            <span className="text-sm text-foreground-weak font-mono">
+            <span className="text-sm text-fg-weak font-mono">
               {coreLoading ? "..." : coreVersion ?? "Not installed"}
             </span>
             {coreUpdate ? (
@@ -185,7 +185,7 @@ export function SettingsAbout() {
         </SettingRow>
         {corePath && (
           <SettingRow label="Core path" description="Location of the OpenACP binary">
-            <span className="text-sm text-foreground-weak font-mono truncate max-w-[300px]" title={corePath}>
+            <span className="text-sm text-fg-weak font-mono truncate max-w-[300px]" title={corePath}>
               {corePath}
             </span>
           </SettingRow>
@@ -198,7 +198,7 @@ export function SettingsAbout() {
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-foreground-weak hover:text-foreground underline underline-offset-2"
+            className="text-sm text-fg-weak hover:text-foreground underline underline-offset-2"
           >
             Repository
           </a>
@@ -208,7 +208,7 @@ export function SettingsAbout() {
             href={DOCS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-foreground-weak hover:text-foreground underline underline-offset-2"
+            className="text-sm text-fg-weak hover:text-foreground underline underline-offset-2"
           >
             Docs
           </a>

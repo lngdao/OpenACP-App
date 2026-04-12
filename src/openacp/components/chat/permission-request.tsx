@@ -137,7 +137,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
 
       {/* Hint */}
       <div className="px-3.5 pb-2.5">
-        <span className="text-2xs font-normal" style={{ color: "var(--foreground-weaker)" }}>
+        <span className="text-2xs font-normal" style={{ color: "var(--fg-weakest)" }}>
           Esc to cancel
         </span>
         {isResolving && (

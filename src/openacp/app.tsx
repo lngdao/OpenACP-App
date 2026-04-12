@@ -644,7 +644,7 @@ function OpenACPAppInner() {
   }, [browserPanelEnabled, openBrowser]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-foreground-weak select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
+    <div className="flex flex-col h-screen w-screen bg-background text-fg-weak select-none [&_input]:select-text [&_textarea]:select-text [&_[contenteditable]]:select-text">
       <Titlebar
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={() => setSidebarCollapsed((v) => !v)}

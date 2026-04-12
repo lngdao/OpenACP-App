@@ -99,10 +99,10 @@ export const UserMessage = memo(function UserMessage({
                 ) : (
                   <FileIcon
                     size={14}
-                    className="text-foreground-weaker flex-shrink-0"
+                    className="text-fg-weakest flex-shrink-0"
                   />
                 )}
-                <span className="text-[12px] text-foreground-weak truncate max-w-[200px] leading-none">
+                <span className="text-[12px] text-fg-weak truncate max-w-[200px] leading-none">
                   {att.fileName}
                 </span>
               </div>

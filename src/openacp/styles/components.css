@@ -421,7 +421,7 @@
 }
 
 [data-component="text-shimmer"] [data-slot="text-shimmer-char-shimmer"] {
-  color: var(--foreground-weaker);
+  color: var(--fg-weakest);
   opacity: 0;
 }
 
@@ -525,7 +525,7 @@
   overflow-wrap: anywhere;
   max-height: 240px;
   overflow-y: auto;
-  color: var(--foreground-weak);
+  color: var(--fg-weak);
 }
 
 /* ── User message ────────────────────────────────────────────────────────── */
@@ -586,7 +586,7 @@
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  color: var(--foreground-weak);
+  color: var(--fg-weak);
 }
 
 /* ── Diff view ───────────────────────────────────────────────────────────── */
@@ -608,7 +608,7 @@
   width: 40px;
   text-align: right;
   padding-right: 8px;
-  color: var(--foreground-weaker);
+  color: var(--fg-weakest);
   user-select: none;
   opacity: 0.6;
 }
@@ -650,7 +650,7 @@
 
 .oac-diff-hunk {
   background: rgba(100, 100, 100, 0.08);
-  color: var(--foreground-weaker);
+  color: var(--fg-weakest);
   padding: 2px 0;
 }
 .oac-diff-hunk .oac-diff-content {
@@ -769,7 +769,7 @@
 .oac-thinking-chevron {
   font-size: 10px;
   transition: transform 0.15s;
-  color: var(--foreground-weaker);
+  color: var(--fg-weakest);
 }
 
 .oac-thinking[open] .oac-thinking-chevron {
@@ -884,7 +884,7 @@
   font-weight: 600;
   font-size: 12px;
   margin-bottom: 6px;
-  color: var(--foreground-weak);
+  color: var(--fg-weak);
 }
 
 .oac-plan-entry {
@@ -893,16 +893,16 @@
   gap: 6px;
   margin-bottom: 3px;
   font-size: 12px;
-  color: var(--foreground-weak);
+  color: var(--fg-weak);
 }
 
 .oac-plan-entry--completed {
   color: var(--muted-foreground);
   text-decoration: line-through;
-  text-decoration-color: var(--foreground-weaker);
+  text-decoration-color: var(--fg-weakest);
 }
 
-.oac-plan-entry--in-progress { color: var(--foreground-weak); }
+.oac-plan-entry--in-progress { color: var(--fg-weak); }
 
 /* ── Tool group (noise collapse) ────────────────────────────────────────── */
 
@@ -916,7 +916,7 @@
   user-select: none;
 }
 
-.oac-tool-group-header:hover { color: var(--foreground-weak); }
+.oac-tool-group-header:hover { color: var(--fg-weak); }
 
 .oac-tool-group-chevron {
   font-size: 10px;
@@ -957,7 +957,7 @@
 
 .oac-titlebar-btn:hover {
   background: var(--accent);
-  color: var(--foreground-weak);
+  color: var(--fg-weak);
 }
 
 .oac-titlebar-btn--active {

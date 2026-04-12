@@ -68,15 +68,15 @@ function ContextBadge({ usage }: { usage: UsageInfo }) {
         <TooltipContent side="top" sideOffset={8} className="bg-card border border-border-weak text-foreground px-3 py-2 min-w-[160px]">
           <div className="flex justify-between gap-4 mb-1">
             <span style={{ color, fontWeight: 600 }}>{pct.toFixed(1)}%</span>
-            <span className="text-foreground-weak font-mono">{formatK(used)} / {formatK(ctx)}</span>
+            <span className="text-fg-weak font-mono">{formatK(used)} / {formatK(ctx)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Text</span>
-            <span className="text-foreground-weak font-mono">{formatK(used)}</span>
+            <span className="text-fg-weak font-mono">{formatK(used)}</span>
           </div>
           <div className="flex justify-between gap-4">
             <span className="text-muted-foreground">Remaining</span>
-            <span className="text-foreground-weak font-mono">{formatK(Math.max(0, ctx - used))}</span>
+            <span className="text-fg-weak font-mono">{formatK(Math.max(0, ctx - used))}</span>
           </div>
         </TooltipContent>
       </Tooltip>
@@ -518,7 +518,7 @@ export function Composer() {
                         <X size={10} weight="bold" />
                       </Button>
                     </div>
-                    <span className="text-[11px] text-foreground-weak truncate leading-none pl-5">
+                    <span className="text-[11px] text-fg-weak truncate leading-none pl-5">
                       {snip.comment}
                     </span>
                   </div>
@@ -537,10 +537,10 @@ export function Composer() {
                     ) : (
                       <FileIcon
                         size={14}
-                        className="text-foreground-weaker flex-shrink-0"
+                        className="text-fg-weakest flex-shrink-0"
                       />
                     )}
-                    <span className="text-[12px] text-foreground-weak truncate max-w-[160px] leading-none">
+                    <span className="text-[12px] text-fg-weak truncate max-w-[160px] leading-none">
                       {att.fileName}
                     </span>
                     <Button
@@ -661,7 +661,7 @@ export function Composer() {
                   <Plus
                     size={18}
                     weight="bold"
-                    className="text-foreground-weak"
+                    className="text-fg-weak"
                   />
                 </Button>
                 <Button
@@ -679,7 +679,7 @@ export function Composer() {
                   <Command
                     size={18}
                     weight="regular"
-                    className="text-foreground-weak"
+                    className="text-fg-weak"
                   />
                 </Button>
               </div>

@@ -62,7 +62,7 @@ function ColorSwatch({ name, variable }: { name: string; variable: string }) {
       <div className="min-w-0">
         <div className="text-sm font-normal text-foreground truncate">{name}</div>
         <div className="text-2xs font-normal text-muted-foreground font-mono truncate">{variable}</div>
-        <div className="text-2xs font-normal text-foreground-weaker font-mono truncate">{value || "—"}</div>
+        <div className="text-2xs font-normal text-fg-weakest font-mono truncate">{value || "—"}</div>
       </div>
     </div>
   )
@@ -340,7 +340,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
       <div className="space-y-10">
         <div>
           <div className="text-sm font-medium text-muted-foreground mb-2">Animation styles</div>
-          <p className="text-sm leading-relaxed text-foreground-weaker mb-4">Pick an animation for the octopus loader.</p>
+          <p className="text-sm leading-relaxed text-fg-weakest mb-4">Pick an animation for the octopus loader.</p>
           <div className="grid grid-cols-4 gap-5">
             <div className="flex flex-col items-center gap-3 rounded-lg border border-border p-5">
               <BrandIcon className="w-10 h-7 text-muted-foreground animate-wobble" />
@@ -396,23 +396,23 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           <div className="flex items-center gap-5">
             <div className="flex flex-col items-center gap-1">
               <BrandIcon className="size-3 text-muted-foreground animate-breathe" />
-              <span className="text-2xs font-normal text-foreground-weaker">12px</span>
+              <span className="text-2xs font-normal text-fg-weakest">12px</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <BrandIcon className="size-4 text-muted-foreground animate-breathe" />
-              <span className="text-2xs font-normal text-foreground-weaker">16px</span>
+              <span className="text-2xs font-normal text-fg-weakest">16px</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <BrandIcon className="size-6 text-muted-foreground animate-breathe" />
-              <span className="text-2xs font-normal text-foreground-weaker">24px</span>
+              <span className="text-2xs font-normal text-fg-weakest">24px</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <BrandIcon className="size-8 text-muted-foreground animate-breathe" />
-              <span className="text-2xs font-normal text-foreground-weaker">32px</span>
+              <span className="text-2xs font-normal text-fg-weakest">32px</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <BrandIcon className="w-12 h-8 text-muted-foreground animate-breathe" />
-              <span className="text-2xs font-normal text-foreground-weaker">48x32</span>
+              <span className="text-2xs font-normal text-fg-weakest">48x32</span>
             </div>
           </div>
         </div>
@@ -421,7 +421,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           <div className="flex items-center gap-4">
             <BrandIcon className="size-4 text-foreground" />
             <BrandIcon className="size-6 text-muted-foreground" />
-            <BrandIcon className="size-8 text-foreground-weaker" />
+            <BrandIcon className="size-8 text-fg-weakest" />
           </div>
         </div>
         <div>
@@ -478,7 +478,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
             <DialogTitle>Dialog Title</DialogTitle>
             <DialogDescription>This is a dialog description.</DialogDescription>
           </DialogHeader>
-          <div className="text-base font-normal text-foreground-weak py-4">Dialog body content goes here.</div>
+          <div className="text-base font-normal text-fg-weak py-4">Dialog body content goes here.</div>
         </DialogContent>
       </Dialog>
     ),
@@ -629,9 +629,9 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           <TabsTrigger value="tab2">Tab 2</TabsTrigger>
           <TabsTrigger value="tab3">Tab 3</TabsTrigger>
         </TabsList>
-        <TabsContent value="tab1" className="text-base font-normal text-foreground-weak p-4">Content for Tab 1</TabsContent>
-        <TabsContent value="tab2" className="text-base font-normal text-foreground-weak p-4">Content for Tab 2</TabsContent>
-        <TabsContent value="tab3" className="text-base font-normal text-foreground-weak p-4">Content for Tab 3</TabsContent>
+        <TabsContent value="tab1" className="text-base font-normal text-fg-weak p-4">Content for Tab 1</TabsContent>
+        <TabsContent value="tab2" className="text-base font-normal text-fg-weak p-4">Content for Tab 2</TabsContent>
+        <TabsContent value="tab3" className="text-base font-normal text-fg-weak p-4">Content for Tab 3</TabsContent>
       </Tabs>
     ),
     code: `import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -715,8 +715,8 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
             ["Border Weak", "--border-weak"],
             ["Input", "--input"],
             ["Ring", "--ring"],
-            ["Foreground Weak", "--foreground-weak"],
-            ["Foreground Weaker", "--foreground-weaker"],
+            ["Foreground Weak", "--fg-weak"],
+            ["Foreground Weaker", "--fg-weakest"],
           ]}
         />
         <ColorGroup
@@ -1087,9 +1087,9 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           <h3 className="text-base font-medium text-foreground mb-3">Foreground Scale</h3>
           <div className="space-y-2">
             <p className="text-base font-normal text-foreground">Foreground — primary text</p>
-            <p className="text-base font-normal text-foreground-weak">Foreground Weak — secondary text</p>
+            <p className="text-base font-normal text-fg-weak">Foreground Weak — secondary text</p>
             <p className="text-base font-normal text-muted-foreground">Muted Foreground — muted text</p>
-            <p className="text-base font-normal text-foreground-weaker">Foreground Weaker — weakest text</p>
+            <p className="text-base font-normal text-fg-weakest">Foreground Weaker — weakest text</p>
           </div>
         </div>
       </div>
@@ -1107,7 +1107,7 @@ import { Plus, ArrowRight, Trash } from "@phosphor-icons/react"
           <div key={n} className="flex items-center gap-4">
             <span className="text-sm font-normal text-muted-foreground font-mono w-8 text-right">{n}</span>
             <div className="bg-primary rounded-sm" style={{ width: `${n * 4}px`, height: "16px" }} />
-            <span className="text-sm font-normal text-foreground-weaker">{n * 4}px / {n * 0.25}rem</span>
+            <span className="text-sm font-normal text-fg-weakest">{n * 4}px / {n * 0.25}rem</span>
           </div>
         ))}
       </div>

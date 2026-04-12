@@ -66,7 +66,7 @@ export function SidebarPanel({ collapsed }: { collapsed?: boolean }) {
               {workspaceName}
             </span>
             <span
-              className="text-sm leading-lg text-foreground-weak truncate"
+              className="text-sm leading-lg text-fg-weak truncate"
               title={workspace.directory}
             >
               {workspacePath}

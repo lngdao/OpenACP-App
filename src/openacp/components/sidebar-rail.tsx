@@ -303,7 +303,7 @@ export function SidebarRail(props: {
               title="Open workspace"
               onClick={props.onOpenFolder}
             >
-              <Plus size={16} className="text-foreground-weak" />
+              <Plus size={16} className="text-fg-weak" />
             </Button>
           </div>
         </div>
@@ -328,7 +328,7 @@ export function SidebarRail(props: {
               location.reload()
             }}
           >
-            <Trash size={16} className="text-foreground-weak" />
+            <Trash size={16} className="text-fg-weak" />
           </Button>
         )}
         <Button
@@ -339,10 +339,10 @@ export function SidebarRail(props: {
           disabled={!props.activeId || !props.connectedIds?.has(props.activeId)}
           className={!props.activeId || !props.connectedIds?.has(props.activeId) ? "opacity-30" : ""}
         >
-          <PuzzlePiece size={16} className="text-foreground-weak" />
+          <PuzzlePiece size={16} className="text-fg-weak" />
         </Button>
         <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
-          <GearSix size={16} className="text-foreground-weak" />
+          <GearSix size={16} className="text-fg-weak" />
         </Button>
       </div>
 

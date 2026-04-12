@@ -260,16 +260,16 @@
   --icon-diff-delete-hover: #ca2d17;
   --icon-diff-modified-base: #ff8c00;
   --syntax-comment: var(--muted-foreground);
-  --syntax-regexp: var(--foreground-weak);
+  --syntax-regexp: var(--fg-weak);
   --syntax-string: #006656;
   --syntax-keyword: var(--muted-foreground);
   --syntax-primitive: #fb4804;
-  --syntax-operator: var(--foreground-weak);
+  --syntax-operator: var(--fg-weak);
   --syntax-variable: var(--foreground);
   --syntax-property: #ed6dc8;
   --syntax-type: #596600;
   --syntax-constant: #007b80;
-  --syntax-punctuation: var(--foreground-weak);
+  --syntax-punctuation: var(--fg-weak);
   --syntax-object: var(--foreground);
   --syntax-success: #2dba26;
   --syntax-warning: #efa72e;
@@ -330,8 +330,8 @@
 
   /* Extensions */
   --border-weak: #e5e5e5;
-  --foreground-weak: #6f6f6f;
-  --foreground-weaker: #c7c7c7;
+  --fg-weak: #6f6f6f;
+  --fg-weakest: #c7c7c7;
 
   /* Sidebar */
   --sidebar-background: var(--background);
@@ -590,7 +590,7 @@
     --icon-diff-delete-hover: #f54f36;
     --icon-diff-modified-base: #ffba92;
     --syntax-comment: var(--muted-foreground);
-    --syntax-regexp: var(--foreground-weak);
+    --syntax-regexp: var(--fg-weak);
     --syntax-string: #00ceb9;
     --syntax-keyword: var(--muted-foreground);
     --syntax-primitive: #ffba92;
@@ -660,8 +660,8 @@
 
     /* Extensions */
     --border-weak: #282828;
-    --foreground-weak: rgba(255, 255, 255, 0.618);
-    --foreground-weaker: rgba(255, 255, 255, 0.284);
+    --fg-weak: rgba(255, 255, 255, 0.618);
+    --fg-weakest: rgba(255, 255, 255, 0.284);
 
     /* Sidebar */
     --sidebar-background: var(--background);
@@ -915,7 +915,7 @@
   --icon-diff-delete-hover: #f54f36;
   --icon-diff-modified-base: #ffba92;
   --syntax-comment: var(--muted-foreground);
-  --syntax-regexp: var(--foreground-weak);
+  --syntax-regexp: var(--fg-weak);
   --syntax-string: #00ceb9;
   --syntax-keyword: var(--muted-foreground);
   --syntax-primitive: #ffba92;
@@ -985,8 +985,8 @@
 
   /* Extensions */
   --border-weak: #282828;
-  --foreground-weak: rgba(255, 255, 255, 0.618);
-  --foreground-weaker: rgba(255, 255, 255, 0.284);
+  --fg-weak: rgba(255, 255, 255, 0.618);
+  --fg-weakest: rgba(255, 255, 255, 0.284);
 
   /* Sidebar */
   --sidebar-background: var(--background);
@@ -1028,9 +1028,9 @@
   --background-base: var(--background);
   --background-stronger: var(--card);
   --color-text-strong: var(--foreground);
-  --color-text-base: var(--foreground-weak);
+  --color-text-base: var(--fg-weak);
   --color-text-weak: var(--muted-foreground);
-  --color-text-weaker: var(--foreground-weaker);
+  --color-text-weaker: var(--fg-weakest);
   --color-text-invert-strong: var(--primary-foreground);
   --color-text-stronger: var(--foreground);
   --button-primary-base: var(--primary);
