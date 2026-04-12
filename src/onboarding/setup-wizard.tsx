@@ -274,7 +274,7 @@ export function SetupWizard(props: Props) {
                         />
                       </div>
                     )}
-                    <div className="flex max-h-56 flex-col gap-1 overflow-y-auto rounded-lg border border-border divide-y divide-border">
+                    <div className="flex max-h-56 flex-col overflow-y-auto rounded-lg border border-border divide-y divide-border-weak">
                       {filteredAgents.map((agent) => {
                         const isSelected = selectedAgent === agent.key
                         const canSelect = agent.installed
@@ -290,17 +290,18 @@ export function SetupWizard(props: Props) {
                               }
                             }}
                           >
-                            {/* Radio indicator */}
+                            {/* Radio indicator — invisible for uninstalled agents (keeps spacing) */}
                             <div
+                              aria-hidden={!canSelect}
                               className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors ${
-                                isSelected
-                                  ? "border-foreground bg-foreground"
-                                  : canSelect
-                                    ? "border-muted-foreground/40"
-                                    : "border-muted-foreground/20"
+                                !canSelect
+                                  ? "opacity-0"
+                                  : isSelected
+                                    ? "border-foreground bg-foreground"
+                                    : "border-muted-foreground/40"
                               }`}
                             >
-                              {isSelected && (
+                              {isSelected && canSelect && (
                                 <motion.div
                                   initial={{ scale: 0 }}
                                   animate={{ scale: 1 }}

@@ -1,6 +1,50 @@
 /* ── Active component styles ──────────────────────────────────────────────── */
 /* Merged from components/ — only styles referenced by current React components */
 
+/* ── Global scrollbar ──────────────────────────────────────────────────────── */
+/* Thin, themed scrollbar consistent across light/dark/platforms.              */
+/* Track transparent, thumb fades in on hover (auto-hide via transparent).     */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+*:hover {
+  scrollbar-color: var(--border-base) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+
+*:hover::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--fg-weaker);
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* ── Markdown (aligned with Claude Code extension styling) ─────────────────── */
 
 [data-component="markdown"] {
