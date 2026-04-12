@@ -190,7 +190,7 @@ export function CommandPalette(props: {
   }
 
   return (
-    <div ref={rootRef} className="w-full rounded-lg border border-border bg-surface-raised-stronger-non-alpha shadow-lg overflow-hidden" onKeyDown={handleKeyDown}>
+    <div ref={rootRef} className="w-full rounded-lg border border-border bg-bg-strong shadow-lg overflow-hidden" onKeyDown={handleKeyDown}>
       {subPicker ? (
         <>
           <div className="px-3 py-2 border-b border-border-weak/50 flex items-center gap-2">

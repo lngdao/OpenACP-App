@@ -588,7 +588,7 @@ export function Composer() {
               style={{
                 height: space,
                 background:
-                  "linear-gradient(to top, var(--surface-raised-stronger-non-alpha) calc(100% - 20px), transparent)",
+                  "linear-gradient(to top, var(--bg-strong) calc(100% - 20px), transparent)",
               }}
             />
 

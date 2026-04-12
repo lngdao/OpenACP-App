@@ -94,7 +94,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
               style={{
                 background: highlighted === idx
                   ? "var(--color-interactive-weak)"
-                  : "var(--surface-inset-base)",
+                  : "var(--bg-weaker)",
                 border: "1px solid var(--border-weaker-base)",
               }}
             >
@@ -118,7 +118,7 @@ export function PermissionRequestCard({ sessionId }: Props) {
           placeholder="Tell agent what to do instead"
           className="w-full bg-transparent text-sm font-normal text-foreground placeholder:text-muted-foreground focus:outline-none rounded-md px-2.5 py-1.5"
           style={{
-            background: "var(--surface-inset-base)",
+            background: "var(--bg-weaker)",
             border: "1px solid var(--border-weaker-base)",
           }}
           value={feedback}

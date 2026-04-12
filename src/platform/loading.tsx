@@ -71,7 +71,7 @@ function LoadingScreen() {
           <span className="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap text-text-strong text-sm">
             {status}
           </span>
-          <div className="w-20 h-1 bg-surface-weak rounded-none overflow-hidden">
+          <div className="w-20 h-1 bg-bg-weaker rounded-none overflow-hidden">
             <div
               className="h-full bg-icon-warning-base rounded-none transition-[width] duration-300"
               style={{ width: `${value}%` }}

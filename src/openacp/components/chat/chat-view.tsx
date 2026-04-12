@@ -54,7 +54,7 @@ function ScrollToBottomButton({
         size="icon-sm"
         className="rounded-full"
         style={{
-          background: "var(--surface-stronger-non-alpha, var(--card))",
+          background: "var(--bg-strong)",
           boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
         }}
         onClick={onClick}
