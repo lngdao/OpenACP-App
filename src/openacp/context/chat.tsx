@@ -18,6 +18,7 @@ import * as charStream from "../lib/char-stream"
 
 interface ChatContext {
   messages: () => Message[]
+  pending: () => PendingItem[]
   streaming: () => boolean
   /** Session ID that is currently streaming (may differ from activeSession for cross-adapter turns) */
   streamingSession: () => string | undefined
@@ -152,8 +153,16 @@ function stepToPart(step: HistoryStep): MessagePart | null {
 
 // ── Chat Provider ───────────────────────────────────────────────────────────
 
+export interface PendingItem {
+  turnId: string
+  text: string
+  sender?: import("../types").TurnSender | null
+  timestamp: string
+}
+
 interface ChatStore {
   messagesBySession: Record<string, Message[]>
+  pendingBySession: Record<string, PendingItem[]>
   activeSession: string | undefined
   streaming: boolean
   /** Which session is currently streaming (can be different from activeSession) */
@@ -170,6 +179,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
 
   const [store, setStore] = useImmer<ChatStore>({
     messagesBySession: {},
+    pendingBySession: {},
     activeSession: undefined,
     streaming: false,
     streamingSession: undefined,
@@ -186,6 +196,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
   const thinkingStartTime = useRef(new Map<string, number>())
   // Maps turnId → userMsgId for cross-adapter messages (message:queued → message:processing pairing)
   const turnIdToUserMsgId = useRef(new Map<string, string>())
+  const turnIdToAssistantMsgId = useRef(new Map<string, string>())
   // turnIds of messages sent by this App instance — used to suppress duplicate SSE echo
   const ownTurnIds = useRef(new Set<string>())
   // Track whether we had a disconnect so we can reload history on reconnect
@@ -543,6 +554,14 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     if (!sessionID) return
     if (abortedSessions.current.has(sessionID)) return
 
+    const turnId = event.turnId
+    // Try turnId-based routing first, fall back to session-based.
+    // If a specific assistant message is mapped to this turnId, route all events to it.
+    const turnTargetMsgId = turnId ? turnIdToAssistantMsgId.current.get(turnId) : undefined
+    if (turnTargetMsgId) {
+      assistantMsgId.current.set(sessionID, turnTargetMsgId)
+    }
+
     const evt = event.event
 
     switch (evt.type) {
@@ -728,6 +747,11 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
           })
         }
         assistantMsgId.current.delete(sessionID)
+        // Cleanup turnId maps
+        if (turnId) {
+          turnIdToAssistantMsgId.current.delete(turnId)
+          turnIdToUserMsgId.current.delete(turnId)
+        }
         setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
         void sessions.refresh()
         const msgs = messagesRef.current[sessionID]
@@ -738,59 +762,133 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
   }
 
   function handleMessageQueued(ev: MessageQueuedEvent) {
-    // If this message was sent by this App instance, we already added it optimistically.
-    // Suppress if turnId is known OR if we're currently sending to this session.
-    if (ownTurnIds.current.has(ev.turnId)) {
-      ownTurnIds.current.delete(ev.turnId)
+    // Skip if this app instance sent this message
+    if (ownTurnIds.current.has(ev.turnId)) return
+    // Race condition guard
+    if (sendingRef.current && ev.sessionId === store.activeSession) return
+
+    // Detect old Core: if sender field is absent, fall back to legacy behavior
+    if (!('sender' in ev)) {
+      // Legacy path — add user message to conversation directly (existing behavior)
+      const userMsgId = nextId("usr-ext")
+      turnIdToUserMsgId.current.set(ev.turnId, userMsgId)
+      const userMsg: Message = {
+        id: userMsgId,
+        role: "user",
+        sessionID: ev.sessionId,
+        parts: [{ id: nextPartId(), type: "text", content: ev.text }],
+        blocks: [{ type: "text", id: nextPartId(), content: ev.text }],
+        createdAt: new Date(ev.timestamp).getTime(),
+        sourceAdapterId: ev.sourceAdapterId,
+      }
+      setStore((draft) => {
+        if (!draft.messagesBySession[ev.sessionId]) draft.messagesBySession[ev.sessionId] = []
+        draft.messagesBySession[ev.sessionId].push(userMsg)
+        draft.messagesBySession[ev.sessionId].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+        draft.scrollTrigger++
+      })
+      messagesRef.current = store.messagesBySession
+      window.dispatchEvent(new CustomEvent("workspace-activity"))
       return
     }
-    // Race condition guard: if we're actively sending to this session, suppress the echo
-    if (sendingRef.current && ev.sessionId === store.activeSession) {
-      return
-    }
-    const userMsgId = nextId("usr-ext")
-    turnIdToUserMsgId.current.set(ev.turnId, userMsgId)
-    const userMsg: Message = {
-      id: userMsgId,
-      role: "user",
-      sessionID: ev.sessionId,
-      parts: [{ id: nextPartId(), type: "text", content: ev.text }],
-      blocks: [{ type: "text", id: nextPartId(), content: ev.text }],
-      createdAt: new Date(ev.timestamp).getTime(),
-      sourceAdapterId: ev.sourceAdapterId,
-    }
+
+    // New path: add to pending list, NOT to conversation
     setStore((draft) => {
-      if (!draft.messagesBySession[ev.sessionId]) draft.messagesBySession[ev.sessionId] = []
-      draft.messagesBySession[ev.sessionId].push(userMsg)
-      // Sort by createdAt so the message lands in correct chronological position
-      // (it may arrive while a previous AI turn is still streaming)
-      draft.messagesBySession[ev.sessionId].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
-      draft.scrollTrigger++
+      const pending = draft.pendingBySession[ev.sessionId] ??= []
+      pending.push({
+        turnId: ev.turnId,
+        text: ev.text,
+        sender: ev.sender,
+        timestamp: ev.timestamp,
+      })
     })
-    // Notify app that this workspace had activity
-    window.dispatchEvent(new CustomEvent("workspace-activity"))
-    // Sync ref so loadHistory's inFlight calculation includes this message
-    if (!messagesRef.current[ev.sessionId]) messagesRef.current[ev.sessionId] = []
-    messagesRef.current[ev.sessionId] = [
-      ...(messagesRef.current[ev.sessionId] || []),
-      userMsg,
-    ].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
   }
 
   function handleMessageProcessing(ev: MessageProcessingEvent) {
-    const userMsgId = turnIdToUserMsgId.current.get(ev.turnId)
-    const astMsgId = nextId("ast-ext")
-    assistantMsgId.current.set(ev.sessionId, astMsgId)
-    addMessage(ev.sessionId, {
-      id: astMsgId,
-      role: "assistant",
-      sessionID: ev.sessionId,
-      parts: [],
-      blocks: [],
-      createdAt: new Date(ev.timestamp).getTime(),
-      parentID: userMsgId,
+    const sid = ev.sessionId
+
+    // Remove from pending list
+    setStore(draft => {
+      const pending = draft.pendingBySession[sid]
+      if (pending) {
+        const idx = pending.findIndex(p => p.turnId === ev.turnId)
+        if (idx !== -1) pending.splice(idx, 1)
+      }
     })
-    setStore((draft) => { draft.streaming = true; draft.streamingSession = ev.sessionId })
+
+    if (ownTurnIds.current.has(ev.turnId)) {
+      // Self-sent: user message already visible via optimistic UI.
+      // Create assistant message now (optimistic UI no longer creates it).
+      const astMsgId = nextId("ast")
+      const userMsgId = turnIdToUserMsgId.current.get(ev.turnId)
+      assistantMsgId.current.set(sid, astMsgId)
+      turnIdToAssistantMsgId.current.set(ev.turnId, astMsgId)
+      ownTurnIds.current.delete(ev.turnId)
+
+      addMessage(sid, {
+        id: astMsgId,
+        role: "assistant",
+        sessionID: sid,
+        parentID: userMsgId,
+        parts: [],
+        blocks: [],
+        createdAt: Date.now(),
+      })
+      setStore((draft) => {
+        draft.streaming = true
+        draft.streamingSession = sid
+        draft.scrollTrigger++
+      })
+      return
+    }
+
+    // Cross-adapter: create user message + assistant message
+    let userMsgId: string | undefined
+
+    if (ev.userPrompt) {
+      // New Core: create user message from processing event
+      userMsgId = nextId("usr-ext")
+      turnIdToUserMsgId.current.set(ev.turnId, userMsgId)
+    }
+    // else: Legacy Core — user message already added by message:queued fallback
+
+    const astMsgId = nextId("ast-ext")
+    assistantMsgId.current.set(sid, astMsgId)
+    turnIdToAssistantMsgId.current.set(ev.turnId, astMsgId)
+
+    setStore((draft) => {
+      const msgs = draft.messagesBySession[sid] ??= []
+
+      if (userMsgId && ev.userPrompt) {
+        msgs.push({
+          id: userMsgId,
+          role: "user",
+          sessionID: sid,
+          parts: [{ id: nextPartId(), type: "text", content: ev.userPrompt }],
+          blocks: [{ type: "text", id: nextPartId(), content: ev.userPrompt }],
+          createdAt: new Date(ev.timestamp).getTime(),
+          sourceAdapterId: ev.sourceAdapterId,
+        })
+      }
+
+      msgs.push({
+        id: astMsgId,
+        role: "assistant",
+        sessionID: sid,
+        parentID: userMsgId ?? turnIdToUserMsgId.current.get(ev.turnId),
+        parts: [],
+        blocks: [],
+        createdAt: Date.now(),
+      })
+
+      msgs.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
+      draft.streaming = true
+      draft.streamingSession = sid
+      draft.scrollTrigger++
+    })
+
+    messagesRef.current = store.messagesBySession
+    window.dispatchEvent(new CustomEvent("workspace-activity"))
   }
 
   const connect = useCallback(() => {
@@ -827,14 +925,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       createdAt: Date.now(),
     })
 
-    const astMsgId = nextId("ast")
-    assistantMsgId.current.set(sessionID, astMsgId)
-    addMessage(sessionID, {
-      id: astMsgId, role: "assistant", sessionID,
-      parts: [], blocks: [], createdAt: Date.now(), parentID: userMsgId,
-    })
     setStore((draft) => {
-      draft.streaming = true
       draft.scrollTrigger++
     })
 
@@ -844,6 +935,8 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     // (message:queued) is guaranteed to be suppressed even if it arrives before the response.
     const turnId = crypto.randomUUID().replace(/-/g, '').slice(0, 8)
     ownTurnIds.current.add(turnId)
+    // Track user message by turnId so message:processing can set it as parentID on the assistant msg
+    turnIdToUserMsgId.current.set(turnId, userMsgId)
 
     try {
       await workspace.client.sendPrompt(sessionID, text, attachments, turnId)
@@ -934,12 +1027,28 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       hadDisconnect.current = false
       if (store.activeSession) {
         void loadHistory(store.activeSession)
+        // Restore pending queue state
+        if (workspace.client.getQueue) {
+          workspace.client.getQueue(store.activeSession).then(queueState => {
+            setStore(draft => {
+              draft.pendingBySession[store.activeSession!] = queueState.pending.map(item => ({
+                turnId: item.turnId ?? '',
+                text: item.userPrompt,
+                sender: null,
+                timestamp: '',
+              }))
+            })
+          }).catch(() => {
+            // Queue endpoint may not exist on older Core
+          })
+        }
       }
     }
   }, [store.sseStatus, store.activeSession])
 
   const value = useMemo((): ChatContext => ({
     messages: () => store.messagesBySession[store.activeSession || ""] || [],
+    pending: () => store.pendingBySession[store.activeSession || ""] || [],
     streaming: () => store.streaming,
     streamingSession: () => store.streamingSession,
     loadingHistory: () => store.loadingHistory,
