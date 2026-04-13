@@ -293,6 +293,12 @@ export interface MessageProcessingEvent {
   sender?: TurnSender | null
 }
 
+export interface MessageFailedEvent {
+  sessionId: string
+  turnId: string
+  reason: string
+}
+
 // ── Permission Request ──────────────────────────────────────────────────────
 
 export interface PermissionOption {

@@ -199,6 +199,8 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
   const turnIdToAssistantMsgId = useRef(new Map<string, string>())
   // turnIds of messages sent by this App instance — used to suppress duplicate SSE echo
   const ownTurnIds = useRef(new Set<string>())
+  // Dedup message:failed events (workspace plugin + Core can both emit for the same turnId)
+  const failedTurnIds = useRef(new Set<string>())
   // Track whether we had a disconnect so we can reload history on reconnect
   const hadDisconnect = useRef(false)
   const msgCounter = useRef(0)
@@ -808,6 +810,14 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     }
 
     // New path: add to pending list, NOT to conversation
+    const currentPending = store.pendingBySession[ev.sessionId] || []
+    console.log('[PendingQueue] message:queued', {
+      turnId: ev.turnId,
+      sessionId: ev.sessionId,
+      text: ev.text?.slice(0, 60),
+      pendingCountBefore: currentPending.length,
+      ts: new Date().toISOString(),
+    })
     setStore((draft) => {
       const pending = draft.pendingBySession[ev.sessionId] ??= []
       pending.push({
@@ -816,6 +826,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         sender: ev.sender,
         timestamp: ev.timestamp,
       })
+      console.log('[PendingQueue] after push, count =', pending.length)
     })
   }
 
@@ -828,6 +839,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       const pending = draft.pendingBySession[sid]
       if (pending) {
         const idx = pending.findIndex(p => p.turnId === ev.turnId)
+        console.log('[PendingQueue] message:processing, removing turnId', ev.turnId, 'idx', idx, 'pendingCount', pending.length)
         if (idx !== -1) pending.splice(idx, 1)
       }
     })
@@ -957,6 +969,45 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     window.dispatchEvent(new CustomEvent("workspace-activity"))
   }
 
+  function handleMessageFailed(ev: import("../types").MessageFailedEvent) {
+    // Dedup: workspace plugin and Core can both emit message:failed for the same turnId.
+    // First event wins (workspace plugin emits first with user-facing message; Core emits
+    // second with generic 'PROMPT_BLOCKED'). Subsequent events for the same turnId are no-ops.
+    if (failedTurnIds.current.has(ev.turnId)) return
+    failedTurnIds.current.add(ev.turnId)
+
+    // Remove from pending — message was blocked by middleware or failed before processing
+    setStore(draft => {
+      const pending = draft.pendingBySession[ev.sessionId]
+      if (pending) {
+        const idx = pending.findIndex(p => p.turnId === ev.turnId)
+        if (idx !== -1) pending.splice(idx, 1)
+      }
+      // Add an error message to the conversation so the user knows what happened.
+      // Use the reason if it's human-readable (from workspace plugin etc.);
+      // skip generic internal codes ('PROMPT_BLOCKED').
+      const isGenericCode = !ev.reason || ev.reason === 'PROMPT_BLOCKED'
+      const errorContent = isGenericCode
+        ? '⚠️ Message could not be sent.'
+        : ev.reason
+      if (!draft.messagesBySession[ev.sessionId]) draft.messagesBySession[ev.sessionId] = []
+      draft.messagesBySession[ev.sessionId].push({
+        id: nextId("err"),
+        role: "assistant",
+        sessionID: ev.sessionId,
+        parts: [{ id: nextPartId(), type: "text", content: errorContent }],
+        blocks: [{ type: "error", id: nextPartId(), content: errorContent }],
+        createdAt: Date.now(),
+      })
+      draft.scrollTrigger++
+    })
+    // Clean up own-turn tracking so we don't create orphaned messages
+    ownTurnIds.current.delete(ev.turnId)
+    turnIdToUserMsgId.current.delete(ev.turnId)
+    turnIdToAssistantMsgId.current.delete(ev.turnId)
+    console.warn('[Chat] message:failed', ev.turnId, ev.reason)
+  }
+
   const connect = useCallback(() => {
     sseRef.current.connect(workspace.directory, workspace.client.eventsUrl, {
       onAgentEvent: handleAgentEvent,
@@ -965,6 +1016,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       onSessionDeleted: (id) => sessions.delete(id),
       onMessageQueued: handleMessageQueued,
       onMessageProcessing: handleMessageProcessing,
+      onMessageFailed: handleMessageFailed,
       onPermissionRequest: onPermissionRequest,
       onPermissionResolved: onPermissionResolved,
       onConnected: () => setStore((d) => { d.sseStatus = 'connected' }),
