@@ -11,6 +11,18 @@ import {
   DialogTitle,
 } from "../ui/dialog"
 
+/**
+ * Formats an ISO timestamp to HH:MM using en-GB locale for consistent output
+ * across machines regardless of system locale settings.
+ */
+function formatTimestamp(iso: string): string {
+  try {
+    return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+  } catch {
+    return iso
+  }
+}
+
 /** Resolves a display label from the sender field per the priority order:
  *  displayName → username → "You" (null/undefined) → "Unknown" (present but no name). */
 function resolveSenderLabel(sender: PendingItem["sender"]): string {
@@ -30,14 +42,11 @@ function PendingItemModal({
   onOpenChange: (open: boolean) => void
 }) {
   const senderLabel = resolveSenderLabel(item.sender)
-  const timestamp = new Date(item.timestamp).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+  const timestamp = formatTimestamp(item.timestamp)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{senderLabel}</DialogTitle>
           <DialogDescription>{timestamp}</DialogDescription>
@@ -45,7 +54,7 @@ function PendingItemModal({
         <div className="max-h-64 overflow-y-auto rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap break-words">
           {item.text}
         </div>
-        <DialogFooter showCloseButton />
+        <DialogFooter />
       </DialogContent>
     </Dialog>
   )
