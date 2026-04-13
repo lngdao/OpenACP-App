@@ -787,7 +787,12 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         draft.messagesBySession[ev.sessionId].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
         draft.scrollTrigger++
       })
-      messagesRef.current = store.messagesBySession
+      // Sync ref so loadHistory's inFlight calculation includes this message
+      if (!messagesRef.current[ev.sessionId]) messagesRef.current[ev.sessionId] = []
+      messagesRef.current[ev.sessionId] = [
+        ...(messagesRef.current[ev.sessionId] || []),
+        userMsg,
+      ].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
       window.dispatchEvent(new CustomEvent("workspace-activity"))
       return
     }
@@ -887,7 +892,22 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       draft.scrollTrigger++
     })
 
-    messagesRef.current = store.messagesBySession
+    // Sync ref so loadHistory's inFlight calculation includes the new messages
+    const refMsgs = messagesRef.current[sid] ??= []
+    if (userMsgId && ev.userPrompt) {
+      refMsgs.push({
+        id: userMsgId, role: "user", sessionID: sid,
+        parts: [{ id: nextPartId(), type: "text", content: ev.userPrompt }],
+        blocks: [{ type: "text", id: nextPartId(), content: ev.userPrompt }],
+        createdAt: new Date(ev.timestamp).getTime(), sourceAdapterId: ev.sourceAdapterId,
+      })
+    }
+    refMsgs.push({
+      id: astMsgId, role: "assistant", sessionID: sid,
+      parentID: userMsgId ?? turnIdToUserMsgId.current.get(ev.turnId),
+      parts: [], blocks: [], createdAt: Date.now(),
+    })
+    refMsgs.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
     window.dispatchEvent(new CustomEvent("workspace-activity"))
   }
 
@@ -943,6 +963,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       return true
     } catch {
       ownTurnIds.current.delete(turnId)
+      turnIdToUserMsgId.current.delete(turnId)
       return false
     }
   }
