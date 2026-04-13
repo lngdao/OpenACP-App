@@ -343,6 +343,40 @@ export function Composer() {
     return () => window.removeEventListener("add-code-snippet", handleSnippet);
   }, []);
 
+  // ── File tree drag-to-composer (pointer-based, bypasses WKWebView limitation)
+  const [fileTreeDragging, setFileTreeDragging] = useState(false)
+  useEffect(() => {
+    function handleDragStart() { setFileTreeDragging(true) }
+    function handleDragEnd() { setFileTreeDragging(false) }
+    function handleFileTreeDrop(e: Event) {
+      setFileTreeDragging(false)
+      const { path } = (e as CustomEvent).detail ?? {}
+      if (!path) return
+      const editor = editorRef.current
+      if (editor) {
+        const current = editor.textContent ?? ""
+        const insert = current && !current.endsWith(" ") ? ` ${path} ` : `${path} `
+        editor.textContent = current + insert
+        editor.dispatchEvent(new Event("input", { bubbles: true }))
+        const range = document.createRange()
+        range.selectNodeContents(editor)
+        range.collapse(false)
+        const sel = window.getSelection()
+        sel?.removeAllRanges()
+        sel?.addRange(range)
+        editor.focus()
+      }
+    }
+    window.addEventListener("file-tree-drag-start", handleDragStart)
+    window.addEventListener("file-tree-drag-end", handleDragEnd)
+    window.addEventListener("file-tree-drop", handleFileTreeDrop)
+    return () => {
+      window.removeEventListener("file-tree-drag-start", handleDragStart)
+      window.removeEventListener("file-tree-drag-end", handleDragEnd)
+      window.removeEventListener("file-tree-drop", handleFileTreeDrop)
+    }
+  }, [])
+
   // ── Drag & drop (Tauri native events) ───────────────────────────────────
   // macOS WKWebView doesn't support HTML5 file drag-drop, so we use
   // Tauri's native onDragDropEvent which provides file paths from the OS.
@@ -541,11 +575,12 @@ export function Composer() {
     <div className="w-full pb-3 flex flex-col justify-center items-center pointer-events-none [&>*]:pointer-events-auto">
       <div
         ref={composerRef}
-        className={`w-full px-6 md:max-w-180 md:mx-auto 2xl:max-w-220 relative ${dragging ? "z-50" : ""}`}
+        data-component="composer-area"
+        className={`w-full px-6 md:max-w-180 md:mx-auto 2xl:max-w-220 relative ${dragging || fileTreeDragging ? "z-50" : ""}`}
       >
         <div
           className={`w-full rounded-xl bg-bg-weak relative transition-colors ring-1 ring-inset ${
-            dragging ? "ring-fg-base/60" : "ring-border-base"
+            dragging || fileTreeDragging ? "ring-fg-base/60" : "ring-border-base"
           }`}
         >
           {paletteOpen && (
@@ -578,11 +613,17 @@ export function Composer() {
               }}
             >
               {/* Drop hint overlay inside composer */}
-              {dragging && (
+              {(dragging || fileTreeDragging) && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center rounded-lg bg-fg-base/5 pointer-events-none">
                   <div className="flex items-center gap-2 text-sm font-medium text-fg-base/80">
-                    <ImageIcon className="size-5" />
-                    Drop files to attach
+                    {dragging ? (
+                      <>
+                        <ImageIcon className="size-5" />
+                        Drop files to attach
+                      </>
+                    ) : (
+                      "Drop to insert file path"
+                    )}
                   </div>
                 </div>
               )}

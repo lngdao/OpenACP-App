@@ -543,6 +543,9 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     if (!sessionID) return
     if (abortedSessions.current.has(sessionID)) return
 
+    // Broadcast for consumers outside chat context (file tree, notifications, etc.)
+    window.dispatchEvent(new CustomEvent("agent-event", { detail: event }))
+
     const evt = event.event
 
     switch (evt.type) {

@@ -42,6 +42,7 @@ import {
   type ConnectionStatus,
 } from "./hooks/use-workspace-connection";
 import { useUpdateCheck } from "./hooks/use-update-check";
+import { useSystemNotifications } from "./hooks/use-system-notifications";
 import {
   getAllSettings,
   getSetting,
@@ -357,6 +358,7 @@ export function OpenACPApp() {
 
 function OpenACPAppInner() {
   const browser = useBrowserPanel();
+  useSystemNotifications();
   const [workspaces, setWorkspaces] = useState<WorkspaceEntry[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
