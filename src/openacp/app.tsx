@@ -56,6 +56,7 @@ import { BrowserOverlayProvider } from "./context/browser-overlay";
 import { FloatingBrowserFrame } from "./components/floating-browser-frame";
 import { TerminalProvider } from "./context/terminal";
 import { TerminalPanel } from "./components/terminal-panel";
+import { ToolDisplayProvider } from "./context/tool-display";
 import type { ServerInfo } from "./types";
 
 function UpdateToastRow({
@@ -343,12 +344,14 @@ function ChatWithPermissions({
 
 export function OpenACPApp() {
   return (
-    <BrowserOverlayProvider>
-      <BrowserPanelProvider>
-        <OpenACPAppInner />
-        <FloatingBrowserFrame />
-      </BrowserPanelProvider>
-    </BrowserOverlayProvider>
+    <ToolDisplayProvider>
+      <BrowserOverlayProvider>
+        <BrowserPanelProvider>
+          <OpenACPAppInner />
+          <FloatingBrowserFrame />
+        </BrowserPanelProvider>
+      </BrowserOverlayProvider>
+    </ToolDisplayProvider>
   );
 }
 

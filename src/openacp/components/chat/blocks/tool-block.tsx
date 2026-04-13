@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "motion/react"
 import { ArrowsOut, CaretRight } from "@phosphor-icons/react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../ui/dialog"
 import { kindIcon, kindLabel, formatToolInput } from "../block-utils"
+import { ToolDiffView } from "./tool-diff-view"
+import { useToolDisplay } from "../../../context/tool-display"
 import type { ToolBlock } from "../../../types"
 
 const MAX_VISIBLE_LINES = 3
@@ -36,7 +38,10 @@ interface ToolBlockProps {
 }
 
 export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason }: ToolBlockProps) {
-  const [expanded, setExpanded] = useState(true)
+  const { shouldAutoExpand } = useToolDisplay()
+  // Lazy initializer runs once at mount. Settings load in <50ms but chat renders
+  // after workspace connection (~seconds), so the correct value is always available here.
+  const [expanded, setExpanded] = useState(() => shouldAutoExpand(block.kind))
   const [modalOpen, setModalOpen] = useState(false)
   const isPending = block.status === "pending" || block.status === "running"
   const isRejected = isRejectionOutput(block.output)
@@ -53,7 +58,12 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
     [block.output, isRejected]
   )
   const reason = feedbackReason && isRejected ? feedbackReason : undefined
-  const hasBody = !!inputText || (!!block.output && !isRejected) || !!reason
+
+  // Use diff view for edit/write when diff data is available
+  const isDiffKind = block.kind === "edit" || block.kind === "write"
+  const hasDiff = isDiffKind && block.diff != null
+
+  const hasBody = hasDiff || !!inputText || (!!block.output && !isRejected) || !!reason
 
   return (
     <div>
@@ -123,50 +133,68 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
             style={{ overflow: "hidden" }}
           >
             <div className="oac-tool-card-body relative group/toolbody">
-              <button
-                type="button"
-                className="absolute top-1 right-1 p-1 rounded opacity-0 group-hover/toolbody:opacity-100 hover:bg-accent transition-opacity z-10"
-                title="Expand"
-                onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
-              >
-                <ArrowsOut size={12} className="text-muted-foreground" />
-              </button>
-              <div className="oac-tool-card-grid">
-                {truncatedInput && (
-                  <div className="oac-tool-card-row">
-                    <div className="oac-tool-card-row-label">IN</div>
-                    <div className="oac-tool-card-row-content">
-                      {truncatedInput.visible}
-                      {truncatedInput.hiddenCount > 0 && (
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
-                        >
-                          + {truncatedInput.hiddenCount} more lines <ArrowsOut size={10} />
-                        </button>
-                      )}
-                    </div>
+              {/* Diff view for edit/write tools */}
+              {hasDiff ? (
+                <>
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 p-1 rounded opacity-0 group-hover/toolbody:opacity-100 hover:bg-accent transition-opacity z-10"
+                    title="Expand"
+                    onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
+                  >
+                    <ArrowsOut size={12} className="text-muted-foreground" />
+                  </button>
+                  <ToolDiffView diff={block.diff!} />
+                </>
+              ) : (
+                /* Fallback: IN/OUT grid for other tools or when diff unavailable */
+                <>
+                  <button
+                    type="button"
+                    className="absolute top-1 right-1 p-1 rounded opacity-0 group-hover/toolbody:opacity-100 hover:bg-accent transition-opacity z-10"
+                    title="Expand"
+                    onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
+                  >
+                    <ArrowsOut size={12} className="text-muted-foreground" />
+                  </button>
+                  <div className="oac-tool-card-grid">
+                    {truncatedInput && (
+                      <div className="oac-tool-card-row">
+                        <div className="oac-tool-card-row-label">IN</div>
+                        <div className="oac-tool-card-row-content">
+                          {truncatedInput.visible}
+                          {truncatedInput.hiddenCount > 0 && (
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                              onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
+                            >
+                              + {truncatedInput.hiddenCount} more lines <ArrowsOut size={10} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {truncatedOutput && (
+                      <div className="oac-tool-card-row">
+                        <div className="oac-tool-card-row-label">OUT</div>
+                        <div className="oac-tool-card-row-content">
+                          {truncatedOutput.visible}
+                          {truncatedOutput.hiddenCount > 0 && (
+                            <button
+                              type="button"
+                              className="flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                              onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
+                            >
+                              + {truncatedOutput.hiddenCount} more lines <ArrowsOut size={10} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                {truncatedOutput && (
-                  <div className="oac-tool-card-row">
-                    <div className="oac-tool-card-row-label">OUT</div>
-                    <div className="oac-tool-card-row-content">
-                      {truncatedOutput.visible}
-                      {truncatedOutput.hiddenCount > 0 && (
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={(e) => { e.stopPropagation(); setModalOpen(true) }}
-                        >
-                          + {truncatedOutput.hiddenCount} more lines <ArrowsOut size={10} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           </motion.div>
         )}
@@ -182,20 +210,28 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
             </DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-auto min-h-0">
-            <div className="oac-tool-card-grid border border-border-weak rounded-md overflow-hidden">
-              {inputText && (
-                <div className="oac-tool-card-row">
-                  <div className="oac-tool-card-row-label">IN</div>
-                  <div className="oac-tool-card-row-content oac-tool-card-row-content--expanded select-text">{inputText}</div>
-                </div>
-              )}
-              {block.output && !isRejected && (
-                <div className="oac-tool-card-row">
-                  <div className="oac-tool-card-row-label">OUT</div>
-                  <div className="oac-tool-card-row-content oac-tool-card-row-content--expanded select-text">{block.output}</div>
-                </div>
-              )}
-            </div>
+            {hasDiff ? (
+              /* Full diff view in modal — forceExpanded disables the 10-line collapse */
+              <div className="border border-border-weak rounded-md overflow-hidden">
+                <ToolDiffView diff={block.diff!} forceExpanded />
+              </div>
+            ) : (
+              /* IN/OUT grid for non-diff tools */
+              <div className="oac-tool-card-grid border border-border-weak rounded-md overflow-hidden">
+                {inputText && (
+                  <div className="oac-tool-card-row">
+                    <div className="oac-tool-card-row-label">IN</div>
+                    <div className="oac-tool-card-row-content oac-tool-card-row-content--expanded select-text">{inputText}</div>
+                  </div>
+                )}
+                {block.output && !isRejected && (
+                  <div className="oac-tool-card-row">
+                    <div className="oac-tool-card-row-label">OUT</div>
+                    <div className="oac-tool-card-row-content oac-tool-card-row-content--expanded select-text">{block.output}</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
