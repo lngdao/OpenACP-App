@@ -240,6 +240,30 @@ export function createApiClient(server: ServerInfo, workspaceId?: string) {
       return api("/auth/me")
     },
 
+    /**
+     * Claims or re-links an identity for the current JWT token.
+     *
+     * Three server-side paths (handled transparently):
+     * - identitySecret: re-links new token to existing user (silent reconnect).
+     * - displayName: creates new user (first-time setup).
+     * - linkCode: links to existing user via multi-device code (not used here).
+     *
+     * Throws on non-2xx responses. Callers should handle:
+     * - 401 — invalid identitySecret (fallback to first-time form)
+     * - 409 — username already taken (show inline error)
+     * - 404/5xx — identity plugin not available (proceed silently)
+     */
+    async setupIdentity(opts: {
+      displayName?: string
+      username?: string
+      identitySecret?: string
+    }): Promise<{ userId: string; displayName: string; username?: string }> {
+      return api('/identity/setup', {
+        method: 'POST',
+        body: JSON.stringify(opts),
+      })
+    },
+
     /** List registered commands from server */
     async getCommands(): Promise<ServerCommand[]> {
       try {
