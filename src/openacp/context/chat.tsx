@@ -1252,6 +1252,9 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         }
         syncRef(sessionID, draft)
       })
+      // Cache immediately with truncated content + interrupted flag
+      const msgs = messagesRef.current[sessionID]
+      if (msgs) void cacheMessages(sessionID, [...msgs])
     }
     assistantMsgId.current.delete(sessionID)
     setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
