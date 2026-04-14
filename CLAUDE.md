@@ -36,3 +36,10 @@ For new screens, match the closest existing Pencil frame 1:1 before coding.
 - **Prototype in Pencil first** for new screens or significant layout changes.
 
 See `docs/design/DESIGN.md` for the token list, class names, and examples.
+
+## Error handling
+
+- **Never silently ignore errors.** Every failed API call, network error, or unexpected status code must surface a visible message to the user. No empty `catch {}`, no "proceed silently" on failure.
+- Use `setError()` or the relevant error state to show inline error messages in the UI.
+- Only suppress errors when the operation is truly optional AND the user would not notice or care (e.g. analytics). When in doubt, show the error.
+- `catch {}` with no error handling is **banned**. At minimum, log to console and show a user-visible message.

@@ -67,20 +67,26 @@ async function connectWithCode(
   const ws = await wsRes.json()
 
   let role = 'user'; let scopes: string[] = []
-  try {
-    const meRes = await fetch(`${host}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${accessToken}` } })
-    if (meRes.ok) { const me = await meRes.json(); role = me.role ?? 'user'; scopes = me.scopes ?? [] }
-  } catch {}
+  let isReconnect = false
+  let existingDisplayName: string | undefined
+  const meRes = await fetch(`${host}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!meRes.ok) throw new Error(`Failed to fetch auth info (${meRes.status})`)
+  const me = await meRes.json()
+  role = me.role ?? 'user'
+  scopes = me.scopes ?? []
+  // If token already linked (e.g. still valid after re-generating link on same server),
+  // treat as reconnect so we skip the identity form
+  if (me.claimed && me.displayName) {
+    isReconnect = true
+    existingDisplayName = me.displayName
+  }
 
   // Step 3: detect reconnect — workspaceId already in store with a stored identitySecret
   const existingEntry = existingWorkspaces.find(e => e.id === ws.id)
-  let isReconnect = false
-  let existingDisplayName: string | undefined
 
   if (existingEntry?.identitySecret) {
-    // Attempt silent re-link using the old token's identitySecret.
+    // Attempt re-link using the old token's identitySecret.
     // On 401 the secret is no longer valid — fall through to first-time form.
-    // On 404/5xx identity plugin is not installed — proceed without re-linking.
     try {
       const tempClient = createApiClient({ url: host, token: accessToken })
       const user = await tempClient.setupIdentity({ identitySecret: existingEntry.identitySecret })
@@ -92,8 +98,8 @@ async function connectWithCode(
         // Old identitySecret is no longer valid — show first-time identity form
         isReconnect = false
       } else {
-        // 404/5xx means identity plugin not available — still treat as reconnect for workspace update
-        isReconnect = true
+        // Any other error (network, 5xx) — surface to user, don't hide it
+        throw new Error(`Identity re-link failed (${status ?? 'network error'})`)
       }
     }
   } else if (existingEntry) {
@@ -119,9 +125,16 @@ export function RemoteTab(props: {
   const [preview, setPreview] = useState<ConnectionPreview | null>(null)
   const [saving, setSaving] = useState(false)
   // Identity form fields (first-time connect only)
-  const [displayName, setDisplayName] = useState('')
   const [username, setUsername] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [usernameError, setUsernameError] = useState<string | null>(null)
+
+  const USERNAME_RE = /^[a-zA-Z0-9_.-]+$/
+  function validateUsername(v: string): string | null {
+    if (!v) return 'Username is required'
+    if (!USERNAME_RE.test(v)) return 'Only letters, numbers, _ . - allowed. No spaces.'
+    return null
+  }
 
   async function handleConnect() {
     setError(null)
@@ -139,26 +152,44 @@ export function RemoteTab(props: {
 
   async function handleConfirm() {
     const p = preview; if (!p) return
+
+    if (!p.isReconnect) {
+      const usernameVal = username.trim().replace(/^@/, '')
+      const err = validateUsername(usernameVal)
+      if (err) { setUsernameError(err); return }
+    }
+
     setSaving(true); setUsernameError(null)
+
+    let confirmedDisplayName: string | undefined
 
     try {
       if (!p.isReconnect) {
+        const usernameVal = username.trim().replace(/^@/, '')
+        // displayName falls back to username if not provided
+        const displayNameVal = displayName.trim() || usernameVal
+
         // First-time connect: claim identity before saving workspace.
-        // Only 409 (username taken) blocks the user — all other errors proceed silently.
         const res = await fetch(`${p.host}/api/v1/identity/setup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${p.accessToken}` },
           body: JSON.stringify({
-            displayName: displayName.trim(),
-            ...(username.trim() && { username: username.trim().replace(/^@/, '') }),
+            displayName: displayNameVal,
+            username: usernameVal,
           }),
         })
-        if (res.status === 409) {
-          setUsernameError('Username already taken')
+        if (res.status === 409 || res.status === 400) {
+          const body = await res.json().catch(() => ({ error: 'Invalid input' }))
+          setUsernameError(body.error ?? 'Invalid input')
           setSaving(false)
           return
         }
-        // 404 (identity plugin not installed) or 5xx — proceed silently
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: res.statusText }))
+          throw new Error(body.error ?? `Identity setup failed (${res.status})`)
+        }
+        const identityData = await res.json()
+        confirmedDisplayName = identityData?.displayName
       }
 
       // Save JWT to keychain
@@ -176,6 +207,7 @@ export function RemoteTab(props: {
         expiresAt: p.expiresAt,
         refreshDeadline: p.refreshDeadline,
         identitySecret: p.identitySecret,
+        displayName: p.isReconnect ? p.existingDisplayName : confirmedDisplayName,
       })
     } catch (e: any) {
       setError(e.message ?? 'Failed to save')
@@ -254,26 +286,34 @@ export function RemoteTab(props: {
         <div className="space-y-2.5">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Your identity</p>
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">Display name</label>
+            <label className="text-xs text-muted-foreground block mb-1">Username</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground select-none">@</span>
+              <input
+                value={username}
+                onChange={(e) => {
+                  // Strip spaces and @ as the user types to prevent invalid input
+                  const v = e.target.value.replace(/[@\s]/g, '')
+                  setUsername(v)
+                  setUsernameError(v ? validateUsername(v) : null)
+                }}
+                placeholder="lucas"
+                autoFocus
+                className="w-full rounded-lg border border-border-weak bg-card pl-7 pr-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30 placeholder:text-muted-foreground transition-colors"
+              />
+            </div>
+            {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">
+              Display name <span className="text-muted-foreground/60">(optional)</span>
+            </label>
             <input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Lucas Chen"
               className="w-full rounded-lg border border-border-weak bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30 placeholder:text-muted-foreground transition-colors"
             />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">Username <span className="text-muted-foreground/60">(optional)</span></label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground select-none">@</span>
-              <input
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); setUsernameError(null) }}
-                placeholder="lucas"
-                className="w-full rounded-lg border border-border-weak bg-card pl-7 pr-3 py-2 text-sm text-foreground outline-none focus:border-foreground/30 placeholder:text-muted-foreground transition-colors"
-              />
-            </div>
-            {usernameError && <p className="text-xs text-destructive mt-1">{usernameError}</p>}
           </div>
         </div>
       )}
@@ -289,14 +329,14 @@ export function RemoteTab(props: {
 
       <div className="flex gap-2">
         <button
-          onClick={() => { setPreview(null); setError(null); setDisplayName(''); setUsername(''); setUsernameError(null) }}
+          onClick={() => { setPreview(null); setError(null); setUsername(''); setDisplayName(''); setUsernameError(null) }}
           className="h-9 px-4 rounded-lg border border-border-weak text-sm font-medium text-fg-weak hover:bg-accent transition-colors"
         >
           Back
         </button>
         <button
           onClick={handleConfirm}
-          disabled={saving || (!preview.isReconnect && !displayName.trim())}
+          disabled={saving || (!preview.isReconnect && !username.trim())}
           className="flex-1 h-9 rounded-lg bg-foreground text-background text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-30"
         >
           {saving ? 'Saving...' : preview.isReconnect ? 'Reconnect' : 'Add workspace'}
