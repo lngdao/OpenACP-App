@@ -24,6 +24,12 @@ import {
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
 import type { Modifier } from "@dnd-kit/core"
 import { Button } from "./ui/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip"
 import { SortableWorkspaceItem } from "./sortable-workspace-item"
 import { RenameWorkspaceDialog } from "./rename-workspace-popover"
 import { showToast } from "../lib/toast"
@@ -187,6 +193,7 @@ export function SidebarRail(props: {
   onTogglePin: (id: string) => void
   onReorder: (activeId: string, overId: string) => void
   onRename: (id: string, name: string) => void
+  hasUpdates?: boolean
 }) {
   const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null)
   const [renameTarget, setRenameTarget] = useState<string | null>(null)
@@ -297,53 +304,72 @@ export function SidebarRail(props: {
           </DndContext>
 
           <div>
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              title="Open workspace"
-              onClick={props.onOpenFolder}
-            >
-              <Plus size={16} className="text-foreground-weak" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-md"
+                  onClick={props.onOpenFolder}
+                >
+                  <Plus className="text-fg-weak" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Open workspace</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       </div>
 
       <div className="shrink-0 w-full pb-5 pt-3 flex flex-col items-center gap-2">
         {import.meta.env.DEV && (
-          <Button
-            variant="ghost"
-            size="icon-lg"
-            title="[Dev] Reset OpenACP"
-            onClick={async () => {
-              await invoke('dev_reset_openacp')
-              // Clear workspace store so onboarding starts fresh
-              try { localStorage.removeItem('workspaces_v2') } catch {}
-              try {
-                const { load } = await import('@tauri-apps/plugin-store')
-                const store = await load('openacp.bin')
-                await store.delete('workspaces_v2')
-                await store.save()
-              } catch {}
-              location.reload()
-            }}
-          >
-            <Trash size={16} className="text-foreground-weak" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-md"
+                onClick={async () => {
+                  await invoke('dev_reset_openacp')
+                  try { localStorage.removeItem('workspaces_v2') } catch {}
+                  try {
+                    const { load } = await import('@tauri-apps/plugin-store')
+                    const store = await load('openacp.bin')
+                    await store.delete('workspaces_v2')
+                    await store.save()
+                  } catch {}
+                  location.reload()
+                }}
+              >
+                <Trash className="text-fg-weak" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">[Dev] Reset OpenACP</TooltipContent>
+          </Tooltip>
         )}
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          title="Plugins"
-          onClick={props.onOpenPlugins}
-          disabled={!props.activeId || !props.connectedIds?.has(props.activeId)}
-          className={!props.activeId || !props.connectedIds?.has(props.activeId) ? "opacity-30" : ""}
-        >
-          <PuzzlePiece size={16} className="text-foreground-weak" />
-        </Button>
-        <Button variant="ghost" size="icon-lg" title="Settings" onClick={props.onOpenSettings}>
-          <GearSix size={16} className="text-foreground-weak" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-md"
+              onClick={props.onOpenPlugins}
+              disabled={!props.activeId || !props.connectedIds?.has(props.activeId)}
+              className={!props.activeId || !props.connectedIds?.has(props.activeId) ? "opacity-30" : ""}
+            >
+              <PuzzlePiece className="text-fg-weak" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Plugins</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon-md" onClick={props.onOpenSettings} className="relative">
+              <GearSix className="text-fg-weak" />
+              {props.hasUpdates && (
+                <span className="absolute top-1 right-1 size-2 rounded-full bg-accent" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Settings</TooltipContent>
+        </Tooltip>
       </div>
 
       {contextMenu && (() => {

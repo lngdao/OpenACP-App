@@ -87,7 +87,7 @@ export function TreeNode({ node, depth, onOpenFile }: TreeNodeProps) {
             {fileIcon(node.name)}
           </>
         )}
-        <span className="truncate text-foreground-weak">{node.name}</span>
+        <span className="truncate text-fg-weak">{node.name}</span>
         {loading && <span className="text-2xs text-muted-foreground ml-auto">...</span>}
       </button>
       {isDir && expanded && children && (

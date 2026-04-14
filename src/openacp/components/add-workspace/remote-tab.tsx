@@ -62,7 +62,7 @@ export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
           <div>
             <p className="text-sm font-medium text-foreground mb-1">Connect to a remote workspace</p>
             <p className="text-xs text-muted-foreground">
-              Run <code className="font-mono bg-secondary px-1 py-0.5 rounded text-foreground-weak text-xs">openacp remote</code> on the remote machine, then paste the invite link.
+              Run <code className="font-mono bg-secondary px-1 py-0.5 rounded text-fg-weak text-xs">openacp remote</code> on the remote machine, then paste the invite link.
             </p>
           </div>
           <div>
@@ -98,24 +98,24 @@ export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
             <div className="border-t border-border-weak" />
             <div className="flex justify-between items-center px-3 py-2.5">
               <span className="text-xs text-muted-foreground">Server</span>
-              <span className="text-xs text-foreground-weak font-mono truncate max-w-48">{preview.host.replace(/^https?:\/\//, '')}</span>
+              <span className="text-xs text-fg-weak font-mono truncate max-w-48">{preview.host.replace(/^https?:\/\//, '')}</span>
             </div>
             <div className="border-t border-border-weak" />
             <div className="flex justify-between items-center px-3 py-2.5">
               <span className="text-xs text-muted-foreground">Access</span>
-              <span className="text-xs text-foreground-weak capitalize">{preview.role}</span>
+              <span className="text-xs text-fg-weak capitalize">{preview.role}</span>
             </div>
             <div className="border-t border-border-weak" />
             <div className="flex justify-between items-center px-3 py-2.5">
               <span className="text-xs text-muted-foreground">Expires</span>
-              <span className="text-xs text-foreground-weak">{new Date(preview.expiresAt).toLocaleString()}</span>
+              <span className="text-xs text-fg-weak">{new Date(preview.expiresAt).toLocaleString()}</span>
             </div>
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
           <div className="flex gap-2">
             <button
               onClick={() => { setPreview(null); setError(null) }}
-              className="h-9 px-4 rounded-lg border border-border-weak text-sm font-medium text-foreground-weak hover:bg-accent transition-colors"
+              className="h-9 px-4 rounded-lg border border-border-weak text-sm font-medium text-fg-weak hover:bg-accent transition-colors"
             >
               Back
             </button>

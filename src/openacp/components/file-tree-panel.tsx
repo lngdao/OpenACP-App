@@ -131,7 +131,7 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
                 <span className={`text-2xs font-mono shrink-0 w-3 ${STATUS_COLORS[change.status]}`}>
                   {STATUS_LABELS[change.status]}
                 </span>
-                <span className="truncate text-foreground-weak">{change.path}</span>
+                <span className="truncate text-fg-weak">{change.path}</span>
               </button>
             ))}
           </div>

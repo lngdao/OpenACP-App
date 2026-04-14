@@ -67,14 +67,22 @@ export async function getAllSettings(): Promise<AppSettings> {
   return { theme, fontSize, language, devMode, browserPanel, browserLastMode, browserSearchEngine, toolAutoExpand }
 }
 
-/** Apply theme to document element */
+/** Apply theme to document element. `system` resolves to the OS preference so that
+ *  both our `[data-theme]` tokens and Tailwind's `dark:` variant stay in sync.
+ *  Mirrors the resolved value into localStorage so the pre-paint script in
+ *  index.html can restore it on next launch without waiting for the Tauri store. */
 export function applyTheme(theme: AppSettings["theme"]) {
   const root = document.documentElement
-  if (theme === "system") {
-    root.removeAttribute("data-theme")
-  } else {
-    root.setAttribute("data-theme", theme)
-  }
+  const resolved =
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme
+  root.setAttribute("data-theme", resolved)
+  try {
+    localStorage.setItem("theme-hint", resolved)
+  } catch {}
 }
 
 /** Apply font size scaling to html root — scales entire UI proportionally (text, icons, spacing).

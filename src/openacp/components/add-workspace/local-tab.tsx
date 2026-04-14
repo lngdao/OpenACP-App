@@ -71,7 +71,7 @@ export function LocalTab(props: LocalTabProps) {
                     <span className="text-xs text-muted-foreground truncate block font-mono">{inst.directory}</span>
                   </div>
                   {isRunning && (
-                    <div className="size-2 rounded-full shrink-0" style={{ background: 'var(--surface-success-strong)' }} />
+                    <div className="size-2 rounded-full shrink-0" style={{ background: 'var(--color-success)' }} />
                   )}
                   {!alreadyAdded && !isRunning && (
                     <button
@@ -139,7 +139,7 @@ function BrowseResultView(props: {
         <div>
           <p className="text-md-medium text-foreground mb-1">Workspace found</p>
           <p className="text-sm-regular text-muted-foreground">
-            This folder is already set up as <strong className="text-foreground-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.
+            This folder is already set up as <strong className="text-fg-weak">{inst.name ?? inst.id}</strong>. Click Add to open it here.
           </p>
         </div>
         <div className="flex items-center gap-2">
