@@ -15,6 +15,7 @@ import {
   resolveKind, buildTitle, extractDescription, extractCommand, isNoiseTool, validatePlanEntries,
 } from "../components/chat/block-utils"
 import * as charStream from "../lib/char-stream"
+import { getSetting } from "../lib/settings-store"
 
 interface ChatContext {
   messages: () => Message[]
@@ -1089,6 +1090,14 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
           addCommandResponse(sessionID, `**Error:** ${e?.message || "Command failed"}`, "assistant")
         }
         return true
+      }
+    }
+
+    // Instant mode: interrupt current turn before sending new message
+    if (store.streaming && store.activeSession) {
+      const mode = await getSetting("messageMode")
+      if (mode === "instant") {
+        abort()
       }
     }
 
