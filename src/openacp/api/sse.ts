@@ -75,7 +75,9 @@ export function createSSEManager() {
         const data = JSON.parse((e as MessageEvent).data)
         // Event bus format: { sessionId, permission: { id, description, options } }
         if (data.permission) {
-          callbacks.onPermissionRequest?.({ ...data.permission, sessionId: data.sessionId })
+          const req = { ...data.permission, sessionId: data.sessionId }
+          callbacks.onPermissionRequest?.(req)
+          window.dispatchEvent(new CustomEvent("permission-request", { detail: req }))
         }
       } catch { /* skip */ }
     })
