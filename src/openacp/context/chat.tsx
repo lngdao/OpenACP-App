@@ -309,45 +309,46 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       const history = await workspace.client.getSessionHistory(sessionID)
       if (history && history.turns.length > 0) {
         const serverMessages = historyToMessages(history)
-        const serverAstBlocks = serverMessages.filter((m) => m.role === "assistant").reduce((n, m) => n + m.blocks.length, 0)
         const local = messagesRef.current[sessionID] ?? []
-        const localAstBlocks = local.filter((m) => m.role === "assistant").reduce((n, m) => n + m.blocks.length, 0)
 
-        if (serverAstBlocks > 0 && serverAstBlocks >= localAstBlocks) {
-          const lastServerTime = new Date(history.turns[history.turns.length - 1].timestamp).getTime()
-          // Server has fully captured all assistant work — the local streaming placeholder (if any)
-          // is superseded by the completed turn in history. Clear it to prevent duplicate rendering.
-          // Guard: only reset if assistantMsgId hasn't changed since we started the fetch.
-          // A changed ID means a new message:processing arrived during the await — an active
-          // turn we must not interrupt.
-          if (assistantMsgId.current.get(sessionID) === streamingPlaceholderAtStart) {
-            assistantMsgId.current.delete(sessionID)
-            setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
-          }
-          // Only keep user messages as in-flight — assistant messages are already
-          // in serverMessages (completed turns) and local copies would cause duplicates
-          // because handleMessageProcessing sets createdAt: Date.now() (client timestamp)
-          // which can be > lastServerTime even for turns the server has captured.
-          // Secondary de-dup: lastServerTime is the turn START timestamp, so a recently
-          // sent user message (createdAt ≈ send time) can be > lastServerTime even when
-          // the server already has it. Exclude inFlight items whose text is already in
-          // serverMessages to prevent that duplicate.
-          const serverUserTexts = new Set(
-            serverMessages
-              .filter((m) => m.role === "user")
-              .flatMap((m) => m.parts.filter((p) => p.type === "text").map((p) => (p as { content: string }).content))
-          )
-          const inFlight = local.filter((m) => {
-            if (m.createdAt <= lastServerTime || m.role !== "user") return false
-            const text = m.parts.find((p) => p.type === "text") as { content: string } | undefined
-            return !text || !serverUserTexts.has(text.content)
-          })
-          setMessages(sessionID, [...serverMessages, ...inFlight])
-          void cacheMessages(sessionID, serverMessages)
-        } else if (local.length === 0) {
-          setMessages(sessionID, serverMessages)
+        // Build turnId index from cache/local for interrupted message preservation
+        const cachedInterrupted = new Map<string, Message>()
+        const cachedSrc = local.length > 0 ? local : (await loadCachedMessages(sessionID).catch(() => null)) ?? []
+        for (const m of cachedSrc) {
+          if (m.turnId && m.interrupted) cachedInterrupted.set(m.turnId, m)
         }
-        // else: local data is richer, keep it
+
+        // Merge: prefer cached version for interrupted messages, server for everything else
+        const merged: Message[] = []
+        for (const serverMsg of serverMessages) {
+          const cached = serverMsg.turnId ? cachedInterrupted.get(serverMsg.turnId) : undefined
+          if (cached) {
+            merged.push(cached) // truncated text + interrupted flag preserved
+          } else {
+            merged.push(serverMsg)
+          }
+        }
+
+        if (assistantMsgId.current.get(sessionID) === streamingPlaceholderAtStart) {
+          assistantMsgId.current.delete(sessionID)
+          setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
+        }
+
+        // Keep user inFlight messages not yet on server
+        const lastServerTime = new Date(history.turns[history.turns.length - 1].timestamp).getTime()
+        const serverUserTexts = new Set(
+          serverMessages
+            .filter((m) => m.role === "user")
+            .flatMap((m) => m.parts.filter((p) => p.type === "text").map((p) => (p as { content: string }).content))
+        )
+        const inFlight = local.filter((m) => {
+          if (m.createdAt <= lastServerTime || m.role !== "user") return false
+          const text = m.parts.find((p) => p.type === "text") as { content: string } | undefined
+          return !text || !serverUserTexts.has(text.content)
+        })
+
+        setMessages(sessionID, [...merged, ...inFlight])
+        void cacheMessages(sessionID, merged)
       }
     } catch {
       // Server unavailable — local cache/in-memory used as fallback
