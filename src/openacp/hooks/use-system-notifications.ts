@@ -77,4 +77,21 @@ export function useSystemNotifications() {
       window.removeEventListener('permission-request', handlePermissionRequest)
     }
   }, [])
+
+  // Listen for mention notifications — show native notification when app is unfocused
+  useEffect(() => {
+    function handleMention(e: Event) {
+      const data = (e as CustomEvent).detail as { text?: string; sessionId?: string } | undefined
+      if (!data?.text) return
+
+      if (!focusedRef.current && permittedRef.current) {
+        sendNotification({ title: 'OpenACP', body: data.text })
+      }
+    }
+
+    window.addEventListener('mention-notification', handleMention)
+    return () => {
+      window.removeEventListener('mention-notification', handleMention)
+    }
+  }, [])
 }
