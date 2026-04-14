@@ -116,7 +116,7 @@ export const ToolBlockView = memo(function ToolBlockView({ block, feedbackReason
           <div className="oac-tool-card-body">
             <div className="flex items-center gap-1.5 text-sm-regular" style={{ color: "var(--text-critical-base, #dc2626)" }}>
               <span style={{ fontWeight: 500 }}>Reason:</span>
-              <span style={{ color: "var(--foreground-weak)" }}>{reason}</span>
+              <span style={{ color: "var(--fg-weak)" }}>{reason}</span>
             </div>
           </div>
         </div>

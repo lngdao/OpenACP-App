@@ -571,6 +571,9 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     if (!sessionID) return
     if (abortedSessions.current.has(sessionID)) return
 
+    // Broadcast for consumers outside chat context (file tree, notifications, etc.)
+    window.dispatchEvent(new CustomEvent("agent-event", { detail: event }))
+
     const turnId = event.turnId
     // Try turnId-based routing first, fall back to session-based.
     // If a specific assistant message is mapped to this turnId, route all events to it.

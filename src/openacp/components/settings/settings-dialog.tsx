@@ -51,10 +51,12 @@ export function SettingsDialog({
   serverUrl,
   serverConnected,
   initialPage = "general",
+  onAboutViewed,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspacePath: string;
+  onAboutViewed?: () => void;
   serverUrl: string | null;
   serverConnected: boolean;
   initialPage?: SettingsPage;
@@ -77,7 +79,7 @@ export function SettingsDialog({
         </VisuallyHidden.Root>
 
         {/* Sidebar */}
-        <div className="w-50 shrink-0 bg-background-base border-r border-border-weak flex flex-col px-3 py-4">
+        <div className="w-50 shrink-0 bg-bg-base border-r border-border-weak flex flex-col px-3 py-4">
           <nav className="flex flex-col gap-1 flex-1">
             {NAV_GROUPS.map((group, gi) => (
               <div key={group.label} className={gi > 0 ? "mt-4" : ""}>
@@ -111,7 +113,7 @@ export function SettingsDialog({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0 overflow-y-auto">
+        <div className="flex-1 min-w-0 overflow-y-auto bg-bg-strong">
           <div className="mx-auto px-8 py-6">
             {page === "general" && (
               <SettingsGeneral workspacePath={workspacePath} />
@@ -126,7 +128,7 @@ export function SettingsDialog({
                 connected={serverConnected}
               />
             )}
-            {page === "about" && <SettingsAbout />}
+            {page === "about" && <SettingsAbout onViewed={onAboutViewed} />}
           </div>
         </div>
       </DialogContent>
