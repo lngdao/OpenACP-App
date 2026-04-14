@@ -69,29 +69,24 @@ async function connectWithCode(
   let role = 'user'; let scopes: string[] = []
   let isReconnect = false
   let existingDisplayName: string | undefined
-  try {
-    const meRes = await fetch(`${host}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${accessToken}` } })
-    if (meRes.ok) {
-      const me = await meRes.json()
-      role = me.role ?? 'user'
-      scopes = me.scopes ?? []
-      // If token already linked (e.g. still valid after re-generating link on same server),
-      // treat as reconnect so we skip the identity form
-      if (me.claimed && me.displayName) {
-        isReconnect = true
-        existingDisplayName = me.displayName
-      }
-    }
-  } catch {}
+  const meRes = await fetch(`${host}/api/v1/auth/me`, { headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!meRes.ok) throw new Error(`Failed to fetch auth info (${meRes.status})`)
+  const me = await meRes.json()
+  role = me.role ?? 'user'
+  scopes = me.scopes ?? []
+  // If token already linked (e.g. still valid after re-generating link on same server),
+  // treat as reconnect so we skip the identity form
+  if (me.claimed && me.displayName) {
+    isReconnect = true
+    existingDisplayName = me.displayName
+  }
 
   // Step 3: detect reconnect — workspaceId already in store with a stored identitySecret
   const existingEntry = existingWorkspaces.find(e => e.id === ws.id)
 
   if (existingEntry?.identitySecret) {
-    // Attempt silent re-link using the old token's identitySecret.
+    // Attempt re-link using the old token's identitySecret.
     // On 401 the secret is no longer valid — fall through to first-time form.
-    // On 404/5xx identity plugin is not installed — proceed without re-linking.
-    // This block can override the isReconnect set from /auth/me above.
     try {
       const tempClient = createApiClient({ url: host, token: accessToken })
       const user = await tempClient.setupIdentity({ identitySecret: existingEntry.identitySecret })
@@ -103,8 +98,8 @@ async function connectWithCode(
         // Old identitySecret is no longer valid — show first-time identity form
         isReconnect = false
       } else {
-        // 404/5xx means identity plugin not available — still treat as reconnect for workspace update
-        isReconnect = true
+        // Any other error (network, 5xx) — surface to user, don't hide it
+        throw new Error(`Identity re-link failed (${status ?? 'network error'})`)
       }
     }
   } else if (existingEntry) {
@@ -175,7 +170,6 @@ export function RemoteTab(props: {
         const displayNameVal = displayName.trim() || usernameVal
 
         // First-time connect: claim identity before saving workspace.
-        // Only 409 (username taken) blocks the user — all other errors proceed silently.
         const res = await fetch(`${p.host}/api/v1/identity/setup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${p.accessToken}` },
@@ -190,14 +184,12 @@ export function RemoteTab(props: {
           setSaving(false)
           return
         }
-        // Read returned identity data on success to store displayName
-        if (res.ok) {
-          try {
-            const identityData = await res.json()
-            confirmedDisplayName = identityData?.displayName
-          } catch {}
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: res.statusText }))
+          throw new Error(body.error ?? `Identity setup failed (${res.status})`)
         }
-        // 404 (identity plugin not installed) or 5xx — proceed silently
+        const identityData = await res.json()
+        confirmedDisplayName = identityData?.displayName
       }
 
       // Save JWT to keychain
