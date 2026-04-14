@@ -857,6 +857,8 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       turnIdToAssistantMsgId.current.set(ev.turnId, astMsgId)
       ownTurnIds.current.delete(ev.turnId)
 
+      // Use server timestamp for both messages to avoid clock skew between
+      // remote server and local client causing user message to sort after assistant.
       setStore((draft) => {
         const msgs = draft.messagesBySession[sid] ??= []
         msgs.push({
@@ -874,7 +876,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
           parentID: userMsgId,
           parts: [],
           blocks: [],
-          createdAt: Date.now(),
+          createdAt: processingStartedAt + 1,
         })
         msgs.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
         draft.streaming = true
@@ -897,7 +899,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         parentID: userMsgId,
         parts: [],
         blocks: [],
-        createdAt: Date.now(),
+        createdAt: processingStartedAt + 1,
       })
       refMsgs.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
       window.dispatchEvent(new CustomEvent("workspace-activity"))
@@ -943,7 +945,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         parentID: userMsgId ?? turnIdToUserMsgId.current.get(ev.turnId),
         parts: [],
         blocks: [],
-        createdAt: Date.now(),
+        createdAt: processingStartedAt + 1,
       })
 
       msgs.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
@@ -966,7 +968,7 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     refMsgs.push({
       id: astMsgId, role: "assistant", sessionID: sid,
       parentID: userMsgId ?? turnIdToUserMsgId.current.get(ev.turnId),
-      parts: [], blocks: [], createdAt: Date.now(),
+      parts: [], blocks: [], createdAt: processingStartedAt + 1,
     })
     refMsgs.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
     window.dispatchEvent(new CustomEvent("workspace-activity"))
