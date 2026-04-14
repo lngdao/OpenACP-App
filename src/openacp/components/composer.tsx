@@ -259,6 +259,7 @@ export function Composer() {
       setAgent(session.agent);
     }
   }, [chat.activeSession(), sessions.list()]);
+
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteFilter, setPaletteFilter] = useState<string | undefined>();
   const [configVersion, setConfigVersion] = useState(0);
@@ -268,6 +269,14 @@ export function Composer() {
   useBrowserOverlayLock(dragging);
 
   const editorRef = useRef<HTMLDivElement>(null);
+
+  // Clear composer input when switching sessions
+  useEffect(() => {
+    setText("");
+    if (editorRef.current) editorRef.current.textContent = "";
+    setAttachments([]);
+    setSnippets([]);
+  }, [chat.activeSession()]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const paletteNavigateRef = useRef<((dir: 'up' | 'down' | 'enter') => void) | null>(null);
   const dragCounter = useRef(0);
