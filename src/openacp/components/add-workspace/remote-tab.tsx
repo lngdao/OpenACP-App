@@ -184,8 +184,9 @@ export function RemoteTab(props: {
             username: usernameVal,
           }),
         })
-        if (res.status === 409) {
-          setUsernameError('Username already taken')
+        if (res.status === 409 || res.status === 400) {
+          const body = await res.json().catch(() => ({ error: 'Invalid input' }))
+          setUsernameError(body.error ?? 'Invalid input')
           setSaving(false)
           return
         }
