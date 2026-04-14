@@ -319,38 +319,13 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
         const localAstBlocks = local.filter((m) => m.role === "assistant").reduce((n, m) => n + m.blocks.length, 0)
 
         if (serverAstBlocks > 0 && serverAstBlocks >= localAstBlocks) {
-          // Build position-based index of cached interrupted assistant messages.
-          // turnId formats differ between SSE (random hex) and server history (turn index),
-          // so we match by sequential assistant position instead.
-          const cachedSrc = local.length > 0 ? local : (await loadCachedMessages(sessionID).catch(() => null)) ?? []
-          const interruptedByPos = new Map<number, Message>()
-          let cachedAstPos = 0
-          for (const m of cachedSrc) {
-            if (m.role === "assistant") {
-              if (m.interrupted) interruptedByPos.set(cachedAstPos, m)
-              cachedAstPos++
-            }
-          }
-
-          // Merge: prefer cached version for interrupted assistant messages at matching positions
-          const merged: Message[] = []
-          let serverAstPos = 0
-          for (const serverMsg of serverMessages) {
-            if (serverMsg.role === "assistant") {
-              const cached = interruptedByPos.get(serverAstPos)
-              merged.push(cached ?? serverMsg)
-              serverAstPos++
-            } else {
-              merged.push(serverMsg)
-            }
-          }
-
+          // Server is authoritative — interrupted turns already have stopReason: "interrupted"
+          // which turnToMessage() maps to interrupted: true. No cache merge needed.
           if (assistantMsgId.current.get(sessionID) === streamingPlaceholderAtStart) {
             assistantMsgId.current.delete(sessionID)
             setStore((draft) => { draft.streaming = false; draft.streamingSession = undefined })
           }
 
-          // Keep user inFlight messages not yet on server
           const lastServerTime = new Date(history.turns[history.turns.length - 1].timestamp).getTime()
           const serverUserTexts = new Set(
             serverMessages
@@ -363,8 +338,8 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
             return !text || !serverUserTexts.has(text.content)
           })
 
-          setMessages(sessionID, [...merged, ...inFlight])
-          void cacheMessages(sessionID, merged)
+          setMessages(sessionID, [...serverMessages, ...inFlight])
+          void cacheMessages(sessionID, serverMessages)
         } else if (local.length === 0) {
           setMessages(sessionID, serverMessages)
         }
