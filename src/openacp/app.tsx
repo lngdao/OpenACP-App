@@ -1081,7 +1081,7 @@ function OpenACPAppInner() {
             setSetupInfo({ path, instanceId, instanceName });
           }}
           onClose={closeAddWorkspaceModal}
-          existingIds={workspaces.map((w) => w.id)}
+          existingWorkspaces={workspaces}
           defaultTab={addWorkspaceDefaultTab}
         />
       )}

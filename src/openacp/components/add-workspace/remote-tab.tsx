@@ -33,7 +33,7 @@ async function connectWithCode(host: string, code: string): Promise<ConnectionPr
   return { host, accessToken, tokenId, expiresAt, refreshDeadline, role, scopes, workspaceId: ws.id, workspaceName: ws.name, workspaceDirectory: ws.directory }
 }
 
-export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void }) {
+export function RemoteTab(props: { onAdd: (entry: WorkspaceEntry) => void; existingWorkspaces: WorkspaceEntry[] }) {
   const [input, setInput] = useState(''); const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState<ConnectionPreview | null>(null)
