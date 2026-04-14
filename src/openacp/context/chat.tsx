@@ -301,7 +301,9 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     if (!hasInMemory) {
       try {
         const cached = await loadCachedMessages(sessionID)
-        if (cached && cached.length > 0) {
+        // Only use cache if messages have turnId (new format). Old cache without
+        // turnId can't participate in interrupted-message merge and may have stale ordering.
+        if (cached && cached.length > 0 && cached.some((m) => m.turnId)) {
           setMessages(sessionID, cached)
         }
       } catch { /* cache unavailable */ }
