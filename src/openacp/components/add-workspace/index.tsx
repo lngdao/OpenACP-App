@@ -10,7 +10,7 @@ interface AddWorkspaceModalProps {
   onAdd: (entry: WorkspaceEntry) => void;
   onSetup?: (path: string, instanceId: string) => void;
   onClose: () => void;
-  existingIds: string[];
+  existingWorkspaces: WorkspaceEntry[];
   defaultTab?: "local" | "remote";
 }
 
@@ -18,6 +18,9 @@ export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
   const [tab, setTab] = useState<"local" | "remote">(
     props.defaultTab ?? "local",
   );
+
+  // Derive IDs for LocalTab; RemoteTab needs the full entries for silent re-linking
+  const existingIds = props.existingWorkspaces.map((w) => w.id);
 
   return (
     <Dialog
@@ -68,9 +71,9 @@ export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
         {/* Content */}
         <div className="p-5 max-h-[60vh] overflow-y-auto">
           {tab === "local" ? (
-            <LocalTab onAdd={props.onAdd} onSetup={props.onSetup} existingIds={props.existingIds} />
+            <LocalTab onAdd={props.onAdd} onSetup={props.onSetup} existingIds={existingIds} />
           ) : (
-            <RemoteTab onAdd={props.onAdd} />
+            <RemoteTab onAdd={props.onAdd} existingWorkspaces={props.existingWorkspaces} />
           )}
         </div>
       </DialogContent>
