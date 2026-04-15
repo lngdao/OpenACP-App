@@ -196,6 +196,18 @@ function NoServerScreen({
 
 function ChatArea() {
   const chat = useChat();
+
+  useEffect(() => {
+    function handleNavigateSession(e: Event) {
+      const { sessionId } = (e as CustomEvent).detail ?? {}
+      if (sessionId) {
+        chat.setActiveSession(sessionId)
+      }
+    }
+    window.addEventListener("navigate-session", handleNavigateSession)
+    return () => window.removeEventListener("navigate-session", handleNavigateSession)
+  }, [chat])
+
   return (
     <div className="flex flex-1 min-h-0 h-full min-w-0">
       <div className="@container relative flex-1 flex flex-col min-h-0 h-full bg-bg-strong min-w-0 border-l border-border-weak overflow-hidden">
@@ -363,7 +375,8 @@ export function OpenACPApp() {
 
 function OpenACPAppInner() {
   const browser = useBrowserPanel();
-  const { append: appendNotification } = useNotifications();
+  const { append: appendNotification, unreadCount } = useNotifications();
+  const [notifOpen, setNotifOpen] = useState(false);
   useSystemNotifications(appendNotification);
   const [workspaces, setWorkspaces] = useState<WorkspaceEntry[]>([]);
   const [active, setActive] = useState<string | null>(null);
@@ -1009,6 +1022,9 @@ function OpenACPAppInner() {
             setShowSettings(true);
           }}
           hasUpdates={updateState.hasUpdates && !updatesSeen}
+          notificationCount={unreadCount}
+          notificationOpen={notifOpen}
+          onNotificationOpenChange={setNotifOpen}
         />
 
         {hasInstance ? (
