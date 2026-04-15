@@ -68,10 +68,33 @@ pub async fn run_openacp_agent_install(
 }
 
 /// Returns Node.js version and path, or None if not found.
-/// Uses login shell to resolve the same PATH the user sees in their terminal.
+/// Prefers the node binary co-located with the openacp binary (same nvm/fnm version)
+/// to avoid mismatch when multiple node installations exist (brew + nvm).
 #[tauri::command]
 pub async fn get_node_info() -> Result<Option<(String, String)>, String> {
-    // Get node path via login shell (same approach as find_openacp_binary)
+    use crate::core::sidecar::binary::find_openacp_binary;
+
+    // Strategy 1: Find node in the same directory as openacp binary
+    // This ensures we report the node that actually runs openacp
+    if let Some((openacp_bin, _)) = find_openacp_binary() {
+        if let Some(bin_dir) = openacp_bin.parent() {
+            let node_path = bin_dir.join("node");
+            if node_path.exists() {
+                if let Ok(output) = tokio::process::Command::new(&node_path)
+                    .arg("--version")
+                    .output()
+                    .await
+                {
+                    if output.status.success() {
+                        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        return Ok(Some((version, node_path.to_string_lossy().to_string())));
+                    }
+                }
+            }
+        }
+    }
+
+    // Strategy 2: Fallback to login shell resolution
     for shell in ["zsh", "bash"] {
         if let Ok(output) = tokio::process::Command::new(shell)
             .args(["-l", "-c", "which node && node --version"])
@@ -108,26 +131,15 @@ pub async fn get_debug_info(app: tauri::AppHandle) -> Result<std::collections::H
         info.insert("core_path".into(), path.to_string_lossy().to_string());
     }
 
-    // Node version + path
-    for shell in ["zsh", "bash"] {
-        if let Ok(output) = tokio::process::Command::new(shell)
-            .args(["-l", "-c", "which node && node --version"])
-            .output()
-            .await
-        {
-            if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let mut lines = stdout.trim().lines();
-                if let (Some(path), Some(version)) = (lines.next(), lines.next()) {
-                    info.insert("node_version".into(), version.trim().into());
-                    info.insert("node_path".into(), path.trim().into());
-                }
-                break;
-            }
+    // Node version + path (reuse get_node_info which prefers co-located node)
+    match get_node_info().await {
+        Ok(Some((version, path))) => {
+            info.insert("node_version".into(), version);
+            info.insert("node_path".into(), path);
         }
-    }
-    if !info.contains_key("node_version") {
-        info.insert("node_version".into(), "Not found".into());
+        _ => {
+            info.insert("node_version".into(), "Not found".into());
+        }
     }
 
     // OS
