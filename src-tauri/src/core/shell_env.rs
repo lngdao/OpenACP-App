@@ -164,8 +164,107 @@ fn clean_env_from(env: &ShellEnv, extra_path_prefix: Option<&str>) -> HashMap<St
     out
 }
 
+/// Returns candidate shells to try, in order. `$SHELL` first (user's
+/// configured shell), then `/bin/zsh` (macOS default), then `/bin/bash`
+/// (Linux fallback).
+#[cfg(not(windows))]
+fn shell_candidates() -> Vec<String> {
+    let mut out = Vec::with_capacity(3);
+    if let Ok(sh) = std::env::var("SHELL") {
+        if !sh.is_empty() {
+            out.push(sh);
+        }
+    }
+    for fallback in ["/bin/zsh", "/bin/bash"] {
+        if !out.iter().any(|s| s == fallback) {
+            out.push(fallback.to_string());
+        }
+    }
+    out
+}
+
+fn make_marker() -> String {
+    let pid = std::process::id();
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    format!("__OPENACP_SHELL_ENV_{pid}_{nanos}__")
+}
+
+/// Runs a command with a hard timeout. On timeout, kills the child and
+/// returns `None`. Uses wait-timeout crate.
+#[cfg(not(windows))]
+fn run_with_timeout(
+    mut cmd: std::process::Command,
+    timeout: Duration,
+) -> Option<std::process::Output> {
+    use wait_timeout::ChildExt;
+
+    cmd.stdin(std::process::Stdio::null());
+    cmd.stdout(std::process::Stdio::piped());
+    cmd.stderr(std::process::Stdio::piped());
+
+    let mut child = cmd.spawn().ok()?;
+
+    match child.wait_timeout(timeout).ok()? {
+        Some(_status) => {
+            let output = child.wait_with_output().ok()?;
+            Some(output)
+        }
+        None => {
+            let _ = child.kill();
+            let _ = child.wait();
+            tracing::warn!("shell_env: shell command timed out after {:?}", timeout);
+            None
+        }
+    }
+}
+
+/// Spawns `$shell -ilc 'printf MARK; env -0; printf MARK'` with a timeout,
+/// extracts and parses the marked env block. Ignores exit code and stderr
+/// — trusts only the marked block in stdout.
+#[cfg(not(windows))]
+fn resolve_via_marker(shell: &str, timeout: Duration) -> Option<HashMap<String, String>> {
+    let marker = make_marker();
+    let script = format!("printf '%s' '{marker}'; env -0; printf '%s' '{marker}'");
+
+    let mut cmd = std::process::Command::new(shell);
+    cmd.args(["-ilc", &script]);
+    // Prevent oh-my-zsh auto-update from blocking the command.
+    cmd.env("DISABLE_AUTO_UPDATE", "true");
+    if let Some(home) = dirs::home_dir() {
+        cmd.current_dir(home);
+    }
+
+    let output = run_with_timeout(cmd, timeout)?;
+    extract_marked_env(&output.stdout, &marker)
+}
+
 fn resolve_blocking() -> ShellEnv {
-    todo!("implemented in later task")
+    #[cfg(windows)]
+    {
+        return ShellEnv::from_process_env();
+    }
+    #[cfg(not(windows))]
+    {
+        let shells = shell_candidates();
+        for shell in &shells {
+            if let Some(vars) = resolve_via_marker(shell, TIMEOUT) {
+                tracing::info!(
+                    "shell_env: resolved via {} ({} vars)",
+                    shell,
+                    vars.len()
+                );
+                return ShellEnv::from_vars(vars, Some(shell.clone()));
+            }
+        }
+        tracing::warn!(
+            "shell_env: all shells failed (tried {}), falling back to std::env",
+            shells.join(", ")
+        );
+        ShellEnv::from_process_env()
+    }
 }
 
 impl ShellEnv {
@@ -302,6 +401,17 @@ mod tests {
         stdout.extend_from_slice(mark.as_bytes());
         stdout.extend_from_slice(b"FOO=bar\0");
         assert!(extract_marked_env(&stdout, mark).is_none());
+    }
+
+    #[test]
+    #[cfg(not(windows))]
+    fn smoke_resolve_blocking_returns_non_empty_path() {
+        let env = resolve_blocking();
+        assert!(!env.path.is_empty(), "resolved PATH should not be empty");
+        assert!(
+            env.vars.contains_key("HOME") || env.vars.contains_key("PATH"),
+            "snapshot should contain at least one of HOME or PATH"
+        );
     }
 
     #[test]
