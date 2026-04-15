@@ -100,6 +100,7 @@ export function createSSEManager() {
     es.addEventListener("notification:text", (e) => {
       try {
         const data = JSON.parse((e as MessageEvent).data)
+        console.log('[sse] mention-notification received', data)
         window.dispatchEvent(new CustomEvent("mention-notification", { detail: data }))
       } catch { /* skip parse errors */ }
     })
