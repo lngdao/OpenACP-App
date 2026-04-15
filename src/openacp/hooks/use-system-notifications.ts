@@ -21,7 +21,8 @@ const SETTING_DEFAULTS: NotificationSettings = {
  * and the corresponding notification setting is enabled.
  */
 export function useSystemNotifications(
-  appendNotification?: (n: Omit<AppNotification, "id" | "timestamp" | "read">) => void
+  appendNotification?: (n: Omit<AppNotification, "id" | "timestamp" | "read">) => void,
+  workspaceName?: string,
 ) {
   const permittedRef = useRef<boolean | null>(null)
   const streamingRef = useRef(false)
@@ -29,6 +30,8 @@ export function useSystemNotifications(
   const settingsRef = useRef<NotificationSettings>(SETTING_DEFAULTS)
   const appendNotificationRef = useRef(appendNotification)
   appendNotificationRef.current = appendNotification
+  const workspaceNameRef = useRef(workspaceName)
+  workspaceNameRef.current = workspaceName
 
   // Load notification settings + request OS permission + track window focus
   useEffect(() => {
@@ -98,6 +101,7 @@ export function useSystemNotifications(
             type: "agent-response",
             title: "Agent response ready",
             sessionId: (e as CustomEvent).detail?.sessionId,
+            workspaceName: workspaceNameRef.current,
             action: { type: "navigate-session" },
           })
         }
@@ -114,6 +118,7 @@ export function useSystemNotifications(
           type: "permission-request",
           title: "Permission approval needed",
           sessionId: detail?.sessionId,
+          workspaceName: workspaceNameRef.current,
         })
       }
     }
@@ -128,6 +133,7 @@ export function useSystemNotifications(
           type: "message-failed",
           title: "Message failed to process",
           sessionId: detail?.sessionId,
+          workspaceName: workspaceNameRef.current,
         })
       }
     }

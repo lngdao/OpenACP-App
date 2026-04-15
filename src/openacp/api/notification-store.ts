@@ -5,6 +5,7 @@ export interface AppNotification {
   type: "agent-response" | "permission-request" | "message-failed"
   sessionId?: string
   sessionName?: string
+  workspaceName?: string
   title: string
   timestamp: number
   read: boolean

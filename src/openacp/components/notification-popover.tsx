@@ -182,10 +182,10 @@ export function NotificationPopover({
                               <div className="text-sm text-foreground truncate">
                                 {n.title}
                               </div>
-                              <div className="text-2xs text-muted-foreground">
-                                {n.sessionName
-                                  ? `${n.sessionName} \u00b7 ${relativeTime(n.timestamp)}`
-                                  : relativeTime(n.timestamp)}
+                              <div className="text-2xs text-muted-foreground truncate">
+                                {[n.workspaceName, n.sessionName].filter(Boolean).join(" / ")}
+                                {(n.workspaceName || n.sessionName) ? ` \u00b7 ` : ""}
+                                {relativeTime(n.timestamp)}
                               </div>
                             </div>
 
