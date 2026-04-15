@@ -33,6 +33,7 @@ import {
   type SettingsPage,
 } from "./components/settings/settings-dialog";
 import { SetupModal } from "./components/add-workspace/setup-modal";
+import { AboutDialog } from "./components/about-dialog";
 import { showToast } from "./lib/toast";
 import { toast } from "sonner";
 import { ArrowLineDown, Package, X } from "@phosphor-icons/react";
@@ -44,6 +45,7 @@ import {
 } from "./hooks/use-workspace-connection";
 import { useUpdateCheck } from "./hooks/use-update-check";
 import { useSystemNotifications } from "./hooks/use-system-notifications";
+import { NotificationsProvider, useNotifications } from "./context/notifications";
 import {
   getAllSettings,
   getSetting,
@@ -194,6 +196,18 @@ function NoServerScreen({
 
 function ChatArea() {
   const chat = useChat();
+
+  useEffect(() => {
+    function handleNavigateSession(e: Event) {
+      const { sessionId } = (e as CustomEvent).detail ?? {}
+      if (sessionId) {
+        chat.setActiveSession(sessionId)
+      }
+    }
+    window.addEventListener("navigate-session", handleNavigateSession)
+    return () => window.removeEventListener("navigate-session", handleNavigateSession)
+  }, [chat])
+
   return (
     <div className="flex flex-1 min-h-0 h-full min-w-0">
       <div className="@container relative flex-1 flex flex-col min-h-0 h-full bg-bg-strong min-w-0 border-l border-border-weak overflow-hidden">
@@ -349,8 +363,10 @@ export function OpenACPApp() {
     <ToolDisplayProvider>
       <BrowserOverlayProvider>
         <BrowserPanelProvider>
-          <OpenACPAppInner />
-          <FloatingBrowserFrame />
+          <NotificationsProvider>
+            <OpenACPAppInner />
+            <FloatingBrowserFrame />
+          </NotificationsProvider>
         </BrowserPanelProvider>
       </BrowserOverlayProvider>
     </ToolDisplayProvider>
@@ -359,10 +375,29 @@ export function OpenACPApp() {
 
 function OpenACPAppInner() {
   const browser = useBrowserPanel();
-  useSystemNotifications();
+  const { append: appendNotification, unreadCount } = useNotifications();
+  const [notifOpen, setNotifOpen] = useState(false);
   const [workspaces, setWorkspaces] = useState<WorkspaceEntry[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const activeWs = workspaces.find((w) => w.id === active);
+  const activeWsName = activeWs?.directory?.split("/").pop() || activeWs?.name;
+  // Session name lookup — populated by SessionsProvider deeper in the tree
+  const sessionNamesRef = useRef<Map<string, string>>(new Map());
+  useEffect(() => {
+    function handleSessionsUpdated(e: Event) {
+      const sessions = (e as CustomEvent).detail as Array<{ id: string; name: string }> | undefined;
+      if (sessions) {
+        const map = new Map<string, string>();
+        for (const s of sessions) map.set(s.id, s.name);
+        sessionNamesRef.current = map;
+      }
+    }
+    window.addEventListener("sessions-updated", handleSessionsUpdated);
+    return () => window.removeEventListener("sessions-updated", handleSessionsUpdated);
+  }, []);
+  const getSessionName = useCallback((id: string) => sessionNamesRef.current.get(id), []);
+  useSystemNotifications(appendNotification, activeWsName, getSessionName);
 
   // Unified update system
   const { state: updateState, updateCore, installAppUpdate } = useUpdateCheck();
@@ -730,6 +765,18 @@ function OpenACPAppInner() {
       window.removeEventListener("open-settings", handleOpenSettings);
   }, []);
 
+  // Listen for native macOS "About" menu → open custom About dialog
+  const [showAbout, setShowAbout] = useState(false);
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("open-settings-about", () => {
+        setShowAbout(true);
+      }).then((fn) => { unlisten = fn; });
+    });
+    return () => { unlisten?.(); };
+  }, []);
+
   function addWorkspace(entry: WorkspaceEntry): boolean {
     const existing = workspaces.find((w) => w.id === entry.id);
     if (existing) {
@@ -918,6 +965,9 @@ function OpenACPAppInner() {
         hideBrowser={!browserPanelEnabled}
         hideTerminal={!hasInstance}
         disabled={!isConnected}
+        notificationCount={unreadCount}
+        notificationOpen={notifOpen}
+        onNotificationOpenChange={setNotifOpen}
       />
       <div className="flex flex-1 min-h-0">
         <SidebarRail
@@ -1152,6 +1202,7 @@ function OpenACPAppInner() {
         initialPage={settingsPage}
         onAboutViewed={() => setUpdatesSeen(true)}
       />
+      <AboutDialog open={showAbout} onOpenChange={setShowAbout} />
       <Toaster />
     </div>
   );
