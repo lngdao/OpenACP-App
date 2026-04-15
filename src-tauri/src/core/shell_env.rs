@@ -149,8 +149,19 @@ fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     (0..=haystack.len() - needle.len()).find(|&i| &haystack[i..i + needle.len()] == needle)
 }
 
-fn clean_env_from(_env: &ShellEnv, _extra_path_prefix: Option<&str>) -> HashMap<String, String> {
-    todo!("implemented in later task")
+fn clean_env_from(env: &ShellEnv, extra_path_prefix: Option<&str>) -> HashMap<String, String> {
+    let mut out = env.vars.clone();
+    let sep = if cfg!(windows) { ";" } else { ":" };
+
+    let path = match extra_path_prefix {
+        Some(prefix) if !prefix.is_empty() => {
+            let combined = format!("{}{}{}", prefix, sep, env.path);
+            dedupe_path(&combined, sep)
+        }
+        _ => env.path.clone(),
+    };
+    out.insert("PATH".to_string(), path);
+    out
 }
 
 fn resolve_blocking() -> ShellEnv {
@@ -291,6 +302,61 @@ mod tests {
         stdout.extend_from_slice(mark.as_bytes());
         stdout.extend_from_slice(b"FOO=bar\0");
         assert!(extract_marked_env(&stdout, mark).is_none());
+    }
+
+    #[test]
+    fn clean_env_from_copies_vars_and_overrides_path() {
+        let mut vars = HashMap::new();
+        vars.insert("PATH".into(), "/base/bin".into());
+        vars.insert("HOME".into(), "/home/user".into());
+        let env = ShellEnv {
+            vars,
+            path: "/base/bin:/extra/bin".into(),
+            resolved_via: None,
+        };
+
+        let out = clean_env_from(&env, None);
+        assert_eq!(out.get("HOME"), Some(&"/home/user".to_string()));
+        assert_eq!(out.get("PATH"), Some(&"/base/bin:/extra/bin".to_string()));
+    }
+
+    #[test]
+    fn clean_env_from_prepends_extra_path_prefix() {
+        let mut vars = HashMap::new();
+        vars.insert("PATH".into(), "/base/bin".into());
+        let env = ShellEnv {
+            vars,
+            path: "/base/bin".into(),
+            resolved_via: None,
+        };
+
+        let out = clean_env_from(&env, Some("/openacp/bin"));
+        let sep = if cfg!(windows) { ";" } else { ":" };
+        let path = out.get("PATH").unwrap();
+        assert!(path.starts_with("/openacp/bin"), "path must start with prefix: {path}");
+        assert!(
+            path.contains(&format!("{sep}/base/bin")),
+            "path must contain base: {path}"
+        );
+    }
+
+    #[test]
+    fn clean_env_from_dedupes_extra_prefix_if_already_present() {
+        let mut vars = HashMap::new();
+        vars.insert("PATH".into(), "/openacp/bin:/usr/bin".into());
+        let env = ShellEnv {
+            vars,
+            path: "/openacp/bin:/usr/bin".into(),
+            resolved_via: None,
+        };
+
+        let out = clean_env_from(&env, Some("/openacp/bin"));
+        let path = out.get("PATH").unwrap();
+        let count = path
+            .split(if cfg!(windows) { ';' } else { ':' })
+            .filter(|p| *p == "/openacp/bin")
+            .count();
+        assert_eq!(count, 1, "should not duplicate existing entry: {path}");
     }
 
     #[test]
