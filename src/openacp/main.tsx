@@ -40,13 +40,35 @@ function App() {
   const [coreVersion, setCoreVersion] = useState<string | null>(null)
   const [showAbout, setShowAbout] = useState(false)
 
-  // Listen for native menu events — works on ALL screens including onboard
+  // Listen for native menu events — works on ALL screens including onboard.
+  //
+  // The subtlety: `listen()` is async, so by the time we have an unlisten fn
+  // the cleanup may have already run. If we naively push the fn into an array
+  // that cleanup reads synchronously, cleanup sees an empty array and the
+  // listener leaks. On HMR remounts this causes listener accumulation —
+  // click About once → multiple modals.
+  //
+  // Fix: track a `cancelled` flag. If the async registration completes AFTER
+  // cleanup fired, immediately unlisten. Otherwise store the fn for the
+  // normal cleanup path.
   useEffect(() => {
-    const unlisteners: (() => void)[] = []
-    import("@tauri-apps/api/event").then(({ listen }) => {
-      listen("open-settings-about", () => { setShowAbout(true) }).then((fn) => unlisteners.push(fn))
-    })
-    return () => { unlisteners.forEach((fn) => fn()) }
+    let cancelled = false
+    let unlisten: (() => void) | null = null
+
+    ;(async () => {
+      const { listen } = await import("@tauri-apps/api/event")
+      const fn = await listen("open-settings-about", () => { setShowAbout(true) })
+      if (cancelled) {
+        fn()
+      } else {
+        unlisten = fn
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      unlisten?.()
+    }
   }, [])
 
   const coreBelowMin = coreVersion !== null
