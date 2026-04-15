@@ -94,28 +94,40 @@ pub async fn get_node_info() -> Result<Option<(String, String)>, String> {
         }
     }
 
-    // Strategy 2: Fallback to interactive then login shell
-    for shell in ["zsh", "bash"] {
-        for flag in ["-i", "-l"] {
-            if let Ok(output) = tokio::process::Command::new(shell)
-                .args([flag, "-c", "which node && node --version"])
+    // Strategy 2: Use `which node` with the cached shell_env PATH. Replaces
+    // the old shell -i/-l spawn loop, same noise-immunity rules apply
+    // (stdout authoritative, exit code ignored).
+    let which_bin = if cfg!(windows) { "where" } else { "/usr/bin/which" };
+    if let Ok(output) = tokio::process::Command::new(which_bin)
+        .arg("node")
+        .env("PATH", crate::core::shell_env::path())
+        .output()
+        .await
+    {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let path = stdout.trim().lines().next().unwrap_or("").trim();
+        let is_valid = if cfg!(windows) {
+            !path.is_empty()
+        } else {
+            path.starts_with('/')
+        };
+        if is_valid {
+            if let Ok(version_output) = tokio::process::Command::new(path)
+                .arg("--version")
+                .env("PATH", crate::core::shell_env::path())
                 .output()
                 .await
             {
-                // Check stdout regardless of exit code — .zshrc errors cause non-zero exit
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let all_lines: Vec<&str> = stdout.trim().lines().collect();
-                let len = all_lines.len();
-                if len >= 2 {
-                    let path = all_lines[len - 2].trim();
-                    let version = all_lines[len - 1].trim();
-                    if path.starts_with('/') && version.starts_with('v') {
-                        return Ok(Some((version.to_string(), path.to_string())));
-                    }
+                if version_output.status.success() {
+                    let version = String::from_utf8_lossy(&version_output.stdout)
+                        .trim()
+                        .to_string();
+                    return Ok(Some((version, path.to_string())));
                 }
             }
         }
     }
+
     Ok(None)
 }
 
