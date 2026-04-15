@@ -78,8 +78,8 @@ export function Titlebar({ sidebarCollapsed, onToggleSidebar, reviewOpen, onTogg
           <Button variant="ghost" size="icon-md" className="relative" disabled={disabled}>
             <Bell className="text-fg-weak" />
             {(notificationCount ?? 0) > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 size-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-medium">
-                {notificationCount! > 99 ? "99+" : notificationCount}
+              <span className="absolute top-0.5 right-0.5 size-3.5 rounded-full bg-destructive text-destructive-foreground text-[9px] leading-none flex items-center justify-center font-medium">
+                {notificationCount! > 99 ? "+" : notificationCount}
               </span>
             )}
           </Button>
