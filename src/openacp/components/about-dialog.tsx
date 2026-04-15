@@ -28,6 +28,15 @@ function formatDebugText(info: DebugInfo): string {
   lines.push(`OS: ${info.os ?? "unknown"}`)
   lines.push(`Config: ${info.config ?? "unknown"}`)
   if (MIN_CORE_VERSION) lines.push(`MIN_CORE_VERSION: ${MIN_CORE_VERSION}`)
+  // Shell env snapshot — added in the shell_env refactor so user bug reports
+  // include how PATH resolution played out.
+  if (info.shell_env_resolved_via) {
+    lines.push(`Shell env resolved via: ${info.shell_env_resolved_via}`)
+  }
+  if (info.shell_env_vars_count) {
+    lines.push(`Shell env vars: ${info.shell_env_vars_count}`)
+  }
+  if (info.shell_env_path) lines.push(`Shell env PATH: ${info.shell_env_path}`)
   if (info.log_path) lines.push(`Log file: ${info.log_path}`)
   return lines.join("\n")
 }
@@ -105,6 +114,12 @@ export function AboutDialog({
               {info.node_path && <InfoRow label="Node path" value={info.node_path} />}
               <InfoRow label="OS" value={info.os ?? "unknown"} />
               <InfoRow label="Config" value={info.config ?? "unknown"} />
+              {info.shell_env_resolved_via && (
+                <InfoRow
+                  label="Shell env"
+                  value={`${info.shell_env_resolved_via} (${info.shell_env_vars_count ?? "?"} vars)`}
+                />
+              )}
             </div>
           ) : (
             <div className="text-sm text-muted-foreground py-4">Loading...</div>
