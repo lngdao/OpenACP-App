@@ -40,7 +40,6 @@ function App() {
   useEffect(() => {
     const unlisteners: (() => void)[] = []
     import("@tauri-apps/api/event").then(({ listen }) => {
-      listen("copy-debug-info", () => { void copyDebugInfo() }).then((fn) => unlisteners.push(fn))
       listen("open-settings-about", () => { setShowAbout(true) }).then((fn) => unlisteners.push(fn))
     })
     return () => { unlisteners.forEach((fn) => fn()) }

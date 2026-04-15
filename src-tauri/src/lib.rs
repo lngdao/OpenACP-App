@@ -119,12 +119,8 @@ pub fn run() {
                 let about_item = MenuItemBuilder::new("About OpenACP")
                     .id("about-openacp")
                     .build(app)?;
-                let debug_item = MenuItemBuilder::new("Copy Debug Info")
-                    .id("copy-debug-info")
-                    .build(app)?;
                 let app_submenu = SubmenuBuilder::new(app, "OpenACP")
                     .item(&about_item)
-                    .item(&debug_item)
                     .separator()
                     .hide()
                     .hide_others()
@@ -160,15 +156,9 @@ pub fn run() {
                 app.on_menu_event(move |_app, event| {
                     if let Some(win) = handle.get_webview_window("main") {
                         use tauri::Emitter;
-                        match event.id().0.as_ref() {
-                            "about-openacp" => {
+                        if event.id().0 == "about-openacp" {
                                 let _ = win.emit("open-settings-about", ());
                                 let _ = win.set_focus();
-                            }
-                            "copy-debug-info" => {
-                                let _ = win.emit("copy-debug-info", ());
-                            }
-                            _ => {}
                         }
                     }
                 });

@@ -72,7 +72,7 @@ export function AboutDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="sm:max-w-sm p-0 gap-0 overflow-hidden">
+      <DialogContent showCloseButton={false} className="sm:max-w-sm p-0 gap-0 overflow-hidden backdrop-blur-xl bg-popover/80">
         <VisuallyHidden.Root>
           <DialogTitle>About OpenACP</DialogTitle>
         </VisuallyHidden.Root>
@@ -111,7 +111,7 @@ export function AboutDialog({
             onClick={handleCopy}
             disabled={!info}
           >
-            {copied ? "Copied" : "Copy"}
+            {copied ? "Copied" : "Copy Debug Info"}
           </Button>
         </div>
       </DialogContent>
