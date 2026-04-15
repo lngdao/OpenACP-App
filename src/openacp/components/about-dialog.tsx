@@ -56,14 +56,21 @@ async function fetchRecentLogs(): Promise<string[]> {
 }
 
 /** Copy debug info + recent logs to clipboard */
-export async function copyDebugInfo(): Promise<void> {
+/** Collect debug info + recent logs and format as a single text block. */
+async function collectDebugText(): Promise<string> {
   const [info, logs] = await Promise.all([fetchDebugInfo(), fetchRecentLogs()])
   const sections = [formatDebugText(info)]
   if (logs.length > 0) {
     sections.push(`\n--- Recent Logs (last ${logs.length} entries) ---\n${logs.join("\n")}`)
   }
-  const text = sections.join("\n")
+  return sections.join("\n")
+}
+
+/** Copy full debug info + logs to clipboard. Exported so the native menu
+ * path can share the same implementation as the dialog button. */
+export async function copyDebugInfo(): Promise<void> {
   try {
+    const text = await collectDebugText()
     await navigator.clipboard.writeText(text)
     showToast({ description: "Debug info copied to clipboard" })
   } catch {
@@ -88,10 +95,14 @@ export function AboutDialog({
     }
   }, [open])
 
+  // Dialog's Copy button: include recent logs (not just the info shown in
+  // the dialog) so user bug reports have the actual CLI stderr captured
+  // by the file logger. Previously this used formatDebugText alone, which
+  // stripped logs and made remote debugging much harder.
   async function handleCopy() {
     if (!info) return
-    const text = formatDebugText(info)
     try {
+      const text = await collectDebugText()
       await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
