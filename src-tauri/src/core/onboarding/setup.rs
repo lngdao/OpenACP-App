@@ -253,11 +253,17 @@ pub async fn run_setup(
 }
 
 /// Runs `openacp agents list --json` and returns the raw JSON string.
+/// When no workspace_dir is given, uses a fallback dir to satisfy the CLI's
+/// non-interactive mode requirement (agents list is a global command but
+/// some CLI versions require --dir in non-interactive/piped contexts).
 pub async fn agents_list(workspace_dir: Option<String>) -> Result<String, String> {
     tracing::info!("run_openacp_agents_list: running `openacp agents list --json`");
 
     let (mut cmd, _bin) = openacp_command()?;
-    if let Some(ref dir) = workspace_dir {
+    let fallback_dir = workspace_dir.or_else(|| {
+        dirs::home_dir().map(|h| h.to_string_lossy().to_string())
+    });
+    if let Some(ref dir) = fallback_dir {
         cmd.args(["--dir", dir]);
     }
     let output = cmd.args(["agents", "list", "--json"])

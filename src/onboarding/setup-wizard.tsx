@@ -77,7 +77,7 @@ export function SetupWizard(props: Props) {
   const [agentInstallLog, setAgentInstallLog] = useState<string[]>([]);
 
   useEffect(() => {
-    invoke<string>("run_openacp_agents_list")
+    invoke<string>("run_openacp_agents_list", {})
       .then((result) => {
         const raw = typeof result === "string" ? JSON.parse(result) : result;
         let list: AgentEntry[];
