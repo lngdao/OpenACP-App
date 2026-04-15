@@ -94,18 +94,20 @@ pub async fn get_node_info() -> Result<Option<(String, String)>, String> {
         }
     }
 
-    // Strategy 2: Fallback to login shell resolution
+    // Strategy 2: Fallback to interactive then login shell
     for shell in ["zsh", "bash"] {
-        if let Ok(output) = tokio::process::Command::new(shell)
-            .args(["-l", "-c", "which node && node --version"])
-            .output()
-            .await
-        {
-            if output.status.success() {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let mut lines = stdout.trim().lines();
-                if let (Some(path), Some(version)) = (lines.next(), lines.next()) {
-                    return Ok(Some((version.trim().to_string(), path.trim().to_string())));
+        for flag in ["-i", "-l"] {
+            if let Ok(output) = tokio::process::Command::new(shell)
+                .args([flag, "-c", "which node && node --version"])
+                .output()
+                .await
+            {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let mut lines = stdout.trim().lines();
+                    if let (Some(path), Some(version)) = (lines.next(), lines.next()) {
+                        return Ok(Some((version.trim().to_string(), path.trim().to_string())));
+                    }
                 }
             }
         }
