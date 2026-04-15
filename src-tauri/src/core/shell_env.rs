@@ -158,12 +158,18 @@ fn resolve_blocking() -> ShellEnv {
 }
 
 impl ShellEnv {
-    fn from_vars(_vars: HashMap<String, String>, _resolved_via: Option<String>) -> Self {
-        todo!("implemented in later task")
+    fn from_vars(mut vars: HashMap<String, String>, resolved_via: Option<String>) -> Self {
+        for key in DENYLIST {
+            vars.remove(*key);
+        }
+        let shell_path = vars.get("PATH").cloned().unwrap_or_default();
+        let path = Self::build_path(&shell_path);
+        Self { vars, path, resolved_via }
     }
 
     fn from_process_env() -> Self {
-        todo!("implemented in later task")
+        let vars: HashMap<String, String> = std::env::vars().collect();
+        Self::from_vars(vars, None)
     }
 
     fn build_path(shell_path: &str) -> String {
@@ -285,6 +291,46 @@ mod tests {
         stdout.extend_from_slice(mark.as_bytes());
         stdout.extend_from_slice(b"FOO=bar\0");
         assert!(extract_marked_env(&stdout, mark).is_none());
+    }
+
+    #[test]
+    fn from_vars_strips_denylist_entries() {
+        let mut vars = HashMap::new();
+        vars.insert("PATH".into(), "/usr/bin".into());
+        vars.insert("NODE_OPTIONS".into(), "--require /tmp/evil.js".into());
+        vars.insert("NODE_PATH".into(), "/tmp/pwned".into());
+        vars.insert("BASH_ENV".into(), "/tmp/rc".into());
+        vars.insert("ENV".into(), "/tmp/rc".into());
+        vars.insert("npm_config_prefix".into(), "/tmp/bad".into());
+        vars.insert("NPM_CONFIG_PREFIX".into(), "/tmp/bad".into());
+        vars.insert("HOME".into(), "/home/user".into());
+
+        let env = ShellEnv::from_vars(vars, Some("zsh".into()));
+        assert!(!env.vars.contains_key("NODE_OPTIONS"));
+        assert!(!env.vars.contains_key("NODE_PATH"));
+        assert!(!env.vars.contains_key("BASH_ENV"));
+        assert!(!env.vars.contains_key("ENV"));
+        assert!(!env.vars.contains_key("npm_config_prefix"));
+        assert!(!env.vars.contains_key("NPM_CONFIG_PREFIX"));
+        assert!(env.vars.contains_key("HOME"));
+        assert!(env.vars.contains_key("PATH"));
+        assert_eq!(env.resolved_via, Some("zsh".into()));
+    }
+
+    #[test]
+    fn from_vars_uses_shell_path_as_basis_for_path_field() {
+        let mut vars = HashMap::new();
+        vars.insert("PATH".into(), "/usr/bin:/usr/local/bin".into());
+        let env = ShellEnv::from_vars(vars, None);
+        assert!(env.path.contains("/usr/bin"));
+        assert!(env.path.contains("/usr/local/bin"));
+    }
+
+    #[test]
+    fn from_vars_handles_missing_path_var() {
+        let vars = HashMap::new();
+        let env = ShellEnv::from_vars(vars, None);
+        let _ = env.path;
     }
 
     #[test]
