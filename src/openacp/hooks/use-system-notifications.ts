@@ -6,6 +6,7 @@ import {
 } from '@tauri-apps/plugin-notification'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getSetting, type NotificationSettings } from '../lib/settings-store'
+import type { AppNotification } from '../api/notification-store'
 
 const SETTING_DEFAULTS: NotificationSettings = {
   enabled: true,
@@ -19,11 +20,15 @@ const SETTING_DEFAULTS: NotificationSettings = {
  * Shows native OS notifications only when the app window is not focused
  * and the corresponding notification setting is enabled.
  */
-export function useSystemNotifications() {
+export function useSystemNotifications(
+  appendNotification?: (n: Omit<AppNotification, "id" | "timestamp" | "read">) => void
+) {
   const permittedRef = useRef<boolean | null>(null)
   const streamingRef = useRef(false)
   const focusedRef = useRef(true)
   const settingsRef = useRef<NotificationSettings>(SETTING_DEFAULTS)
+  const appendNotificationRef = useRef(appendNotification)
+  appendNotificationRef.current = appendNotification
 
   // Load notification settings + request OS permission + track window focus
   useEffect(() => {
@@ -88,18 +93,42 @@ export function useSystemNotifications() {
           sendNotification({ title: 'OpenACP', body: 'Agent response ready' })
         }
         streamingRef.current = false
+        if (settingsRef.current.enabled && settingsRef.current.agentResponse) {
+          appendNotificationRef.current?.({
+            type: "agent-response",
+            title: "Agent response ready",
+            sessionId: (e as CustomEvent).detail?.sessionId,
+            action: { type: "navigate-session" },
+          })
+        }
       }
     }
 
-    function handlePermissionRequest() {
+    function handlePermissionRequest(ev: Event) {
       if (canNotify() && settingsRef.current.permissionRequest) {
         sendNotification({ title: 'OpenACP', body: 'Permission approval needed' })
       }
+      if (settingsRef.current.enabled && settingsRef.current.permissionRequest) {
+        const detail = (ev as CustomEvent)?.detail
+        appendNotificationRef.current?.({
+          type: "permission-request",
+          title: "Permission approval needed",
+          sessionId: detail?.sessionId,
+        })
+      }
     }
 
-    function handleMessageFailed() {
+    function handleMessageFailed(ev: Event) {
       if (canNotify() && settingsRef.current.messageFailed) {
         sendNotification({ title: 'OpenACP', body: 'Message failed to process' })
+      }
+      if (settingsRef.current.enabled && settingsRef.current.messageFailed) {
+        const detail = (ev as CustomEvent)?.detail
+        appendNotificationRef.current?.({
+          type: "message-failed",
+          title: "Message failed to process",
+          sessionId: detail?.sessionId,
+        })
       }
     }
 

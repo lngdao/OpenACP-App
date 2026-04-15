@@ -33,6 +33,7 @@ import {
   type SettingsPage,
 } from "./components/settings/settings-dialog";
 import { SetupModal } from "./components/add-workspace/setup-modal";
+import { AboutDialog } from "./components/about-dialog";
 import { showToast } from "./lib/toast";
 import { toast } from "sonner";
 import { ArrowLineDown, Package, X } from "@phosphor-icons/react";
@@ -44,6 +45,7 @@ import {
 } from "./hooks/use-workspace-connection";
 import { useUpdateCheck } from "./hooks/use-update-check";
 import { useSystemNotifications } from "./hooks/use-system-notifications";
+import { NotificationsProvider, useNotifications } from "./context/notifications";
 import {
   getAllSettings,
   getSetting,
@@ -349,8 +351,10 @@ export function OpenACPApp() {
     <ToolDisplayProvider>
       <BrowserOverlayProvider>
         <BrowserPanelProvider>
-          <OpenACPAppInner />
-          <FloatingBrowserFrame />
+          <NotificationsProvider>
+            <OpenACPAppInner />
+            <FloatingBrowserFrame />
+          </NotificationsProvider>
         </BrowserPanelProvider>
       </BrowserOverlayProvider>
     </ToolDisplayProvider>
@@ -359,7 +363,8 @@ export function OpenACPApp() {
 
 function OpenACPAppInner() {
   const browser = useBrowserPanel();
-  useSystemNotifications();
+  const { append: appendNotification } = useNotifications();
+  useSystemNotifications(appendNotification);
   const [workspaces, setWorkspaces] = useState<WorkspaceEntry[]>([]);
   const [active, setActive] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -728,6 +733,18 @@ function OpenACPAppInner() {
     window.addEventListener("open-settings", handleOpenSettings);
     return () =>
       window.removeEventListener("open-settings", handleOpenSettings);
+  }, []);
+
+  // Listen for native macOS "About" menu → open custom About dialog
+  const [showAbout, setShowAbout] = useState(false);
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("open-settings-about", () => {
+        setShowAbout(true);
+      }).then((fn) => { unlisten = fn; });
+    });
+    return () => { unlisten?.(); };
   }, []);
 
   function addWorkspace(entry: WorkspaceEntry): boolean {
@@ -1152,6 +1169,7 @@ function OpenACPAppInner() {
         initialPage={settingsPage}
         onAboutViewed={() => setUpdatesSeen(true)}
       />
+      <AboutDialog open={showAbout} onOpenChange={setShowAbout} />
       <Toaster />
     </div>
   );
