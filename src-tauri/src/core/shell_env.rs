@@ -119,8 +119,25 @@ fn parse_env_nul(bytes: &[u8]) -> Option<HashMap<String, String>> {
     Some(map)
 }
 
-fn extract_marked_env(_stdout: &[u8], _marker: &str) -> Option<HashMap<String, String>> {
-    todo!("implemented in later task")
+/// Given shell stdout containing `MARK...env -0 output...MARK`, extract the
+/// bytes between the two marks and parse them. Returns `None` if both marks
+/// aren't present.
+fn extract_marked_env(stdout: &[u8], marker: &str) -> Option<HashMap<String, String>> {
+    let marker_bytes = marker.as_bytes();
+    let start = find_bytes(stdout, marker_bytes)? + marker_bytes.len();
+    let rest = &stdout[start..];
+    let end_rel = find_bytes(rest, marker_bytes)?;
+    let inner = &rest[..end_rel];
+    parse_env_nul(inner)
+}
+
+/// Finds the first occurrence of `needle` in `haystack`, returning the byte
+/// offset. `None` if not found.
+fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+    if needle.is_empty() || needle.len() > haystack.len() {
+        return None;
+    }
+    (0..=haystack.len() - needle.len()).find(|&i| &haystack[i..i + needle.len()] == needle)
 }
 
 fn clean_env_from(_env: &ShellEnv, _extra_path_prefix: Option<&str>) -> HashMap<String, String> {
@@ -189,6 +206,58 @@ mod tests {
         let env = parse_env_nul(input).unwrap();
         assert_eq!(env.get("FOO"), Some(&"bar".to_string()));
         assert_eq!(env.get("BAZ"), Some(&"qux".to_string()));
+    }
+
+    #[test]
+    fn extract_marked_env_basic() {
+        let mark = "__TEST_MARK__";
+        let mut stdout = Vec::new();
+        stdout.extend_from_slice(mark.as_bytes());
+        stdout.extend_from_slice(b"FOO=bar\0BAZ=qux\0");
+        stdout.extend_from_slice(mark.as_bytes());
+        let env = extract_marked_env(&stdout, mark).unwrap();
+        assert_eq!(env.get("FOO"), Some(&"bar".to_string()));
+        assert_eq!(env.get("BAZ"), Some(&"qux".to_string()));
+    }
+
+    #[test]
+    fn extract_marked_env_skips_zshrc_noise_before_first_mark() {
+        let mark = "__TEST_MARK__";
+        let mut stdout = Vec::new();
+        stdout.extend_from_slice(b"Welcome to zsh!\ncompletion warning: foo not found\n");
+        stdout.extend_from_slice(mark.as_bytes());
+        stdout.extend_from_slice(b"FOO=bar\0");
+        stdout.extend_from_slice(mark.as_bytes());
+        let env = extract_marked_env(&stdout, mark).unwrap();
+        assert_eq!(env.get("FOO"), Some(&"bar".to_string()));
+    }
+
+    #[test]
+    fn extract_marked_env_skips_noise_after_last_mark() {
+        let mark = "__TEST_MARK__";
+        let mut stdout = Vec::new();
+        stdout.extend_from_slice(mark.as_bytes());
+        stdout.extend_from_slice(b"FOO=bar\0");
+        stdout.extend_from_slice(mark.as_bytes());
+        stdout.extend_from_slice(b"\ntrailing garbage from shell exit\n");
+        let env = extract_marked_env(&stdout, mark).unwrap();
+        assert_eq!(env.get("FOO"), Some(&"bar".to_string()));
+        assert_eq!(env.len(), 1);
+    }
+
+    #[test]
+    fn extract_marked_env_returns_none_when_marks_missing() {
+        let stdout = b"no marks here, just noise";
+        assert!(extract_marked_env(stdout, "__MISSING__").is_none());
+    }
+
+    #[test]
+    fn extract_marked_env_returns_none_when_only_one_mark() {
+        let mark = "__TEST_MARK__";
+        let mut stdout = Vec::new();
+        stdout.extend_from_slice(mark.as_bytes());
+        stdout.extend_from_slice(b"FOO=bar\0");
+        assert!(extract_marked_env(&stdout, mark).is_none());
     }
 
     #[test]
