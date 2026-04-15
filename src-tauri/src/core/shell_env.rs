@@ -166,8 +166,26 @@ impl ShellEnv {
         todo!("implemented in later task")
     }
 
-    fn build_path(_shell_path: &str) -> String {
-        todo!("implemented in later task")
+    fn build_path(shell_path: &str) -> String {
+        #[cfg(windows)]
+        {
+            return dedupe_path(shell_path, ";");
+        }
+        #[cfg(not(windows))]
+        {
+            let sep = ":";
+            let mut parts: Vec<String> = shell_path
+                .split(sep)
+                .filter(|p| !p.is_empty())
+                .map(|p| p.to_string())
+                .collect();
+            for dir in WELL_KNOWN_NODE_DIRS {
+                if std::path::Path::new(dir).exists() {
+                    parts.push((*dir).to_string());
+                }
+            }
+            dedupe_path(&parts.join(sep), sep)
+        }
     }
 }
 
@@ -267,6 +285,24 @@ mod tests {
         stdout.extend_from_slice(mark.as_bytes());
         stdout.extend_from_slice(b"FOO=bar\0");
         assert!(extract_marked_env(&stdout, mark).is_none());
+    }
+
+    #[test]
+    fn build_path_dedupes_and_preserves_shell_path() {
+        let shell_path = "/opt/homebrew/bin:/usr/bin:/opt/homebrew/bin";
+        let built = ShellEnv::build_path(shell_path);
+        let parts: Vec<&str> = built.split(':').collect();
+        let bhbrew = parts.iter().filter(|p| **p == "/opt/homebrew/bin").count();
+        assert_eq!(bhbrew, 1, "homebrew bin should appear exactly once: {built}");
+        assert!(built.contains("/usr/bin"));
+    }
+
+    #[test]
+    fn build_path_contains_original_shell_entries() {
+        let shell_path = "/some/custom/bin:/another/bin";
+        let built = ShellEnv::build_path(shell_path);
+        assert!(built.contains("/some/custom/bin"));
+        assert!(built.contains("/another/bin"));
     }
 
     #[test]
