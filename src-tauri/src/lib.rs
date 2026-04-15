@@ -36,6 +36,10 @@ pub fn run() {
         )
         .init();
 
+    // Initialize file logger for diagnostics
+    core::logging::init();
+    core::logging::write_line("INFO", "be", "OpenACP Desktop starting");
+
     let sidecar = Arc::new(Mutex::new(SidecarManager::new()));
     let pty = Arc::new(Mutex::new(PtyManager::new()));
 
@@ -66,6 +70,7 @@ pub fn run() {
             core::onboarding::commands::check_openacp_installed,
             core::onboarding::commands::get_openacp_binary_path,
             core::onboarding::commands::get_node_info,
+            core::onboarding::commands::get_debug_info,
             core::onboarding::commands::check_openacp_config,
             core::onboarding::commands::check_core_update,
             core::onboarding::commands::run_install_script,
@@ -73,6 +78,10 @@ pub fn run() {
             core::onboarding::commands::run_openacp_agents_list,
             core::onboarding::commands::run_openacp_agent_install,
             core::onboarding::commands::dev_reset_openacp,
+            // Logging commands
+            core::logging::write_fe_log,
+            core::logging::get_recent_logs,
+            core::logging::get_log_file_path,
             // Keychain commands
             core::keychain::commands::keychain_set,
             core::keychain::commands::keychain_get,
@@ -150,14 +159,14 @@ pub fn run() {
                     .build()?;
                 app.set_menu(menu)?;
 
-                // Handle About menu click — emit event to frontend
+                // Handle menu clicks
                 let handle = app.handle().clone();
                 app.on_menu_event(move |_app, event| {
-                    if event.id().0 == "about-openacp" {
-                        if let Some(win) = handle.get_webview_window("main") {
-                            use tauri::Emitter;
-                            let _ = win.emit("open-settings-about", ());
-                            let _ = win.set_focus();
+                    if let Some(win) = handle.get_webview_window("main") {
+                        use tauri::Emitter;
+                        if event.id().0 == "about-openacp" {
+                                let _ = win.emit("open-settings-about", ());
+                                let _ = win.set_focus();
                         }
                     }
                 });
