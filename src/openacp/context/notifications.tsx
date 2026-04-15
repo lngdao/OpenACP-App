@@ -71,6 +71,30 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     setItems([])
   }, [])
 
+  // Patch stale session names (e.g. "Untitled") when sessions get renamed
+  useEffect(() => {
+    function handleSessionsUpdated(e: Event) {
+      const sessions = (e as CustomEvent).detail as Array<{ id: string; name: string }> | undefined
+      if (!sessions) return
+      const nameMap = new Map(sessions.map((s) => [s.id, s.name]))
+      setItems((prev) => {
+        let changed = false
+        const next = prev.map((n) => {
+          if (!n.sessionId) return n
+          const freshName = nameMap.get(n.sessionId)
+          if (freshName && freshName !== n.sessionName && freshName !== "Untitled") {
+            changed = true
+            return { ...n, sessionName: freshName }
+          }
+          return n
+        })
+        return changed ? next : prev
+      })
+    }
+    window.addEventListener("sessions-updated", handleSessionsUpdated)
+    return () => window.removeEventListener("sessions-updated", handleSessionsUpdated)
+  }, [])
+
   const unreadCount = useMemo(() => items.filter((n) => !n.read).length, [items])
 
   const value = useMemo((): NotificationsContext => ({

@@ -184,7 +184,8 @@ export function NotificationPopover({
                               </div>
                               <div className="text-2xs text-muted-foreground truncate">
                                 {[n.workspaceName, n.sessionName].filter(Boolean).join(" / ")}
-                                {(n.workspaceName || n.sessionName) ? ` \u00b7 ` : ""}
+                              </div>
+                              <div className="text-2xs text-muted-foreground">
                                 {relativeTime(n.timestamp)}
                               </div>
                             </div>
