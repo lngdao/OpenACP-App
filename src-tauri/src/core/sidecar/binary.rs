@@ -118,16 +118,19 @@ fn check_known_locations() -> Option<PathBuf> {
         // Scoop
         candidates.push(home.join("scoop/shims/openacp.cmd"));
         candidates.push(home.join("scoop/shims/openacp.exe"));
-        // nvm-windows
+        // nvm-windows — sort versions descending
         if let Ok(nvm_home) = std::env::var("NVM_HOME") {
             let nvm_dir = PathBuf::from(nvm_home);
             if nvm_dir.exists() {
                 if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
-                    for entry in entries.flatten() {
-                        if entry.path().is_dir() {
-                            candidates.push(entry.path().join("openacp.cmd"));
-                            candidates.push(entry.path().join("openacp"));
-                        }
+                    let mut versions: Vec<_> = entries.flatten()
+                        .filter(|e| e.path().is_dir())
+                        .map(|e| e.path())
+                        .collect();
+                    versions.sort_by(|a, b| b.cmp(a));
+                    for version_dir in versions {
+                        candidates.push(version_dir.join("openacp.cmd"));
+                        candidates.push(version_dir.join("openacp"));
                     }
                 }
             }
@@ -147,37 +150,43 @@ fn check_known_locations() -> Option<PathBuf> {
         candidates.push(PathBuf::from("/usr/local/bin/openacp"));
         candidates.push(PathBuf::from("/opt/homebrew/bin/openacp"));
 
-        // nvm
+        // nvm — sort versions descending so newest is checked first
         let nvm_dir = home.join(".nvm/versions/node");
         if nvm_dir.exists() {
             if let Ok(entries) = std::fs::read_dir(&nvm_dir) {
-                for entry in entries.flatten() {
-                    candidates.push(entry.path().join("bin/openacp"));
+                let mut versions: Vec<_> = entries.flatten().map(|e| e.path()).collect();
+                versions.sort_by(|a, b| b.cmp(a));
+                for version_dir in versions {
+                    candidates.push(version_dir.join("bin/openacp"));
                 }
             }
         }
 
-        // fnm (macOS)
+        // fnm (macOS) — sort versions descending
         #[cfg(target_os = "macos")]
         {
             let fnm_dir = home.join("Library/Application Support/fnm/node-versions");
             if fnm_dir.exists() {
                 if let Ok(entries) = std::fs::read_dir(&fnm_dir) {
-                    for entry in entries.flatten() {
-                        candidates.push(entry.path().join("installation/bin/openacp"));
+                    let mut versions: Vec<_> = entries.flatten().map(|e| e.path()).collect();
+                    versions.sort_by(|a, b| b.cmp(a));
+                    for version_dir in versions {
+                        candidates.push(version_dir.join("installation/bin/openacp"));
                     }
                 }
             }
         }
 
-        // fnm (Linux)
+        // fnm (Linux) — sort versions descending
         #[cfg(target_os = "linux")]
         {
             let fnm_dir = home.join(".local/share/fnm/node-versions");
             if fnm_dir.exists() {
                 if let Ok(entries) = std::fs::read_dir(&fnm_dir) {
-                    for entry in entries.flatten() {
-                        candidates.push(entry.path().join("installation/bin/openacp"));
+                    let mut versions: Vec<_> = entries.flatten().map(|e| e.path()).collect();
+                    versions.sort_by(|a, b| b.cmp(a));
+                    for version_dir in versions {
+                        candidates.push(version_dir.join("installation/bin/openacp"));
                     }
                 }
             }
