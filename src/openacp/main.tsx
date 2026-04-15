@@ -18,6 +18,10 @@ import { compareVersions, parseVersionString, MIN_CORE_VERSION } from "./lib/ver
 import { ArrowLineDown } from "@phosphor-icons/react"
 import { copyDebugInfo, AboutDialog } from "./components/about-dialog"
 import { Toaster } from "./components/ui/toaster"
+import { initLogger } from "./lib/logger"
+
+// Initialize frontend logger — intercepts console and writes to file
+initLogger()
 
 // Intercept all external link clicks — open in browser panel or system browser
 document.addEventListener("click", (e) => {

@@ -28,13 +28,26 @@ function formatDebugText(info: DebugInfo): string {
   lines.push(`OS: ${info.os ?? "unknown"}`)
   lines.push(`Config: ${info.config ?? "unknown"}`)
   if (MIN_CORE_VERSION) lines.push(`MIN_CORE_VERSION: ${MIN_CORE_VERSION}`)
+  if (info.log_path) lines.push(`Log file: ${info.log_path}`)
   return lines.join("\n")
 }
 
-/** Copy debug info to clipboard — can be called from anywhere (menu event, button, etc.) */
+async function fetchRecentLogs(): Promise<string[]> {
+  try {
+    return await invoke<string[]>("get_recent_logs", { count: 100 })
+  } catch {
+    return []
+  }
+}
+
+/** Copy debug info + recent logs to clipboard */
 export async function copyDebugInfo(): Promise<void> {
-  const info = await fetchDebugInfo()
-  const text = formatDebugText(info)
+  const [info, logs] = await Promise.all([fetchDebugInfo(), fetchRecentLogs()])
+  const sections = [formatDebugText(info)]
+  if (logs.length > 0) {
+    sections.push(`\n--- Recent Logs (last ${logs.length} entries) ---\n${logs.join("\n")}`)
+  }
+  const text = sections.join("\n")
   try {
     await navigator.clipboard.writeText(text)
     showToast({ description: "Debug info copied to clipboard" })

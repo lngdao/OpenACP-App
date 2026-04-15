@@ -36,6 +36,10 @@ pub fn run() {
         )
         .init();
 
+    // Initialize file logger for diagnostics
+    core::logging::init();
+    core::logging::write_line("INFO", "be", "OpenACP Desktop starting");
+
     let sidecar = Arc::new(Mutex::new(SidecarManager::new()));
     let pty = Arc::new(Mutex::new(PtyManager::new()));
 
@@ -74,6 +78,10 @@ pub fn run() {
             core::onboarding::commands::run_openacp_agents_list,
             core::onboarding::commands::run_openacp_agent_install,
             core::onboarding::commands::dev_reset_openacp,
+            // Logging commands
+            core::logging::write_fe_log,
+            core::logging::get_recent_logs,
+            core::logging::get_log_file_path,
             // Keychain commands
             core::keychain::commands::keychain_set,
             core::keychain::commands::keychain_get,

@@ -155,6 +155,11 @@ pub async fn get_debug_info(app: tauri::AppHandle) -> Result<std::collections::H
         Err(e) => { info.insert("config".into(), format!("error: {e}")); }
     }
 
+    // Log file path
+    if let Some(path) = crate::core::logging::log_file_path() {
+        info.insert("log_path".into(), path);
+    }
+
     Ok(info)
 }
 
