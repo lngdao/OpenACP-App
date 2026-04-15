@@ -287,8 +287,11 @@ pub async fn agents_list(workspace_dir: Option<String>) -> Result<String, String
 pub async fn agent_install(app: &tauri::AppHandle, agent_key: &str, workspace_dir: Option<&str>) -> Result<(), String> {
     let (bin, extra_path) = find_openacp_binary()
         .ok_or("openacp not found — please install it first")?;
+    let path = build_openacp_path(&bin, &extra_path);
+    tracing::info!("agent_install: bin={} PATH={}", bin.display(), &path[..path.len().min(200)]);
+
     let mut shell_cmd = app.shell().command(bin.to_string_lossy().to_string());
-    shell_cmd = shell_cmd.env("PATH", build_openacp_path(&bin, &extra_path));
+    shell_cmd = shell_cmd.env("PATH", &path);
     if let Some(dir) = workspace_dir {
         shell_cmd = shell_cmd.args(["--dir", dir]);
     }
@@ -298,11 +301,13 @@ pub async fn agent_install(app: &tauri::AppHandle, agent_key: &str, workspace_di
         .map_err(|e| e.to_string())?;
 
     let mut exit_code: Option<i32> = None;
+    let mut output_lines: Vec<String> = Vec::new();
 
     while let Some(event) = rx.recv().await {
         match event {
             CommandEvent::Stdout(bytes) | CommandEvent::Stderr(bytes) => {
                 let line = String::from_utf8_lossy(&bytes).to_string();
+                output_lines.push(line.clone());
                 let _ = app.emit("agent-install-output", line);
             }
             CommandEvent::Terminated(payload) => {
@@ -313,9 +318,17 @@ pub async fn agent_install(app: &tauri::AppHandle, agent_key: &str, workspace_di
         }
     }
 
+    // Log output to file logger for diagnostics
+    let combined = output_lines.join("\n");
+    crate::core::logging::write_line("INFO", "be", &format!("agent_install output: {}", &combined[..combined.len().min(500)]));
+
     match exit_code {
         Some(0) | None => Ok(()),
-        Some(code) => Err(format!("Agent install exited with code {code}")),
+        Some(code) => {
+            tracing::error!("agent_install: exited with code {code}, output: {}", &combined[..combined.len().min(300)]);
+            crate::core::logging::write_line("ERROR", "be", &format!("agent_install failed (exit {code}): {}", &combined[..combined.len().min(1000)]));
+            Err(format!("Agent install exited with code {code}"))
+        }
     }
 }
 
