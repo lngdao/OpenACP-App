@@ -102,17 +102,15 @@ pub async fn get_node_info() -> Result<Option<(String, String)>, String> {
                 .output()
                 .await
             {
-                if output.status.success() {
-                    // Take last 2 lines — interactive shell may print extra output before
-                    let stdout = String::from_utf8_lossy(&output.stdout);
-                    let all_lines: Vec<&str> = stdout.trim().lines().collect();
-                    let len = all_lines.len();
-                    if len >= 2 {
-                        let path = all_lines[len - 2].trim();
-                        let version = all_lines[len - 1].trim();
-                        if path.starts_with('/') && version.starts_with('v') {
-                            return Ok(Some((version.to_string(), path.to_string())));
-                        }
+                // Check stdout regardless of exit code — .zshrc errors cause non-zero exit
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let all_lines: Vec<&str> = stdout.trim().lines().collect();
+                let len = all_lines.len();
+                if len >= 2 {
+                    let path = all_lines[len - 2].trim();
+                    let version = all_lines[len - 1].trim();
+                    if path.starts_with('/') && version.starts_with('v') {
+                        return Ok(Some((version.to_string(), path.to_string())));
                     }
                 }
             }

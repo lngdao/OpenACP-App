@@ -82,24 +82,24 @@ fn resolve_via_shell() -> Option<PathBuf> {
                     Err(e) => {
                         tracing::debug!("find_openacp_binary: {shell} {flag} not available — {e}");
                     }
-                    Ok(output) if !output.status.success() => {
-                        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-                        tracing::info!(
-                            "find_openacp_binary: `{shell} {flag} -c 'which openacp'` not found (exit {:?}){hint}",
-                            output.status.code(),
-                            hint = if stderr.is_empty() { String::new() } else { format!(" — {stderr}") }
-                        );
-                    }
                     Ok(output) => {
-                        // Take last line only — interactive shells may print welcome
-                        // messages or prompts that pollute stdout before the actual output
+                        // Check stdout regardless of exit code — interactive shells (-i)
+                        // may exit non-zero if .zshrc has errors (broken completions, etc.)
+                        // but the command itself can still succeed and produce valid output.
                         let stdout = String::from_utf8_lossy(&output.stdout);
                         let path = stdout.trim().lines().last().unwrap_or("").trim().to_string();
-                        if path.is_empty() || !path.starts_with('/') {
-                            tracing::info!("find_openacp_binary: {shell} {flag} returned invalid path: {path:?}");
-                        } else {
+                        if !path.is_empty() && path.starts_with('/') {
                             tracing::info!("find_openacp_binary: found via {shell} {flag}: {path}");
                             return Some(PathBuf::from(path));
+                        }
+                        if !output.status.success() {
+                            let stderr = String::from_utf8_lossy(&output.stderr);
+                            let hint = stderr.trim().lines().last().unwrap_or("").trim();
+                            tracing::info!(
+                                "find_openacp_binary: `{shell} {flag}` exit {:?}{hint}",
+                                output.status.code(),
+                                hint = if hint.is_empty() { String::new() } else { format!(" — {hint}") }
+                            );
                         }
                     }
                 }
@@ -239,14 +239,13 @@ pub fn get_login_shell_path() -> Option<String> {
                     .args([flag, "-c", "echo $PATH"])
                     .output()
                 {
-                    if output.status.success() {
-                        // Take last line — interactive shell may print extra output
-                        let stdout = String::from_utf8_lossy(&output.stdout);
-                        let path = stdout.trim().lines().last().unwrap_or("").trim().to_string();
-                        if !path.is_empty() && path.contains('/') {
-                            tracing::debug!("get_login_shell_path: resolved via {shell} {flag}");
-                            return Some(path);
-                        }
+                    // Check stdout regardless of exit code — .zshrc errors
+                    // may cause non-zero exit but PATH output is still valid
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    let path = stdout.trim().lines().last().unwrap_or("").trim().to_string();
+                    if !path.is_empty() && path.contains('/') {
+                        tracing::debug!("get_login_shell_path: resolved via {shell} {flag}");
+                        return Some(path);
                     }
                 }
             }
