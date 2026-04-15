@@ -84,8 +84,17 @@ pub fn clean_env(extra_path_prefix: Option<&str>) -> HashMap<String, String> {
 
 /// Dedupe PATH entries while preserving order of first occurrence.
 pub fn dedupe_path(path: &str, sep: &str) -> String {
-    let _ = (path, sep);
-    todo!("implemented in later task")
+    let mut seen = std::collections::HashSet::new();
+    let mut kept: Vec<&str> = Vec::new();
+    for part in path.split(sep) {
+        if part.is_empty() {
+            continue;
+        }
+        if seen.insert(part) {
+            kept.push(part);
+        }
+    }
+    kept.join(sep)
 }
 
 // ─── Internals (implemented in later tasks) ─────────────────────────────
@@ -258,6 +267,32 @@ mod tests {
         stdout.extend_from_slice(mark.as_bytes());
         stdout.extend_from_slice(b"FOO=bar\0");
         assert!(extract_marked_env(&stdout, mark).is_none());
+    }
+
+    #[test]
+    fn dedupe_path_removes_duplicates_preserving_order() {
+        let input = "/usr/bin:/usr/local/bin:/usr/bin:/opt/homebrew/bin:/usr/local/bin";
+        let out = dedupe_path(input, ":");
+        assert_eq!(out, "/usr/bin:/usr/local/bin:/opt/homebrew/bin");
+    }
+
+    #[test]
+    fn dedupe_path_handles_empty_string() {
+        assert_eq!(dedupe_path("", ":"), "");
+    }
+
+    #[test]
+    fn dedupe_path_skips_empty_segments() {
+        let input = ":/usr/bin::/usr/local/bin:";
+        let out = dedupe_path(input, ":");
+        assert_eq!(out, "/usr/bin:/usr/local/bin");
+    }
+
+    #[test]
+    fn dedupe_path_windows_separator() {
+        let input = r"C:\foo;C:\bar;C:\foo";
+        let out = dedupe_path(input, ";");
+        assert_eq!(out, r"C:\foo;C:\bar");
     }
 
     #[test]
