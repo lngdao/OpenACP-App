@@ -124,7 +124,7 @@ export function AboutDialog({
             onClick={handleCopy}
             disabled={!info}
           >
-            {copied ? "Copied" : "Copy Debug Info"}
+            {copied ? "Copied" : "Copy"}
           </Button>
         </div>
       </DialogContent>
