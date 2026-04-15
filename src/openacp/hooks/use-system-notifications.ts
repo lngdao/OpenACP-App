@@ -13,6 +13,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
  * Currently notifies on:
  * - Agent response complete (session goes idle after streaming)
  * - Permission request waiting for user action
+ * - User mentioned by agent in a teamwork session
  */
 export function useSystemNotifications() {
   const permittedRef = useRef<boolean | null>(null)
@@ -75,6 +76,23 @@ export function useSystemNotifications() {
     return () => {
       window.removeEventListener('agent-event', handleAgentEvent)
       window.removeEventListener('permission-request', handlePermissionRequest)
+    }
+  }, [])
+
+  // Listen for mention notifications — show native notification when app is unfocused
+  useEffect(() => {
+    function handleMention(e: Event) {
+      const data = (e as CustomEvent).detail as { text?: string; sessionId?: string } | undefined
+      if (!data?.text) return
+
+      if (!focusedRef.current && permittedRef.current) {
+        sendNotification({ title: 'OpenACP', body: data.text })
+      }
+    }
+
+    window.addEventListener('mention-notification', handleMention)
+    return () => {
+      window.removeEventListener('mention-notification', handleMention)
     }
   }, [])
 }
