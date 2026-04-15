@@ -16,11 +16,8 @@ import { restartWorkspaceServer } from "./api/workspace-service"
 import { WindowDragBar } from "../onboarding/window-drag-bar"
 import { compareVersions, parseVersionString, MIN_CORE_VERSION } from "./lib/version"
 import { ArrowLineDown } from "@phosphor-icons/react"
-import { listen } from "@tauri-apps/api/event"
-import { copyDebugInfo } from "./components/about-dialog"
-
-// Listen for native menu "Copy Debug Info" — works on ALL screens including onboard
-listen("copy-debug-info", () => { void copyDebugInfo() })
+import { copyDebugInfo, AboutDialog } from "./components/about-dialog"
+import { Toaster } from "./components/ui/toaster"
 
 // Intercept all external link clicks — open in browser panel or system browser
 document.addEventListener("click", (e) => {
@@ -37,6 +34,17 @@ document.addEventListener("click", (e) => {
 function App() {
   const [screen, setScreen] = useState<StartupScreen>('splash')
   const [coreVersion, setCoreVersion] = useState<string | null>(null)
+  const [showAbout, setShowAbout] = useState(false)
+
+  // Listen for native menu events — works on ALL screens including onboard
+  useEffect(() => {
+    const unlisteners: (() => void)[] = []
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("copy-debug-info", () => { void copyDebugInfo() }).then((fn) => unlisteners.push(fn))
+      listen("open-settings-about", () => { setShowAbout(true) }).then((fn) => unlisteners.push(fn))
+    })
+    return () => { unlisteners.forEach((fn) => fn()) }
+  }, [])
 
   const coreBelowMin = coreVersion !== null
     && MIN_CORE_VERSION !== '0.0.0'
@@ -132,6 +140,8 @@ function App() {
           <OpenACPApp />
         )
       )}
+      <AboutDialog open={showAbout} onOpenChange={setShowAbout} />
+      <Toaster />
     </TooltipProvider>
   )
 }

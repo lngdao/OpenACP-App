@@ -33,7 +33,6 @@ import {
   type SettingsPage,
 } from "./components/settings/settings-dialog";
 import { SetupModal } from "./components/add-workspace/setup-modal";
-import { AboutDialog } from "./components/about-dialog";
 import { showToast } from "./lib/toast";
 import { toast } from "sonner";
 import { ArrowLineDown, Package, X } from "@phosphor-icons/react";
@@ -765,18 +764,6 @@ function OpenACPAppInner() {
       window.removeEventListener("open-settings", handleOpenSettings);
   }, []);
 
-  // Listen for native macOS "About" menu → open custom About dialog
-  const [showAbout, setShowAbout] = useState(false);
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    import("@tauri-apps/api/event").then(({ listen }) => {
-      listen("open-settings-about", () => {
-        setShowAbout(true);
-      }).then((fn) => { unlisten = fn; });
-    });
-    return () => { unlisten?.(); };
-  }, []);
-
   function addWorkspace(entry: WorkspaceEntry): boolean {
     const existing = workspaces.find((w) => w.id === entry.id);
     if (existing) {
@@ -1202,7 +1189,6 @@ function OpenACPAppInner() {
         initialPage={settingsPage}
         onAboutViewed={() => setUpdatesSeen(true)}
       />
-      <AboutDialog open={showAbout} onOpenChange={setShowAbout} />
       <Toaster />
     </div>
   );
