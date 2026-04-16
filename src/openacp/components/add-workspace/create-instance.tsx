@@ -54,8 +54,8 @@ export function CreateInstance(props: CreateInstanceProps) {
   }
 
   return (
-    <div className="space-y-4 p-3 bg-secondary rounded-lg">
-      <p className="text-md-regular text-fg-weak">No OpenACP instance at <code className="text-sm-regular text-foreground">{folderName}</code></p>
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">No OpenACP instance at <code className="text-foreground">{folderName}</code></p>
       {mode === 'choose' && (
         <div className="space-y-1.5">
           {props.existingInstances.length > 0 && (
