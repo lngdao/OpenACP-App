@@ -10,7 +10,7 @@ describe("FolderFlowStep", () => {
   it("renders the folder name in the header", () => {
     render(
       <FolderFlowStep
-        result={{ type: "new", directory: "/tmp/demo" }}
+        result={{ type: "unregistered", directory: "/tmp/demo" }}
         instances={instances}
         onAdd={vi.fn()}
         onBack={vi.fn()}

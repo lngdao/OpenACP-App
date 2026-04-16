@@ -31,7 +31,7 @@ export function FolderFlowStep(props: FolderFlowStepProps) {
         >
           <CaretLeft size={14} />
         </button>
-        <span className="text-sm font-medium text-foreground truncate">/ {folderName}</span>
+        <span className="text-sm font-medium text-foreground truncate">{folderName}</span>
       </div>
       <Body {...props} />
     </div>
