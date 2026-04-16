@@ -286,17 +286,33 @@ const defaults: AppSettings = {
 }
 ```
 
-Modify `getAllSettings` (~line 74) to read + return `sounds`:
+Modify `getAllSettings` (~line 74) to read + return `sounds`. **Preserve all existing reads** — add only the `sounds` read and include it in the return object:
 
 ```typescript
 export async function getAllSettings(): Promise<AppSettings> {
   const s = await getStore()
-  // ...existing reads...
+  const theme = ((await s.get("theme")) as AppSettings["theme"]) ?? defaults.theme
+  const fontSize = ((await s.get("fontSize")) as AppSettings["fontSize"]) ?? defaults.fontSize
+  const language = ((await s.get("language")) as AppSettings["language"]) ?? defaults.language
+  const devMode = ((await s.get("devMode")) as AppSettings["devMode"]) ?? defaults.devMode
+  const browserPanel = ((await s.get("browserPanel")) as AppSettings["browserPanel"]) ?? defaults.browserPanel
+  const browserLastMode =
+    ((await s.get("browserLastMode")) as AppSettings["browserLastMode"]) ?? defaults.browserLastMode
+  const browserSearchEngine =
+    ((await s.get("browserSearchEngine")) as AppSettings["browserSearchEngine"]) ?? defaults.browserSearchEngine
+  const toolAutoExpand =
+    ((await s.get("toolAutoExpand")) as AppSettings["toolAutoExpand"]) ?? defaults.toolAutoExpand
+  const messageMode =
+    ((await s.get("messageMode")) as AppSettings["messageMode"]) ?? defaults.messageMode
   const notifications =
     ((await s.get("notifications")) as AppSettings["notifications"]) ?? defaults.notifications
   const sounds =
-    ((await s.get("sounds")) as AppSettings["sounds"]) ?? defaults.sounds
-  return { /* ...existing fields..., */ notifications, sounds }
+    ((await s.get("sounds")) as AppSettings["sounds"]) ?? defaults.sounds  // NEW
+  return {
+    theme, fontSize, language, devMode, browserPanel, browserLastMode,
+    browserSearchEngine, toolAutoExpand, messageMode, notifications,
+    sounds,  // NEW
+  }
 }
 ```
 
@@ -1010,11 +1026,14 @@ git commit -m "feat(sound-effects): add Sounds page to settings dialog nav"
 
 - [ ] **Step 1: Add FS operations + import/delete functions**
 
-Append to `src/openacp/lib/sound-registry.ts`:
+**Hoist the new imports to the top of `src/openacp/lib/sound-registry.ts`** (with the existing imports — do NOT leave them at the bottom):
 
 ```typescript
 import { BaseDirectory, exists, mkdir, writeFile, remove } from "@tauri-apps/plugin-fs"
 import type { ImportedFormat } from "./settings-store"
+```
+
+Then append the rest of the module (constants, error class, helpers, functions) to the end of the file:
 
 const ALLOWED_EXTS: ImportedFormat[] = ["mp3", "wav", "ogg"]
 const MAX_SIZE_BYTES = 5 * 1024 * 1024
@@ -1047,8 +1066,15 @@ async function ensureSoundsDir(): Promise<void> {
 
 /**
  * Import a user-selected audio file.
+ *
  * Validates size + format + library cap. Writes to appDataDir/sounds/<uuid>.<ext>.
- * Returns metadata — caller MUST re-read `sounds` settings before persisting to avoid clobber.
+ * Returns metadata — caller MUST re-read `sounds` settings via `getSetting('sounds')`
+ * immediately before persisting the new library to avoid clobbering concurrent writes.
+ *
+ * The `currentLibrary` argument is for the library-size precheck only (may be
+ * stale). The authoritative atomicity step lives in the caller (see
+ * `settings-sounds.tsx` `handleImport`), which re-reads settings AFTER this
+ * function returns and BEFORE `setSetting`.
  */
 export async function importSound(
   file: File,
