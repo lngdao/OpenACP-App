@@ -61,8 +61,8 @@ function Body(props: FolderFlowStepProps) {
         </div>
         <Button
           type="button"
+          size="sm"
           onClick={() => props.onAdd({ id: inst.id, name: inst.name ?? inst.id, directory: inst.directory, type: "local" })}
-          className="px-4 py-1.5 text-sm-medium h-auto"
         >
           Add workspace
         </Button>
@@ -115,9 +115,9 @@ function RegisterExistingView(props: {
       <div className="flex items-center gap-2">
         <Button
           type="button"
+          size="sm"
           onClick={register}
           disabled={loading}
-          className="px-4 py-1.5 text-sm-medium h-auto"
         >
           {loading ? "Adding..." : "Add workspace"}
         </Button>
