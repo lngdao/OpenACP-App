@@ -28,6 +28,21 @@ function formatDebugText(info: DebugInfo): string {
   lines.push(`OS: ${info.os ?? "unknown"}`)
   lines.push(`Config: ${info.config ?? "unknown"}`)
   if (MIN_CORE_VERSION) lines.push(`MIN_CORE_VERSION: ${MIN_CORE_VERSION}`)
+  // Shell env snapshot — added in the shell_env refactor so user bug reports
+  // include how PATH resolution played out.
+  if (info.shell_env_resolved_via) {
+    lines.push(`Shell env resolved via: ${info.shell_env_resolved_via}`)
+  }
+  if (info.shell_env_vars_count) {
+    lines.push(`Shell env vars: ${info.shell_env_vars_count}`)
+  }
+  if (info.shell_env_path) lines.push(`Shell env PATH: ${info.shell_env_path}`)
+  // Launcher info — how we spawn openacp. "explicit node (...)" means we
+  // bypass the shebang for determinism; "shim + env node" means fallback.
+  if (info.openacp_launcher) {
+    lines.push(`openacp launcher: ${info.openacp_launcher}`)
+  }
+  if (info.openacp_entry) lines.push(`openacp entry: ${info.openacp_entry}`)
   if (info.log_path) lines.push(`Log file: ${info.log_path}`)
   return lines.join("\n")
 }
@@ -41,14 +56,21 @@ async function fetchRecentLogs(): Promise<string[]> {
 }
 
 /** Copy debug info + recent logs to clipboard */
-export async function copyDebugInfo(): Promise<void> {
+/** Collect debug info + recent logs and format as a single text block. */
+async function collectDebugText(): Promise<string> {
   const [info, logs] = await Promise.all([fetchDebugInfo(), fetchRecentLogs()])
   const sections = [formatDebugText(info)]
   if (logs.length > 0) {
     sections.push(`\n--- Recent Logs (last ${logs.length} entries) ---\n${logs.join("\n")}`)
   }
-  const text = sections.join("\n")
+  return sections.join("\n")
+}
+
+/** Copy full debug info + logs to clipboard. Exported so the native menu
+ * path can share the same implementation as the dialog button. */
+export async function copyDebugInfo(): Promise<void> {
   try {
+    const text = await collectDebugText()
     await navigator.clipboard.writeText(text)
     showToast({ description: "Debug info copied to clipboard" })
   } catch {
@@ -73,10 +95,14 @@ export function AboutDialog({
     }
   }, [open])
 
+  // Dialog's Copy button: include recent logs (not just the info shown in
+  // the dialog) so user bug reports have the actual CLI stderr captured
+  // by the file logger. Previously this used formatDebugText alone, which
+  // stripped logs and made remote debugging much harder.
   async function handleCopy() {
     if (!info) return
-    const text = formatDebugText(info)
     try {
+      const text = await collectDebugText()
       await navigator.clipboard.writeText(text)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -105,6 +131,15 @@ export function AboutDialog({
               {info.node_path && <InfoRow label="Node path" value={info.node_path} />}
               <InfoRow label="OS" value={info.os ?? "unknown"} />
               <InfoRow label="Config" value={info.config ?? "unknown"} />
+              {info.shell_env_resolved_via && (
+                <InfoRow
+                  label="Shell env"
+                  value={`${info.shell_env_resolved_via} (${info.shell_env_vars_count ?? "?"} vars)`}
+                />
+              )}
+              {info.openacp_launcher && (
+                <InfoRow label="Launcher" value={info.openacp_launcher} />
+              )}
             </div>
           ) : (
             <div className="text-sm text-muted-foreground py-4">Loading...</div>
