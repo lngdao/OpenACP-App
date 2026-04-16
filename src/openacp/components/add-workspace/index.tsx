@@ -51,23 +51,24 @@ export function AddWorkspaceModal(props: AddWorkspaceModalProps) {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-border-weak">
+        {/* Tabs — every tab carries a 2px bottom border (active = foreground, inactive = weak),
+            so the underline is one continuous line across both halves with no height jump. */}
+        <div className="flex">
           <button
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-medium transition-colors border-b-2 ${
               tab === "local"
-                ? "text-foreground border-b-2 border-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-foreground border-foreground"
+                : "text-muted-foreground border-border-weak hover:text-foreground"
             }`}
             onClick={() => setTab("local")}
           >
             Local
           </button>
           <button
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 text-sm font-medium transition-colors border-b-2 ${
               tab === "remote"
-                ? "text-foreground border-b-2 border-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "text-foreground border-foreground"
+                : "text-muted-foreground border-border-weak hover:text-foreground"
             }`}
             onClick={() => setTab("remote")}
           >
