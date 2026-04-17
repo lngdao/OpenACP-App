@@ -215,6 +215,9 @@ export function ChatView() {
   const activeSessionId = chat.activeSession();
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  // Direct access to Virtuoso's scroller element for reliable scroll-to-bottom
+  // that bypasses Virtuoso's height estimation (which can be wrong for unmeasured items).
+  const scrollerElRef = useRef<HTMLElement | null>(null);
   const [atBottom, setAtBottom] = useState(true);
   // Tracks whether the user has intentionally scrolled up during streaming.
   // Set immediately on upward wheel input; cleared when the viewport returns to the bottom,
@@ -492,6 +495,7 @@ export function ChatView() {
           <>
             <Virtuoso
               ref={virtuosoRef}
+              scrollerRef={(el) => { scrollerElRef.current = el as HTMLElement | null; }}
               className="h-full no-scrollbar"
               data={flatItems}
               computeItemKey={(_, item) => item.key}
@@ -542,19 +546,17 @@ export function ChatView() {
               visible={!atBottom}
               onClick={() => {
                 // Explicit intent to return to bottom — reset scroll flag so the interval
-                // can take over if the smooth animation doesn't reach the new bottom
-                // (content may have grown during the animation).
+                // can take over to track growing content.
                 userScrolledUpRef.current = false;
                 if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
-                virtuosoRef.current?.scrollToIndex({
-                  index: "LAST",
-                  // During streaming: use instant scroll so it doesn't conflict with the 80ms
-                  // interval (which also uses "auto"). Smooth animation gets interrupted by the
-                  // interval's instant scrollToIndex calls, causing visible stuttering.
-                  // Not streaming: smooth animation (no interval running to interfere).
-                  behavior: streaming ? "auto" : "smooth",
-                  align: "end",
-                });
+                // Use the scroller element directly to bypass Virtuoso's height estimation.
+                // scrollToIndex relies on estimated heights for unmeasured items (defaultItemHeight=80),
+                // which causes it to land short when jumping from far up — requiring 2 clicks.
+                // Direct scrollTop = scrollHeight always reaches the true bottom in one shot.
+                const el = scrollerElRef.current;
+                if (el) {
+                  el.scrollTo({ top: el.scrollHeight, behavior: streaming ? "auto" : "smooth" });
+                }
               }}
             />
           </>
