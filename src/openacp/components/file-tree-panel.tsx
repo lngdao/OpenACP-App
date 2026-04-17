@@ -127,6 +127,8 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
   const [loading, setLoading] = useState(true)
   const [repoChanges, setRepoChanges] = useState<RepoChanges[]>([])
   const { mode: gitMode, repos: gitRepos } = useGitRepos(workspacePath)
+  // Stable key: only re-fetch when repo paths/branches actually change
+  const reposKey = gitRepos.map((r) => `${r.path}:${r.branch}`).join("|")
 
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -161,7 +163,7 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
         })
         .finally(() => setLoading(false))
     }
-  }, [workspacePath, mode, refreshKey, gitMode, gitRepos])
+  }, [workspacePath, mode, refreshKey, gitMode, reposKey])
 
   // Auto-refresh when agent modifies files (tool_call completed for file-related tools)
   useEffect(() => {
