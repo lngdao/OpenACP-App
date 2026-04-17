@@ -248,15 +248,20 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
   // Listen for "open-diff-in-review" from files panel changes tab
   useEffect(() => {
     function handleOpenDiff(e: Event) {
-      const { path } = (e as CustomEvent).detail ?? {}
-      if (!path) return
-      // Switch to review tab and expand the file's diff
+      const { path: requestedPath } = (e as CustomEvent).detail ?? {}
+      if (!requestedPath) return
+      // Match by exact path or by suffix (git status path vs tool.diff.path may differ)
+      const matchedDiff = fileDiffs.find(
+        (d) => d.path === requestedPath || d.path.endsWith(requestedPath) || requestedPath.endsWith(d.path)
+      )
       setSelectedTab(null)
-      setExpandedDiffs((prev) => new Set(prev).add(path))
+      if (matchedDiff) {
+        setExpandedDiffs((prev) => new Set(prev).add(matchedDiff.path))
+      }
     }
     window.addEventListener("open-diff-in-review", handleOpenDiff)
     return () => window.removeEventListener("open-diff-in-review", handleOpenDiff)
-  }, [])
+  }, [fileDiffs])
 
   // "review" = built-in review tab, or a file path for open file tabs
   const activeView = selectedTab ?? "review";

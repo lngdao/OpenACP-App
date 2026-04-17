@@ -280,15 +280,14 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
     }
   }, [onOpenFile])
 
-  // Open changed file in review panel diff view (not as plain file)
+  // Open changed file in review panel diff view — send relative path as-is
+  // (matches tool.diff.path which is relative)
   const handleOpenChange = useCallback((filePath: string) => {
-    const absPath = filePath.startsWith("/") ? filePath : `${workspacePath}/${filePath}`
-    window.dispatchEvent(new CustomEvent("open-diff-in-review", { detail: { path: absPath } }))
-  }, [workspacePath])
+    window.dispatchEvent(new CustomEvent("open-diff-in-review", { detail: { path: filePath } }))
+  }, [])
 
-  const handleGroupedOpenChange = useCallback((repoPath: string, filePath: string) => {
-    const absPath = filePath.startsWith("/") ? filePath : `${repoPath}/${filePath}`
-    window.dispatchEvent(new CustomEvent("open-diff-in-review", { detail: { path: absPath } }))
+  const handleGroupedOpenChange = useCallback((_repoPath: string, filePath: string) => {
+    window.dispatchEvent(new CustomEvent("open-diff-in-review", { detail: { path: filePath } }))
   }, [])
 
   return (
