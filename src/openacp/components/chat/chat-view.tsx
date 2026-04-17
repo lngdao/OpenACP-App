@@ -305,11 +305,18 @@ export function ChatView() {
   }, [messages]);
 
   // ── Single scroll helper ──
-  // Uses the scroller element directly — always reaches the true bottom regardless of
-  // whether Virtuoso has measured all items. Every scroll-to-bottom action calls this.
+  // Uses the scroller element directly. Scrolls twice: once immediately, once after a frame.
+  // The retry is needed because Virtuoso adjusts its total height as items near the bottom
+  // get measured — the first scroll lands at the estimated bottom, the second at the true bottom.
   const scrollToBottom = useCallback(() => {
     const el = scrollerElRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+    requestAnimationFrame(() => {
+      if (scrollerElRef.current) {
+        scrollerElRef.current.scrollTo({ top: scrollerElRef.current.scrollHeight, behavior: "auto" });
+      }
+    });
   }, []);
 
   // ── Explicit scroll triggers (always scroll + always reset flag) ──
@@ -479,7 +486,18 @@ export function ChatView() {
           <>
             <Virtuoso
               ref={virtuosoRef}
-              scrollerRef={(el) => { scrollerElRef.current = el as HTMLElement | null; }}
+              scrollerRef={(el) => {
+                scrollerElRef.current = el as HTMLElement | null;
+                // Scroll to bottom on Virtuoso mount (initial session load, session switch
+                // from empty to messages). The rAF gives Virtuoso time to render initial items.
+                if (el && !userScrolledUpRef.current) {
+                  requestAnimationFrame(() => {
+                    if (scrollerElRef.current) {
+                      scrollerElRef.current.scrollTo({ top: scrollerElRef.current.scrollHeight, behavior: "auto" });
+                    }
+                  });
+                }
+              }}
               className="h-full no-scrollbar"
               data={flatItems}
               computeItemKey={(_, item) => item.key}
