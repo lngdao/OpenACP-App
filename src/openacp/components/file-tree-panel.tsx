@@ -5,6 +5,7 @@ import { ResizeHandle } from "./ui/resize-handle"
 import { TreeNode, type FileNode } from "./file-tree/tree-node"
 import { GitDiff, Files, CaretRight, CaretDown, FolderSimple } from "@phosphor-icons/react"
 import { useGitRepos, type GitRepoInfo } from "../hooks/use-git-repos"
+import { getContent, setContent } from "../lib/content-cache"
 
 const DEFAULT_WIDTH = 280
 const MIN_WIDTH = 200
@@ -264,8 +265,15 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
   }, [])
 
   const handleOpenFile = useCallback(async (path: string) => {
+    // Check content cache first for instant re-opens
+    const cached = getContent(path)
+    if (cached) {
+      onOpenFile(path, cached.content, cached.language)
+      return
+    }
     try {
       const result = await invoke<{ content: string; language: string }>("read_file_content", { path })
+      setContent(path, result.content, result.language)
       onOpenFile(path, result.content, result.language)
     } catch (e) {
       console.error("[file-tree] failed to read file:", e)

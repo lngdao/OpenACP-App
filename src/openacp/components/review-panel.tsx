@@ -1,107 +1,14 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { X, CaretRight, CaretDown, CaretLeft } from "@phosphor-icons/react";
-import { computeDiffLines, type DiffLine } from "./chat/diff-utils";
 import { ResizeHandle } from "./ui/resize-handle";
 import { useChat } from "../context/chat";
 import type { ToolCallPart, FileDiff as FileDiffData } from "../types";
-import { Button } from "./ui/button";
-import { CodeViewer } from "./ui/code-viewer";
+import { PierreFile } from "./pierre/pierre-file";
+import { PierreDiff } from "./pierre/pierre-diff";
 
 const DEFAULT_WIDTH = 480;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 800;
-
-function DiffStats({ before, after }: { before: string; after: string }) {
-  const stats = useMemo(() => {
-    const lines = computeDiffLines(before, after, "");
-    return lines.reduce(
-      (acc, l) => {
-        if (l.type === "add") acc.add++;
-        else if (l.type === "del") acc.del++;
-        return acc;
-      },
-      { add: 0, del: 0 },
-    );
-  }, [before, after]);
-  return (
-    <span className="flex items-center gap-1.5 text-sm leading-lg font-mono">
-      {stats.add > 0 && (
-        <span style={{ color: "var(--syntax-diff-add, #2da44e)" }}>
-          +{stats.add}
-        </span>
-      )}
-      {stats.del > 0 && (
-        <span style={{ color: "var(--syntax-diff-delete, #cf222e)" }}>
-          -{stats.del}
-        </span>
-      )}
-    </span>
-  );
-}
-
-function DiffView({
-  before,
-  after,
-  path,
-}: {
-  before: string;
-  after: string;
-  path: string;
-}) {
-  const lines = useMemo(
-    () => computeDiffLines(before, after, path),
-    [before, after, path],
-  );
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [hasOverflowRight, setHasOverflowRight] = useState(false);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const check = () => setHasOverflowRight(el.scrollWidth > el.clientWidth + el.scrollLeft + 1);
-    check();
-    el.addEventListener("scroll", check);
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    return () => { el.removeEventListener("scroll", check); ro.disconnect(); };
-  }, [lines]);
-
-  return (
-    <div className="relative">
-      {/* Scroll container — ref here for overflow detection; .oac-diff-view inside is display:table */}
-      <div ref={containerRef} className="font-mono overflow-x-auto no-scrollbar" style={{ fontSize: "12px" }}>
-        <div className="oac-diff-view">
-          {lines.map((line, i) => (
-            <div
-              key={i}
-              className={`oac-diff-line ${line.type === "add" ? "oac-diff-add" : line.type === "del" ? "oac-diff-del" : line.type === "hunk" ? "oac-diff-hunk" : ""}`}
-            >
-              <span className="oac-diff-gutter oac-diff-gutter-old">
-                {line.oldNum ?? ""}
-              </span>
-              <span className="oac-diff-gutter oac-diff-gutter-new">
-                {line.newNum ?? ""}
-              </span>
-              <span className="oac-diff-sign">
-                {line.type === "add"
-                  ? "+"
-                  : line.type === "del"
-                    ? "-"
-                    : line.type === "hunk"
-                      ? ""
-                      : " "}
-              </span>
-              <span className="oac-diff-content">{line.content}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      {hasOverflowRight && (
-        <div className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none" style={{ background: "linear-gradient(to left, var(--card), transparent)" }} />
-      )}
-    </div>
-  );
-}
 
 function FileTabsBar({ tabs, activeView, fileName, onSelect, onMiddleClick, onClose }: {
   tabs: OpenFile[]
@@ -340,12 +247,13 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
                     >
                       {isExpanded ? <CaretDown size={12} /> : <CaretRight size={12} />}
                       <span className="truncate flex-1 text-left">{fileName(path)}</span>
-                      <DiffStats before={diff.before ?? ""} after={diff.after} />
                     </button>
                     {isExpanded && (
-                      <div className="overflow-x-auto no-scrollbar">
-                        <DiffView path={path} before={diff.before ?? ""} after={diff.after} />
-                      </div>
+                      <PierreDiff
+                        oldContent={diff.before ?? ""}
+                        newContent={diff.after}
+                        filePath={path}
+                      />
                     )}
                   </div>
                 );
@@ -357,19 +265,13 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
 
       {/* Open file tab content */}
       {activeView !== "review" && currentFile && (
-        <div className="flex-1 min-h-0 overflow-auto no-scrollbar">
-          <CodeViewer
-            content={currentFile.content}
-            language={currentFile.language}
-            filePath={currentFile.path}
-            onComment={handleCodeComment}
-          />
-        </div>
+        <PierreFile
+          content={currentFile.content}
+          language={currentFile.language}
+          filePath={currentFile.path}
+          onComment={handleCodeComment}
+        />
       )}
     </div>
   );
-}
-
-function _FileContentView({ content, language }: { content: string; language: string }) {
-  return <CodeViewer content={content} language={language} />
 }

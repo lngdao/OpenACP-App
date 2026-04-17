@@ -58,6 +58,7 @@ import { FloatingBrowserFrame } from "./components/floating-browser-frame";
 import { TerminalProvider } from "./context/terminal";
 import { TerminalPanel } from "./components/terminal-panel";
 import { ToolDisplayProvider } from "./context/tool-display";
+import { PierreWorkerPoolProvider } from "./context/worker-pool";
 import type { ServerInfo } from "./types";
 
 export function UpdateToastRow({
@@ -996,39 +997,41 @@ function OpenACPAppInner() {
                 );
               }}
             >
-              <TerminalProvider>
-                <SessionsProvider>
-                  <PermissionsProvider>
-                    <ChatWithPermissions
-                      sidebarCollapsed={sidebarCollapsed}
-                      reviewOpen={reviewOpen}
-                      onToggleReview={() => setReviewOpen((v) => !v)}
-                      setReviewOpen={setReviewOpen}
-                      fileTreeOpen={fileTreeOpen}
-                      workspacePath={activeWorkspace?.directory ?? ""}
-                      browserPanelEnabled={browserPanelEnabled}
-                      terminalOpen={terminalOpen}
-                      onCloseTerminal={() => setTerminalOpen(false)}
-                    />
-                  </PermissionsProvider>
-                </SessionsProvider>
-              </TerminalProvider>
-              <PluginsModal
-                open={pluginsOpen}
-                onClose={() => setPluginsOpen(false)}
-              />
-              <ShareWorkspaceDialog
-                open={shareOpen}
-                onOpenChange={setShareOpen}
-                onShared={(link) => {
-                  if (active) {
-                    setSharingWorkspaceIds(
-                      (prev) => new Set([...prev, active]),
-                    );
-                    setShareLinks((prev) => new Map(prev).set(active, link));
-                  }
-                }}
-              />
+              <PierreWorkerPoolProvider>
+                <TerminalProvider>
+                  <SessionsProvider>
+                    <PermissionsProvider>
+                      <ChatWithPermissions
+                        sidebarCollapsed={sidebarCollapsed}
+                        reviewOpen={reviewOpen}
+                        onToggleReview={() => setReviewOpen((v) => !v)}
+                        setReviewOpen={setReviewOpen}
+                        fileTreeOpen={fileTreeOpen}
+                        workspacePath={activeWorkspace?.directory ?? ""}
+                        browserPanelEnabled={browserPanelEnabled}
+                        terminalOpen={terminalOpen}
+                        onCloseTerminal={() => setTerminalOpen(false)}
+                      />
+                    </PermissionsProvider>
+                  </SessionsProvider>
+                </TerminalProvider>
+                <PluginsModal
+                  open={pluginsOpen}
+                  onClose={() => setPluginsOpen(false)}
+                />
+                <ShareWorkspaceDialog
+                  open={shareOpen}
+                  onOpenChange={setShareOpen}
+                  onShared={(link) => {
+                    if (active) {
+                      setSharingWorkspaceIds(
+                        (prev) => new Set([...prev, active]),
+                      );
+                      setShareLinks((prev) => new Map(prev).set(active, link));
+                    }
+                  }}
+                />
+              </PierreWorkerPoolProvider>
             </WorkspaceProvider>
           ) : (
             <div className="flex-1 flex items-center justify-center bg-card">
