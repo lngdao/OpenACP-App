@@ -156,7 +156,8 @@ function FileTabsBar({ tabs, activeView, fileName, onSelect, onMiddleClick, onCl
       )}
       <div
         ref={scrollRef}
-        className="flex-1 min-w-0 flex items-center gap-1 px-1 overflow-x-auto no-scrollbar"
+        className="flex-1 min-w-0 flex items-center gap-1 px-1 overflow-x-scroll no-scrollbar"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" } as React.CSSProperties}
       >
         {tabs.map((file) => {
           const isSelected = activeView === file.path;
