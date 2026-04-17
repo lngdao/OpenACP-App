@@ -52,7 +52,7 @@ function FileTabsBar({ tabs, activeView, fileName, onSelect, onMiddleClick, onCl
   }
 
   return (
-    <div className="flex-1 min-w-0 flex items-center relative">
+    <div className="flex-1 min-w-0 flex items-center relative overflow-hidden">
       {canScrollLeft && (
         <button
           className="shrink-0 size-6 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"

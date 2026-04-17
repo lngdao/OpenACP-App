@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
-import { File } from "@pierre/diffs/react"
+import { File, Virtualizer } from "@pierre/diffs/react"
 import { Plus } from "@phosphor-icons/react"
 import type { FileContents, SelectedLineRange, LineAnnotation, GetHoveredLineResult } from "@pierre/diffs"
 import { Button } from "../ui/button"
@@ -113,25 +113,29 @@ export function PierreFile({ content, language, filePath, onComment }: PierreFil
   }, [onComment, commenting, selectedLines])
 
   return (
-    <File
-      file={file}
-      selectedLines={selectedLines}
-      lineAnnotations={annotations}
-      renderAnnotation={renderAnnotation}
-      renderGutterUtility={onComment ? renderGutterUtility : undefined}
-      options={{
-        enableLineSelection: true,
-        onLineSelected: handleLineSelected,
-      }}
-      metrics={{
-        lineHeight: 20,
-        hunkSeparatorHeight: 24,
-        hunkLineCount: 0,
-        diffHeaderHeight: 0,
-        fileGap: 0,
-      }}
-      className="h-full w-full select-text"
-      style={{ fontSize: "12px" }}
-    />
+    <Virtualizer
+      className="h-full w-full"
+      contentClassName="select-text"
+    >
+      <File
+        file={file}
+        selectedLines={selectedLines}
+        lineAnnotations={annotations}
+        renderAnnotation={renderAnnotation}
+        renderGutterUtility={onComment ? renderGutterUtility : undefined}
+        options={{
+          enableLineSelection: true,
+          onLineSelected: handleLineSelected,
+        }}
+        metrics={{
+          lineHeight: 20,
+          hunkSeparatorHeight: 24,
+          hunkLineCount: 0,
+          diffHeaderHeight: 0,
+          fileGap: 0,
+        }}
+        style={{ fontSize: "12px" }}
+      />
+    </Virtualizer>
   )
 }
