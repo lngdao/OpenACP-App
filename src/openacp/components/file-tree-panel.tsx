@@ -70,9 +70,10 @@ function GroupedChangesView({
   const rows = useMemo<VirtualRow[]>(() => {
     const result: VirtualRow[] = []
     for (const { repo, changes } of repoChanges) {
+      if (changes.length === 0) continue // skip repos with no changes
       const isExpanded = expanded.has(repo.path)
       result.push({ kind: "header", repo, count: changes.length, collapsed: !isExpanded })
-      if (isExpanded && changes.length > 0) {
+      if (isExpanded) {
         for (const change of changes) {
           result.push({ kind: "change", repoPath: repo.path, change })
         }
@@ -88,32 +89,22 @@ function GroupedChangesView({
       itemContent={(index) => {
         const row = rows[index]
         if (row.kind === "header") {
-          const hasChanges = row.count > 0
           return (
             <button
               type="button"
-              className={`flex items-center gap-1 w-full px-3 h-6 min-w-0 text-left transition-colors ${
-                hasChanges ? "hover:bg-accent" : ""
-              }`}
-              onClick={() => hasChanges && toggleExpand(row.repo.path)}
-              disabled={!hasChanges}
+              className="flex items-center gap-1 w-full px-3 h-6 min-w-0 text-left transition-colors hover:bg-accent"
+              onClick={() => toggleExpand(row.repo.path)}
             >
-              {hasChanges ? (
-                row.collapsed ? (
-                  <CaretRight size={10} className="shrink-0 text-fg-weakest" />
-                ) : (
-                  <CaretDown size={10} className="shrink-0 text-fg-weakest" />
-                )
+              {row.collapsed ? (
+                <CaretRight size={10} className="shrink-0 text-fg-weakest" />
               ) : (
-                <span className="w-2.5 shrink-0" />
+                <CaretDown size={10} className="shrink-0 text-fg-weakest" />
               )}
-              <FolderSimple size={12} weight="fill" className={`shrink-0 ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`} />
-              <span className={`text-xs truncate min-w-0 ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`}>
+              <FolderSimple size={12} weight="fill" className="shrink-0 text-fg-weaker" />
+              <span className="text-xs truncate min-w-0 text-fg-weaker">
                 {row.repo.name}
               </span>
-              {hasChanges && (
-                <span className="text-2xs text-fg-weakest shrink-0 ml-auto">{row.count}</span>
-              )}
+              <span className="text-2xs text-fg-weakest shrink-0 ml-auto">{row.count}</span>
             </button>
           )
         }
