@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { ResizeHandle } from "./ui/resize-handle"
 import { TreeNode, type FileNode } from "./file-tree/tree-node"
-import { GitDiff, Files } from "@phosphor-icons/react"
+import { GitDiff, Files, CaretRight, CaretDown, FolderSimple } from "@phosphor-icons/react"
+import { useGitRepos, type GitRepoInfo } from "../hooks/use-git-repos"
 
 const DEFAULT_WIDTH = 280
 const MIN_WIDTH = 200
@@ -11,6 +12,11 @@ const MAX_WIDTH = 480
 interface FileChange {
   path: string
   status: "modified" | "added" | "deleted" | "untracked"
+}
+
+interface RepoChanges {
+  repo: GitRepoInfo
+  changes: FileChange[]
 }
 
 interface FileTreePanelProps {
@@ -32,12 +38,95 @@ const STATUS_LABELS: Record<string, string> = {
   untracked: "?",
 }
 
+function GroupedChangesView({
+  repoChanges,
+  onOpenChange,
+}: {
+  repoChanges: RepoChanges[]
+  onOpenChange: (repoPath: string, filePath: string) => void
+}) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  function toggleCollapse(path: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
+
+  return (
+    <div className="flex flex-col">
+      {repoChanges.map(({ repo, changes }) => {
+        const isCollapsed = collapsed.has(repo.path)
+        const hasChanges = changes.length > 0
+
+        return (
+          <div key={repo.path}>
+            <button
+              type="button"
+              className={`flex items-center gap-1.5 w-full px-3 py-1.5 text-left transition-colors ${
+                hasChanges ? "hover:bg-accent" : ""
+              }`}
+              onClick={() => hasChanges && toggleCollapse(repo.path)}
+              disabled={!hasChanges}
+            >
+              {hasChanges ? (
+                isCollapsed ? (
+                  <CaretRight size={10} className="shrink-0 text-fg-weakest" />
+                ) : (
+                  <CaretDown size={10} className="shrink-0 text-fg-weakest" />
+                )
+              ) : (
+                <span className="w-2.5" />
+              )}
+              <FolderSimple size={12} weight="fill" className={`shrink-0 ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`} />
+              <span className={`text-xs truncate ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`}>
+                {repo.name}
+              </span>
+              <span className={`text-2xs ${hasChanges ? "text-fg-weak" : "text-fg-weakest"}`}>
+                {repo.branch}
+              </span>
+              <span className="flex-1" />
+              {hasChanges && (
+                <span className="text-2xs text-fg-weakest">{changes.length}</span>
+              )}
+            </button>
+
+            {hasChanges && !isCollapsed && (
+              <div className="flex flex-col">
+                {changes.map((change) => (
+                  <button
+                    key={`${repo.path}/${change.path}`}
+                    type="button"
+                    className="flex items-center gap-2 w-full text-left pl-7 pr-3 py-[3px] hover:bg-accent rounded-sm transition-colors text-sm"
+                    onClick={() => onOpenChange(repo.path, change.path)}
+                    title={change.path}
+                  >
+                    <span className={`text-2xs font-mono shrink-0 w-3 ${STATUS_COLORS[change.status]}`}>
+                      {STATUS_LABELS[change.status]}
+                    </span>
+                    <span className="truncate text-fg-weak">{change.path}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps) {
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const [mode, setMode] = useState<"files" | "changes">("files")
   const [rootNodes, setRootNodes] = useState<FileNode[]>([])
   const [changes, setChanges] = useState<FileChange[]>([])
   const [loading, setLoading] = useState(true)
+  const [repoChanges, setRepoChanges] = useState<RepoChanges[]>([])
+  const { mode: gitMode, repos: gitRepos } = useGitRepos(workspacePath)
 
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -50,13 +139,29 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
         .then(setRootNodes)
         .catch(() => setRootNodes([]))
         .finally(() => setLoading(false))
+    } else if (gitMode === "multi" && gitRepos.length > 1) {
+      Promise.all(
+        gitRepos.map((repo) =>
+          invoke<FileChange[]>("get_workspace_changes", { path: repo.path })
+            .then((changes) => ({ repo, changes }))
+            .catch(() => ({ repo, changes: [] as FileChange[] }))
+        )
+      )
+        .then(setRepoChanges)
+        .finally(() => setLoading(false))
     } else {
       invoke<FileChange[]>("get_workspace_changes", { path: workspacePath })
-        .then(setChanges)
-        .catch(() => setChanges([]))
+        .then((c) => {
+          setChanges(c)
+          setRepoChanges([])
+        })
+        .catch(() => {
+          setChanges([])
+          setRepoChanges([])
+        })
         .finally(() => setLoading(false))
     }
-  }, [workspacePath, mode, refreshKey])
+  }, [workspacePath, mode, refreshKey, gitMode, gitRepos])
 
   // Auto-refresh when agent modifies files (tool_call completed for file-related tools)
   useEffect(() => {
@@ -151,6 +256,14 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
           ) : (
             <div className="px-3 py-4 text-sm text-muted-foreground">No files found</div>
           )
+        ) : repoChanges.length > 0 ? (
+          <GroupedChangesView
+            repoChanges={repoChanges}
+            onOpenChange={(repoPath, filePath) => {
+              const absPath = filePath.startsWith("/") ? filePath : `${repoPath}/${filePath}`
+              handleOpenFile(absPath)
+            }}
+          />
         ) : changes.length > 0 ? (
           <div className="flex flex-col">
             {changes.map((change) => (
