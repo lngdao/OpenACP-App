@@ -543,7 +543,11 @@ export function ChatView() {
                 if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
                 virtuosoRef.current?.scrollToIndex({
                   index: "LAST",
-                  behavior: "smooth",
+                  // During streaming: use instant scroll so it doesn't conflict with the 80ms
+                  // interval (which also uses "auto"). Smooth animation gets interrupted by the
+                  // interval's instant scrollToIndex calls, causing visible stuttering.
+                  // Not streaming: smooth animation (no interval running to interfere).
+                  behavior: streaming ? "auto" : "smooth",
                   align: "end",
                 });
               }}
