@@ -216,9 +216,13 @@ export function ChatView() {
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [atBottom, setAtBottom] = useState(true);
-  // Tracks whether the user has intentionally scrolled up (vs. content expansion pushing viewport).
-  // Set on upward wheel input; cleared when the viewport reaches the bottom again.
+  // Tracks whether the user has intentionally scrolled up during streaming.
+  // Only set when the user has moved beyond atBottomThreshold (not on tiny wheel nudges within the
+  // threshold). Cleared when the viewport returns to the bottom or an explicit scroll is triggered.
   const userScrolledUpRef = useRef(false);
+  // Mirrors atBottom state as a ref so the onWheel handler can read it synchronously without
+  // accessing stale closure state.
+  const atBottomRef = useRef(true);
 
   const messages = chat.messages();
   const streaming = chat.streaming();
@@ -310,7 +314,9 @@ export function ChatView() {
   // Scroll to bottom when triggered (user sent message, cross-adapter turn, history loaded)
   useEffect(() => {
     if (chat.scrollTrigger() > 0) {
-      // Same reason as above — avoid align: "end" before items have been measured.
+      // Reset user scroll intent: sending a message is an explicit signal to show the response.
+      userScrolledUpRef.current = false;
+      // Same reason as session-switch — avoid align: "end" before items have been measured.
       virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto" });
     }
   }, [chat.scrollTrigger()]);
@@ -445,7 +451,12 @@ export function ChatView() {
       </Dialog>
       <div
         className="flex-1 min-h-0 overflow-hidden relative"
-        onWheel={(e) => { if (e.deltaY < 0) userScrolledUpRef.current = true; }}
+        onWheel={(e) => {
+          // Only disable auto-scroll when the user has actually moved beyond the atBottomThreshold.
+          // Ignoring wheel events while still within the threshold prevents tiny trackpad nudges
+          // from permanently disabling streaming auto-scroll.
+          if (e.deltaY < 0 && !atBottomRef.current) userScrolledUpRef.current = true;
+        }}
       >
         {hasMessages ? (
           <>
@@ -481,6 +492,7 @@ export function ChatView() {
               )}
               followOutput={false}
               atBottomStateChange={(isAtBottom) => {
+                atBottomRef.current = isAtBottom;
                 if (isAtBottom) userScrolledUpRef.current = false;
                 setAtBottom(isAtBottom);
               }}
