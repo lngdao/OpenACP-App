@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useTransition, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useTransition, useMemo, useRef } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { Virtuoso } from "react-virtuoso"
 import { ResizeHandle } from "./ui/resize-handle"
@@ -55,7 +55,6 @@ function GroupedChangesView({
   repoChanges: RepoChanges[]
   onOpenChange: (repoPath: string, filePath: string) => void
 }) {
-  // Start fully collapsed — user expands repos they care about
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   function toggleExpand(path: string) {
@@ -70,7 +69,7 @@ function GroupedChangesView({
   const rows = useMemo<VirtualRow[]>(() => {
     const result: VirtualRow[] = []
     for (const { repo, changes } of repoChanges) {
-      if (changes.length === 0) continue // skip repos with no changes
+      if (changes.length === 0) continue
       const isExpanded = expanded.has(repo.path)
       result.push({ kind: "header", repo, count: changes.length, collapsed: !isExpanded })
       if (isExpanded) {
@@ -81,6 +80,10 @@ function GroupedChangesView({
     }
     return result
   }, [repoChanges, expanded])
+
+  if (rows.length === 0) {
+    return <div className="px-3 py-4 text-sm text-muted-foreground">No changes</div>
+  }
 
   return (
     <Virtuoso
@@ -135,6 +138,10 @@ function SingleChangesView({
   changes: FileChange[]
   onOpenChange: (filePath: string) => void
 }) {
+  if (changes.length === 0) {
+    return <div className="px-3 py-4 text-sm text-muted-foreground">No changes</div>
+  }
+
   return (
     <Virtuoso
       totalCount={changes.length}
@@ -164,26 +171,44 @@ function SingleChangesView({
 export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps) {
   const [width, setWidth] = useState(DEFAULT_WIDTH)
   const [mode, setMode] = useState<"files" | "changes">("files")
+
+  // Keep both views' data alive — never discard on tab switch
   const [rootNodes, setRootNodes] = useState<FileNode[]>([])
   const [changes, setChanges] = useState<FileChange[]>([])
-  const [loading, setLoading] = useState(true)
   const [repoChanges, setRepoChanges] = useState<RepoChanges[]>([])
+  const [filesLoaded, setFilesLoaded] = useState(false)
+  const [changesLoaded, setChangesLoaded] = useState(false)
+
+  // Track which views have been opened (lazy mount)
+  const [mountedViews, setMountedViews] = useState<Set<string>>(() => new Set(["files"]))
+
   const { mode: gitMode, repos: gitRepos } = useGitRepos(workspacePath)
   const reposKey = gitRepos.map((r) => `${r.path}:${r.branch}`).join("|")
 
   const [refreshKey, setRefreshKey] = useState(0)
   const [, startTransition] = useTransition()
 
-  // Refresh when workspace, mode, or refreshKey changes
+  // Ensure current mode's view is mounted
+  useEffect(() => {
+    setMountedViews((prev) => {
+      if (prev.has(mode)) return prev
+      return new Set(prev).add(mode)
+    })
+  }, [mode])
+
+  // Fetch files data (independent of mode — only on workspace/refresh change)
   useEffect(() => {
     if (!workspacePath) return
-    setLoading(true)
-    if (mode === "files") {
-      invoke<FileNode[]>("read_directory", { path: workspacePath })
-        .then(setRootNodes)
-        .catch(() => setRootNodes([]))
-        .finally(() => setLoading(false))
-    } else if (gitMode === "multi" && gitRepos.length > 1) {
+    invoke<FileNode[]>("read_directory", { path: workspacePath })
+      .then(setRootNodes)
+      .catch(() => setRootNodes([]))
+      .finally(() => setFilesLoaded(true))
+  }, [workspacePath, refreshKey])
+
+  // Fetch changes data (independent of mode — only on workspace/refresh/repos change)
+  useEffect(() => {
+    if (!workspacePath) return
+    if (gitMode === "multi" && gitRepos.length > 1) {
       Promise.all(
         gitRepos.map((repo) =>
           invoke<FileChange[]>("get_workspace_changes", { path: repo.path })
@@ -191,8 +216,11 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
             .catch(() => ({ repo, changes: [] as FileChange[] }))
         )
       )
-        .then((result) => startTransition(() => setRepoChanges(result)))
-        .finally(() => setLoading(false))
+        .then((result) => startTransition(() => {
+          setRepoChanges(result)
+          setChanges([])
+        }))
+        .finally(() => setChangesLoaded(true))
     } else {
       invoke<FileChange[]>("get_workspace_changes", { path: workspacePath })
         .then((c) => startTransition(() => {
@@ -203,9 +231,9 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
           setChanges([])
           setRepoChanges([])
         })
-        .finally(() => setLoading(false))
+        .finally(() => setChangesLoaded(true))
     }
-  }, [workspacePath, mode, refreshKey, gitMode, reposKey])
+  }, [workspacePath, refreshKey, gitMode, reposKey])
 
   // Auto-refresh when agent modifies files
   useEffect(() => {
@@ -244,10 +272,15 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
     }
   }, [onOpenFile])
 
-  const handleOpenChange = useCallback(async (filePath: string) => {
+  const handleOpenChange = useCallback((filePath: string) => {
     const absPath = filePath.startsWith("/") ? filePath : `${workspacePath}/${filePath}`
-    await handleOpenFile(absPath)
+    handleOpenFile(absPath)
   }, [workspacePath, handleOpenFile])
+
+  const handleGroupedOpenChange = useCallback((repoPath: string, filePath: string) => {
+    const absPath = filePath.startsWith("/") ? filePath : `${repoPath}/${filePath}`
+    handleOpenFile(absPath)
+  }, [handleOpenFile])
 
   return (
     <div
@@ -286,13 +319,17 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
         </div>
       </div>
 
-      {/* Body */}
-      <div className="flex-1 overflow-hidden min-h-0">
-        {loading ? (
-          <div className="px-3 py-4 text-sm text-muted-foreground">Loading...</div>
-        ) : mode === "files" ? (
-          <div className="h-full overflow-y-auto overflow-x-hidden py-1">
-            {rootNodes.length > 0 ? (
+      {/* Body — both views stay mounted, toggle visibility with display */}
+      <div className="flex-1 overflow-hidden min-h-0 relative">
+        {/* Files view */}
+        {mountedViews.has("files") && (
+          <div
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden py-1"
+            style={{ display: mode === "files" ? "block" : "none" }}
+          >
+            {!filesLoaded ? (
+              <div className="px-3 py-4 text-sm text-muted-foreground">Loading...</div>
+            ) : rootNodes.length > 0 ? (
               rootNodes.map((node) => (
                 <TreeNode key={node.path} node={node} depth={0} onOpenFile={handleOpenFile} />
               ))
@@ -300,21 +337,28 @@ export function FileTreePanel({ workspacePath, onOpenFile }: FileTreePanelProps)
               <div className="px-3 py-4 text-sm text-muted-foreground">No files found</div>
             )}
           </div>
-        ) : repoChanges.length > 0 ? (
-          <GroupedChangesView
-            repoChanges={repoChanges}
-            onOpenChange={(repoPath, filePath) => {
-              const absPath = filePath.startsWith("/") ? filePath : `${repoPath}/${filePath}`
-              handleOpenFile(absPath)
-            }}
-          />
-        ) : changes.length > 0 ? (
-          <SingleChangesView
-            changes={changes}
-            onOpenChange={handleOpenChange}
-          />
-        ) : (
-          <div className="px-3 py-4 text-sm text-muted-foreground">No changes</div>
+        )}
+
+        {/* Changes view */}
+        {mountedViews.has("changes") && (
+          <div
+            className="absolute inset-0"
+            style={{ display: mode === "changes" ? "flex" : "none", flexDirection: "column" }}
+          >
+            {!changesLoaded ? (
+              <div className="px-3 py-4 text-sm text-muted-foreground">Loading...</div>
+            ) : repoChanges.length > 0 ? (
+              <GroupedChangesView
+                repoChanges={repoChanges}
+                onOpenChange={handleGroupedOpenChange}
+              />
+            ) : (
+              <SingleChangesView
+                changes={changes}
+                onOpenChange={handleOpenChange}
+              />
+            )}
+          </div>
         )}
       </div>
     </div>
