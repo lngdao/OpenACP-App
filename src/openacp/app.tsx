@@ -754,10 +754,8 @@ function OpenACPAppInner() {
   function handleAddWorkspace(entry: WorkspaceEntry) {
     const isNew = addWorkspace(entry);
     setShowAddWorkspace(false);
-    if (!isNew && active === entry.id) {
-      // Re-connect to updated workspace
-      void connect();
-    }
+    // No explicit connect() here — useWorkspaceConnection watches workspace.host
+    // and will trigger a fresh connection automatically after the state update renders.
     showToast({
       description: isNew
         ? `Workspace "${entry.name}" added.`
