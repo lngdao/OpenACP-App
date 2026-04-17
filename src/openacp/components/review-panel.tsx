@@ -195,29 +195,22 @@ export interface OpenFile {
   path: string
   content: string
   language: string
+  /** If present, this file tab shows a diff view instead of code viewer */
+  diff?: { before: string; after: string }
 }
 
-export interface RequestedDiff {
-  path: string
-  before: string
-  after: string
-  language: string
-}
-
-export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onRequestedTabHandled, requestedDiffPath, onRequestedDiffHandled }: {
+export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onRequestedTabHandled }: {
   onClose: () => void
   openFiles?: OpenFile[]
   onCloseFile?: (path: string)=> void
   requestedTab?: string | null
   onRequestedTabHandled?: () => void
-  requestedDiffPath?: RequestedDiff | null
-  onRequestedDiffHandled?: () => void
 }) {
   const chat = useChat();
   const [selectedTab, setSelectedTab] = useState<string | null>(null);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
 
-  // Accumulate diffs: first edit's `before` + last edit's `after` per file
+  // Accumulate agent diffs: first edit's `before` + last edit's `after` per file
   const fileDiffs = useMemo(() => {
     const firstBefore = new Map<string, string | undefined>();
     const lastAfter = new Map<string, FileDiffData>();
@@ -227,37 +220,17 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
         if (part.type !== "tool_call") continue;
         const tool = part as ToolCallPart;
         if (!tool.diff?.path) continue;
-        // Keep the very first `before` (original file state)
         if (!firstBefore.has(tool.diff.path)) {
           firstBefore.set(tool.diff.path, tool.diff.before);
         }
-        // Always update to latest `after`
         lastAfter.set(tool.diff.path, tool.diff);
       }
     }
     return Array.from(lastAfter.entries()).map(([path, diff]) => ({
       path,
-      diff: {
-        ...diff,
-        before: firstBefore.get(path),
-      },
+      diff: { ...diff, before: firstBefore.get(path) },
     }));
   }, [chat.messages()]);
-
-  // Git working tree diffs (from files panel changes tab)
-  const [gitDiffs, setGitDiffs] = useState<Map<string, { before: string; after: string }>>(new Map())
-
-  // Combine agent diffs + git working tree diffs
-  const allDiffs = useMemo(() => {
-    const agentPaths = new Set(fileDiffs.map((d) => d.path))
-    const gitEntries = Array.from(gitDiffs.entries())
-      .filter(([path]) => !agentPaths.has(path))
-      .map(([path, { before, after }]) => ({
-        path,
-        diff: { path, before, after } as FileDiffData,
-      }))
-    return [...fileDiffs, ...gitEntries]
-  }, [fileDiffs, gitDiffs])
 
   const openFileTabs = openFiles ?? [];
 
@@ -269,19 +242,6 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
     }
   }, [requestedTab, onRequestedTabHandled])
 
-  // Handle requested diff from files panel changes tab
-  useEffect(() => {
-    if (!requestedDiffPath) return
-    // Add git diff to local state
-    setGitDiffs((prev) => {
-      const next = new Map(prev)
-      next.set(requestedDiffPath.path, { before: requestedDiffPath.before, after: requestedDiffPath.after })
-      return next
-    })
-    setSelectedTab(null) // switch to review tab
-    setExpandedDiffs((prev) => new Set(prev).add(requestedDiffPath.path))
-    onRequestedDiffHandled?.()
-  }, [requestedDiffPath, onRequestedDiffHandled])
 
   // "review" = built-in review tab, or a file path for open file tabs
   const activeView = selectedTab ?? "review";
@@ -298,7 +258,12 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
     });
   };
 
-  const fileName = (path: string) => path.split("/").pop() || path;
+  const fileName = (path: string) => {
+    const cleanPath = path.replace(/^diff:/, "")
+    const name = cleanPath.split("/").pop() || cleanPath
+    const file = openFileTabs.find(f => f.path === path)
+    return file?.diff ? `${name} (Working Tree)` : name
+  };
 
   const handleCodeComment = useCallback((comment: string, code: string, lines: [number, number], file?: string) => {
     window.dispatchEvent(new CustomEvent("add-code-snippet", {
@@ -334,8 +299,8 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
           onClick={() => setSelectedTab(null)}
         >
           <span className="text-sm font-medium">Review</span>
-          {allDiffs.length > 0 && (
-            <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-secondary text-foreground">{allDiffs.length}</span>
+          {fileDiffs.length > 0 && (
+            <span className="text-xs font-medium px-1.5 py-0.5 rounded-md bg-secondary text-foreground">{fileDiffs.length}</span>
           )}
         </button>
         {openFileTabs.length > 0 && (
@@ -353,7 +318,7 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
       {/* Review tab content */}
       {activeView === "review" && (
         <>
-          {allDiffs.length === 0 ? (
+          {fileDiffs.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-sm leading-lg text-muted-foreground">
@@ -371,17 +336,17 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
                 <button
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors ml-auto"
                   onClick={() => {
-                    if (expandedDiffs.size === allDiffs.length) {
+                    if (expandedDiffs.size === fileDiffs.length) {
                       setExpandedDiffs(new Set());
                     } else {
-                      setExpandedDiffs(new Set(allDiffs.map(d => d.path)));
+                      setExpandedDiffs(new Set(fileDiffs.map(d => d.path)));
                     }
                   }}
                 >
-                  {expandedDiffs.size === allDiffs.length ? "Collapse all" : "Expand all"}
+                  {expandedDiffs.size === fileDiffs.length ? "Collapse all" : "Expand all"}
                 </button>
               </div>
-              {allDiffs.map(({ path, diff }) => {
+              {fileDiffs.map(({ path, diff }) => {
                 const isExpanded = expandedDiffs.has(path);
                 return (
                   <div key={path} className="border-b border-border-weak">
@@ -408,14 +373,24 @@ export function ReviewPanel({ onClose, openFiles, onCloseFile, requestedTab, onR
 
       {/* Open file tab content */}
       {activeView !== "review" && currentFile && (
-        <div className="flex-1 min-h-0 overflow-auto no-scrollbar">
-          <CodeViewer
-            content={currentFile.content}
-            language={currentFile.language}
-            filePath={currentFile.path}
-            onComment={handleCodeComment}
-          />
-        </div>
+        currentFile.diff ? (
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto no-scrollbar">
+            <DiffView
+              path={currentFile.path}
+              before={currentFile.diff.before}
+              after={currentFile.diff.after}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-auto no-scrollbar">
+            <CodeViewer
+              content={currentFile.content}
+              language={currentFile.language}
+              filePath={currentFile.path}
+              onComment={handleCodeComment}
+            />
+          </div>
+        )
       )}
     </div>
   );

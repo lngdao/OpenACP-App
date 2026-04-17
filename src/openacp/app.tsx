@@ -244,9 +244,6 @@ function ChatWithPermissions({
     import("./components/review-panel").OpenFile[]
   >([]);
   const [requestedTab, setRequestedTab] = useState<string | null>(null);
-  const [requestedDiffPath, setRequestedDiffPath] = useState<{
-    path: string; before: string; after: string; language: string
-  } | null>(null);
 
   const handleOpenFile = useCallback(
     (path: string, content: string, language: string) => {
@@ -281,11 +278,16 @@ function ChatWithPermissions({
         console.error("[open-file-in-review] failed:", err);
       }
     }
-    // Open diff from files panel changes tab
+    // Open diff from files panel changes tab as a file tab
     function handleOpenDiffInReview(e: Event) {
       const { path, before, after, language } = (e as CustomEvent).detail ?? {};
       if (!path) return;
-      setRequestedDiffPath({ path, before: before ?? "", after: after ?? "", language: language ?? "text" });
+      const tabPath = `diff:${path}`;
+      setOpenFiles((prev) => {
+        if (prev.some((f) => f.path === tabPath)) return prev;
+        return [...prev, { path: tabPath, content: after ?? "", language: language ?? "text", diff: { before: before ?? "", after: after ?? "" } }];
+      });
+      setRequestedTab(tabPath);
       setReviewOpen(true);
     }
 
@@ -321,8 +323,6 @@ function ChatWithPermissions({
                   onCloseFile={handleCloseFile}
                   requestedTab={requestedTab}
                   onRequestedTabHandled={() => setRequestedTab(null)}
-                  requestedDiffPath={requestedDiffPath}
-                  onRequestedDiffHandled={() => setRequestedDiffPath(null)}
                 />
               </motion.div>
             )}
