@@ -197,8 +197,10 @@ function MultiRepoBranch({ repos }: { repos: GitRepoInfo[] }) {
                           key={b}
                           className="flex items-center gap-2 px-2 py-1 rounded-sm"
                         >
-                          <GitBranch size={10} weight={b === repo.branch ? "bold" : "regular"} className="shrink-0" />
-                          <span className={`size-1.5 rounded-full shrink-0 ${b === repo.branch ? "bg-color-success" : "bg-transparent"}`} />
+                          <span className="shrink-0 flex items-center gap-0.5">
+                            <GitBranch size={10} weight={b === repo.branch ? "bold" : "regular"} />
+                            <span className={`size-1.5 rounded-full ${b === repo.branch ? "bg-color-success" : "bg-transparent"}`} />
+                          </span>
                           <span className={`flex-1 truncate text-xs ${b === repo.branch ? "text-fg-base font-medium" : "text-fg-weak"}`}>
                             {b}
                           </span>
