@@ -215,21 +215,15 @@ export function ChatView() {
   const activeSessionId = chat.activeSession();
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
-  // Direct access to Virtuoso's scroller element for reliable scroll-to-bottom
-  // that bypasses Virtuoso's height estimation (which can be wrong for unmeasured items).
+  // Direct access to Virtuoso's scroller element — bypasses Virtuoso's height estimation
+  // (which can be wrong for unmeasured items). All scroll-to-bottom calls go through this.
   const scrollerElRef = useRef<HTMLElement | null>(null);
   const [atBottom, setAtBottom] = useState(true);
-  // Tracks whether the user has intentionally scrolled up during streaming.
-  // Set immediately on upward wheel input; cleared when the viewport returns to the bottom,
-  // an explicit scroll is triggered, or a debounced timer determines the scroll was accidental.
-  const userScrolledUpRef = useRef(false);
-  // Mirrors atBottom state as a ref so the onWheel handler can read it synchronously without
-  // accessing stale closure state.
   const atBottomRef = useRef(true);
-  // Debounced reset timer: when onWheel sets userScrolledUpRef, this timer checks 300ms later
-  // whether the user actually left the bottom zone. If still at bottom, the scroll was accidental
-  // and the flag is cleared. Continuous scrolling resets the timer each event.
-  const scrollResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks whether the user has intentionally scrolled up during streaming.
+  // Set by onWheel on any upward scroll; cleared by atBottomStateChange(true) or explicit
+  // actions (button click, send message, session switch). No debounce, no conditional resets.
+  const userScrolledUpRef = useRef(false);
 
   const messages = chat.messages();
   const streaming = chat.streaming();
@@ -310,62 +304,49 @@ export function ChatView() {
     return items;
   }, [messages]);
 
-  // Scroll to bottom on session switch
+  // ── Single scroll helper ──
+  // Uses the scroller element directly — always reaches the true bottom regardless of
+  // whether Virtuoso has measured all items. Every scroll-to-bottom action calls this.
+  const scrollToBottom = useCallback(() => {
+    const el = scrollerElRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+  }, []);
+
+  // ── Explicit scroll triggers (always scroll + always reset flag) ──
+
   useEffect(() => {
-    // Reset user scroll intent so streaming in the new session auto-scrolls by default.
-    // Cannot rely on scrollTrigger to do this because cached sessions skip the history-load path.
     userScrolledUpRef.current = false;
-    if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
-    // align: "end" is intentionally omitted — items are unmeasured at this point (defaultItemHeight
-    // estimates), so Virtuoso cannot reliably compute the end-aligned position. Default behaviour
-    // scrolls to show the last item at the viewport bottom when it is below the fold.
-    virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto" });
+    scrollToBottom();
   }, [activeSessionId]);
 
-  // Scroll to bottom when triggered (user sent message, cross-adapter turn, history loaded)
   useEffect(() => {
     if (chat.scrollTrigger() > 0) {
-      // Reset user scroll intent: sending a message is an explicit signal to show the response.
       userScrolledUpRef.current = false;
-      if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
-      // Wait one frame for Virtuoso to measure the newly added items, then scroll to the
-      // bottom of the last item so the user's submitted message is visible above it.
-      requestAnimationFrame(() => {
-        virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto", align: "end" });
-      });
+      // Wait one frame for new items to render before scrolling
+      requestAnimationFrame(scrollToBottom);
     }
   }, [chat.scrollTrigger()]);
 
-  // Supplementary scroll for rapidly growing items (e.g. thinking text). followOutput only fires
-  // when new items are added, not when an existing item grows. This interval catches growing-item
-  // cases. Because onWheel sets userScrolledUpRef=true immediately (no gate), the interval never
-  // fights user input: the flag is already set before the first tick after user starts scrolling.
+  // ── Streaming auto-scroll (single driver: 80ms interval) ──
+  // followOutput is disabled — this interval is the sole scroll mechanism during streaming.
+  // It handles both new items and growing items (e.g. thinking text).
+  // onWheel sets userScrolledUpRef immediately, so the interval never fights user input.
   useEffect(() => {
     if (!streaming) return;
     const id = setInterval(() => {
-      if (!userScrolledUpRef.current) {
-        virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto", align: "end" });
-      }
+      if (!userScrolledUpRef.current) scrollToBottom();
     }, 80);
     return () => clearInterval(id);
   }, [streaming]);
 
-  // Final scroll when streaming ends — catches content from charStream.flush() that may have
-  // increased content height after the streaming scroll mechanisms stopped.
+  // ── Streaming end (catch charStream.flush content) ──
   const prevStreamingRef = useRef(false);
   useEffect(() => {
     if (prevStreamingRef.current && !streaming && !userScrolledUpRef.current) {
-      requestAnimationFrame(() => {
-        virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto", align: "end" });
-      });
+      requestAnimationFrame(scrollToBottom);
     }
     prevStreamingRef.current = streaming;
   }, [streaming]);
-
-  // Clean up debounce timer on unmount to prevent stale ref access
-  useEffect(() => {
-    return () => { if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current); };
-  }, []);
 
   const sessions = useSessions();
   const sessionTitle = useMemo(() => {
@@ -482,18 +463,10 @@ export function ChatView() {
       <div
         className="flex-1 min-h-0 overflow-hidden relative"
         onWheel={(e) => {
-          // Upward scroll during streaming disables auto-scroll. Threshold of -2 filters
-          // sub-pixel trackpad inertia noise (macOS generates trailing negative deltaY after
-          // a downward momentum swipe). A debounced timer clears the flag after 300ms if the
-          // user is still within atBottomThreshold — treating it as an accidental nudge.
-          // Continuous scrolling resets the timer, so intentional slow scrolls are not cleared.
-          if (e.deltaY < -2 && streaming) {
-            userScrolledUpRef.current = true;
-            if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
-            scrollResetTimerRef.current = setTimeout(() => {
-              if (atBottomRef.current) userScrolledUpRef.current = false;
-            }, 300);
-          }
+          // Any upward scroll during streaming stops auto-follow (standard chat app UX).
+          // Threshold of -2 filters sub-pixel trackpad inertia noise on macOS.
+          // User resumes by scrolling to bottom (atBottomStateChange resets) or clicking button.
+          if (e.deltaY < -2 && streaming) userScrolledUpRef.current = true;
         }}
       >
         {hasMessages ? (
@@ -529,14 +502,7 @@ export function ChatView() {
                   )}
                 </div>
               )}
-              followOutput={() => {
-                // Always follow during streaming unless user explicitly scrolled up.
-                // Ignoring isAtBottom here is intentional: content growth can push the viewport
-                // past atBottomThreshold within a single rAF frame, which would make followOutput
-                // disengage. userScrolledUpRef is the sole gating signal for user intent.
-                if (!streaming || userScrolledUpRef.current) return false;
-                return "auto";
-              }}
+              followOutput={false}
               atBottomStateChange={(isAtBottom) => {
                 atBottomRef.current = isAtBottom;
                 if (isAtBottom) userScrolledUpRef.current = false;
@@ -550,17 +516,13 @@ export function ChatView() {
             <ScrollToBottomButton
               visible={!atBottom}
               onClick={() => {
-                // Explicit intent to return to bottom — reset scroll flag so the interval
-                // can take over to track growing content.
                 userScrolledUpRef.current = false;
-                if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
-                // Use the scroller element directly to bypass Virtuoso's height estimation.
-                // scrollToIndex relies on estimated heights for unmeasured items (defaultItemHeight=80),
-                // which causes it to land short when jumping from far up — requiring 2 clicks.
-                // Direct scrollTop = scrollHeight always reaches the true bottom in one shot.
-                const el = scrollerElRef.current;
-                if (el) {
-                  el.scrollTo({ top: el.scrollHeight, behavior: streaming ? "auto" : "smooth" });
+                if (streaming) {
+                  scrollToBottom();
+                } else {
+                  // When not streaming, use smooth animation (no interval to interfere)
+                  const el = scrollerElRef.current;
+                  if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
                 }
               }}
             />
