@@ -312,6 +312,7 @@ export function ChatView() {
     // Reset user scroll intent so streaming in the new session auto-scrolls by default.
     // Cannot rely on scrollTrigger to do this because cached sessions skip the history-load path.
     userScrolledUpRef.current = false;
+    if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
     // align: "end" is intentionally omitted — items are unmeasured at this point (defaultItemHeight
     // estimates), so Virtuoso cannot reliably compute the end-aligned position. Default behaviour
     // scrolls to show the last item at the viewport bottom when it is below the fold.
@@ -323,8 +324,12 @@ export function ChatView() {
     if (chat.scrollTrigger() > 0) {
       // Reset user scroll intent: sending a message is an explicit signal to show the response.
       userScrolledUpRef.current = false;
-      // Same reason as session-switch — avoid align: "end" before items have been measured.
-      virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto" });
+      if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
+      // Wait one frame for Virtuoso to measure the newly added items, then scroll to the
+      // bottom of the last item so the user's submitted message is visible above it.
+      requestAnimationFrame(() => {
+        virtuosoRef.current?.scrollToIndex({ index: "LAST", behavior: "auto", align: "end" });
+      });
     }
   }, [chat.scrollTrigger()]);
 
