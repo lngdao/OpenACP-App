@@ -305,6 +305,9 @@ export function ChatView() {
 
   // Scroll to bottom on session switch
   useEffect(() => {
+    // Reset user scroll intent so streaming in the new session auto-scrolls by default.
+    // Cannot rely on scrollTrigger to do this because cached sessions skip the history-load path.
+    userScrolledUpRef.current = false;
     // align: "end" is intentionally omitted — items are unmeasured at this point (defaultItemHeight
     // estimates), so Virtuoso cannot reliably compute the end-aligned position. Default behaviour
     // scrolls to show the last item at the viewport bottom when it is below the fold.
