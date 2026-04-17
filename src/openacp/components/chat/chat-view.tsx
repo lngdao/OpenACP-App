@@ -535,13 +535,18 @@ export function ChatView() {
             />
             <ScrollToBottomButton
               visible={!atBottom}
-              onClick={() =>
+              onClick={() => {
+                // Explicit intent to return to bottom — reset scroll flag so the interval
+                // can take over if the smooth animation doesn't reach the new bottom
+                // (content may have grown during the animation).
+                userScrolledUpRef.current = false;
+                if (scrollResetTimerRef.current) clearTimeout(scrollResetTimerRef.current);
                 virtuosoRef.current?.scrollToIndex({
                   index: "LAST",
                   behavior: "smooth",
                   align: "end",
-                })
-              }
+                });
+              }}
             />
           </>
         ) : (
