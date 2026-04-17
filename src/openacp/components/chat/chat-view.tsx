@@ -557,13 +557,7 @@ export function ChatView() {
               visible={!atBottom}
               onClick={() => {
                 userScrolledUpRef.current = false;
-                if (streaming) {
-                  scrollToBottom();
-                } else {
-                  // When not streaming, use smooth animation (no interval to interfere)
-                  const el = scrollerElRef.current;
-                  if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-                }
+                scrollToBottom();
               }}
             />
           </>
