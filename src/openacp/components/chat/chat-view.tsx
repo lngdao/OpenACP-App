@@ -327,16 +327,22 @@ export function ChatView() {
     }
   }, [chat.scrollTrigger()]);
 
-  // ── Streaming auto-scroll (single driver: 80ms interval) ──
-  // followOutput is disabled — this interval is the sole scroll mechanism during streaming.
+  // ── Streaming auto-scroll (single driver: rAF loop) ──
+  // followOutput is disabled — this rAF loop is the sole scroll mechanism during streaming.
   // It handles both new items and growing items (e.g. thinking text).
-  // onWheel sets userScrolledUpRef immediately, so the interval never fights user input.
+  // Runs every frame (~16ms) so Virtuoso's scroll corrections (from height estimation errors
+  // when new blocks are added) are immediately countered — no visible upward jump.
+  // onWheel sets userScrolledUpRef synchronously (before rAF), so the loop never fights
+  // user input: the flag is always set before the next rAF tick.
   useEffect(() => {
     if (!streaming) return;
-    const id = setInterval(() => {
+    let rafId: number;
+    const tick = () => {
       if (!userScrolledUpRef.current) scrollToBottom();
-    }, 80);
-    return () => clearInterval(id);
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
   }, [streaming]);
 
   // ── Streaming end (catch charStream.flush content) ──
