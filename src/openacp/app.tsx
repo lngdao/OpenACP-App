@@ -58,7 +58,6 @@ import { FloatingBrowserFrame } from "./components/floating-browser-frame";
 import { TerminalProvider } from "./context/terminal";
 import { TerminalPanel } from "./components/terminal-panel";
 import { ToolDisplayProvider } from "./context/tool-display";
-import { PierreWorkerPoolProvider } from "./context/worker-pool";
 import type { ServerInfo } from "./types";
 
 export function UpdateToastRow({
@@ -997,8 +996,7 @@ function OpenACPAppInner() {
                 );
               }}
             >
-              <PierreWorkerPoolProvider>
-                <TerminalProvider>
+              <TerminalProvider>
                   <SessionsProvider>
                     <PermissionsProvider>
                       <ChatWithPermissions
@@ -1031,7 +1029,6 @@ function OpenACPAppInner() {
                     }
                   }}
                 />
-              </PierreWorkerPoolProvider>
             </WorkspaceProvider>
           ) : (
             <div className="flex-1 flex items-center justify-center bg-card">
