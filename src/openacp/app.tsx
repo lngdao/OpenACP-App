@@ -207,11 +207,9 @@ function ChatArea() {
 
   return (
     <div className="flex flex-1 min-h-0 h-full min-w-0">
-      <div className="@container relative flex-1 flex flex-col min-h-0 h-full bg-bg-strong min-w-0 border-l border-border-weak overflow-hidden">
+      <div className="@container flex-1 flex flex-col min-h-0 h-full bg-bg-strong min-w-0 border-l border-border-weak overflow-hidden">
         <ChatView />
-        <div className="absolute inset-x-0 bottom-0 z-10">
-          <Composer />
-        </div>
+        <Composer />
       </div>
     </div>
   );
@@ -754,10 +752,8 @@ function OpenACPAppInner() {
   function handleAddWorkspace(entry: WorkspaceEntry) {
     const isNew = addWorkspace(entry);
     setShowAddWorkspace(false);
-    if (!isNew && active === entry.id) {
-      // Re-connect to updated workspace
-      void connect();
-    }
+    // No explicit connect() here — useWorkspaceConnection watches workspace.host
+    // and will trigger a fresh connection automatically after the state update renders.
     showToast({
       description: isNew
         ? `Workspace "${entry.name}" added.`

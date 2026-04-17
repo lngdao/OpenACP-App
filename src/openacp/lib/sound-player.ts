@@ -95,8 +95,17 @@ export function stopAllSounds(): void {
   activeAudios.clear()
 }
 
+function revokeIfBlob(src: string | undefined): void {
+  if (src?.startsWith("blob:")) URL.revokeObjectURL(src)
+}
+
 /** Evict a cached src — call after delete/import to pick up changes */
 export function invalidateSoundCache(soundId?: string): void {
-  if (soundId) srcCache.delete(soundId)
-  else srcCache.clear()
+  if (soundId) {
+    revokeIfBlob(srcCache.get(soundId))
+    srcCache.delete(soundId)
+  } else {
+    for (const src of srcCache.values()) revokeIfBlob(src)
+    srcCache.clear()
+  }
 }

@@ -1,7 +1,11 @@
-import { convertFileSrc } from "@tauri-apps/api/core"
-import { appDataDir } from "@tauri-apps/api/path"
-import { BaseDirectory, exists, mkdir, writeFile, remove } from "@tauri-apps/plugin-fs"
+import { BaseDirectory, exists, mkdir, readFile, writeFile, remove } from "@tauri-apps/plugin-fs"
 import type { ImportedFormat, ImportedSound, SoundEventKey } from "./settings-store"
+
+const MIME_FOR_EXT: Record<ImportedFormat, string> = {
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  ogg: "audio/ogg",
+}
 
 export interface Sound {
   /** "builtin:<name>" or "imported:<uuid>" */
@@ -73,9 +77,15 @@ export async function getSoundSrc(
     const meta = library.find((s) => s.id === id)
     if (!meta) return null
     try {
-      const base = await appDataDir()
-      const absolutePath = `${base}/sounds/${meta.id}.${meta.ext}`
-      return convertFileSrc(absolutePath)
+      // Read file bytes via fs plugin + wrap in Blob URL.
+      // (convertFileSrc would need Tauri assetProtocol configured; using fs
+      // plugin avoids that extra config and stays within the scoped fs
+      // permissions already granted in capabilities/default.json.)
+      const bytes = await readFile(`sounds/${meta.id}.${meta.ext}`, {
+        baseDir: BaseDirectory.AppData,
+      })
+      const blob = new Blob([bytes], { type: MIME_FOR_EXT[meta.ext] })
+      return URL.createObjectURL(blob)
     } catch (err) {
       console.warn("[sound-registry] imported resolve failed:", id, err)
       return null
