@@ -55,10 +55,11 @@ function GroupedChangesView({
   repoChanges: RepoChanges[]
   onOpenChange: (repoPath: string, filePath: string) => void
 }) {
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  // Start fully collapsed — user expands repos they care about
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
-  function toggleCollapse(path: string) {
-    setCollapsed((prev) => {
+  function toggleExpand(path: string) {
+    setExpanded((prev) => {
       const next = new Set(prev)
       if (next.has(path)) next.delete(path)
       else next.add(path)
@@ -69,16 +70,16 @@ function GroupedChangesView({
   const rows = useMemo<VirtualRow[]>(() => {
     const result: VirtualRow[] = []
     for (const { repo, changes } of repoChanges) {
-      const isCollapsed = collapsed.has(repo.path)
-      result.push({ kind: "header", repo, count: changes.length, collapsed: isCollapsed })
-      if (!isCollapsed && changes.length > 0) {
+      const isExpanded = expanded.has(repo.path)
+      result.push({ kind: "header", repo, count: changes.length, collapsed: !isExpanded })
+      if (isExpanded && changes.length > 0) {
         for (const change of changes) {
           result.push({ kind: "change", repoPath: repo.path, change })
         }
       }
     }
     return result
-  }, [repoChanges, collapsed])
+  }, [repoChanges, expanded])
 
   return (
     <Virtuoso
@@ -91,10 +92,10 @@ function GroupedChangesView({
           return (
             <button
               type="button"
-              className={`flex items-center gap-1.5 w-full px-3 h-6 text-left transition-colors ${
+              className={`flex items-center gap-1 w-full px-3 h-6 min-w-0 text-left transition-colors ${
                 hasChanges ? "hover:bg-accent" : ""
               }`}
-              onClick={() => hasChanges && toggleCollapse(row.repo.path)}
+              onClick={() => hasChanges && toggleExpand(row.repo.path)}
               disabled={!hasChanges}
             >
               {hasChanges ? (
@@ -104,18 +105,17 @@ function GroupedChangesView({
                   <CaretDown size={10} className="shrink-0 text-fg-weakest" />
                 )
               ) : (
-                <span className="w-2.5" />
+                <span className="w-2.5 shrink-0" />
               )}
               <FolderSimple size={12} weight="fill" className={`shrink-0 ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`} />
-              <span className={`text-xs truncate ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`}>
+              <span className={`text-xs truncate min-w-0 ${hasChanges ? "text-fg-weaker" : "text-fg-weakest"}`}>
                 {row.repo.name}
               </span>
-              <span className={`text-2xs ${hasChanges ? "text-fg-weak" : "text-fg-weakest"}`}>
+              <span className={`text-2xs truncate min-w-0 shrink-[2] ${hasChanges ? "text-fg-weak" : "text-fg-weakest"}`}>
                 {row.repo.branch}
               </span>
-              <span className="flex-1" />
               {hasChanges && (
-                <span className="text-2xs text-fg-weakest">{row.count}</span>
+                <span className="text-2xs text-fg-weakest shrink-0 ml-auto">{row.count}</span>
               )}
             </button>
           )
