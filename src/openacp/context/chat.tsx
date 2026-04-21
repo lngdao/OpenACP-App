@@ -339,7 +339,11 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
           let localAstIdx = 0
           for (const m of local) {
             if (m.role === "assistant") {
-              if (m.interrupted) localInterruptedIndices.add(localAstIdx)
+              // Only propagate if local says interrupted AND the message has NOT
+              // completed (no usage info). A completed message with a stale
+              // interrupted flag is almost certainly a bogus client-side mark
+              // from an overzealous abort — don't ride it forward into history.
+              if (m.interrupted && !m.usage) localInterruptedIndices.add(localAstIdx)
               localAstIdx++
             }
           }
@@ -1314,6 +1318,13 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     // Already aborting this session — avoid double-fire
     if (abortedSessions.current.has(sessionID)) return
 
+    // Only treat as an interruptible abort if the session is actually streaming.
+    // This avoids a misleading "Interrupted" banner when abort() is called against
+    // a session whose latest turn has already finished (e.g. rapid instant-mode
+    // sends where the optimistic echo briefly overlapped with a still-set
+    // assistantMsgId, or session-switch flows that race with a usage event).
+    const isActuallyStreaming = store.streamingBySession[sessionID] === true
+
     // Find the turnId of the currently streaming turn so we can block only its events
     const currentMsgId = assistantMsgId.current.get(sessionID)
     let currentTurnId: string | undefined
@@ -1333,13 +1344,16 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
     thoughtBuffer.current.delete(sessionID)
     charStream.clearStream(`${sessionID}:text`)
     charStream.clearStream(`${sessionID}:thought`)
-    // Mark the assistant message as interrupted
-    if (currentMsgId) {
+    // Mark the assistant message as interrupted — ONLY if the turn is still live
+    // and the target message hasn't already recorded its usage (completion).
+    if (isActuallyStreaming && currentMsgId) {
       setStore((draft) => {
         const msgs = draft.messagesBySession[sessionID]
         if (msgs) {
           const msg = msgs.find((m) => m.id === currentMsgId)
-          if (msg) msg.interrupted = true
+          // Skip messages that already have `usage` — the turn finished normally,
+          // marking it interrupted would contradict the server's record.
+          if (msg && !msg.usage) msg.interrupted = true
         }
         syncRef(sessionID, draft)
       })
