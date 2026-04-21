@@ -173,11 +173,23 @@ export const TerminalRenderer = React.memo(function TerminalRenderer({
         onReady?.()
       })
 
-      // Stream PTY output -> terminal
+      // Stream PTY output -> terminal. Subscribe BEFORE calling startStream
+      // so the drain + subsequent live chunks arrive in order.
       const unData = await backend.onData(sessionId, (data) => {
         term.write(data)
       })
       cleanups.push(unData)
+
+      // Drain any output the shell produced before we were subscribed (initial
+      // prompt, rc-file echoes). startStream is idempotent; a second tab
+      // mounting the same session id after dispose would just get "".
+      try {
+        const initial = await backend.startStream(sessionId)
+        if (initial && !cancelled) term.write(initial)
+      } catch (e) {
+        // Older backends may not implement startStream — tolerate silently.
+        console.warn("[terminal] startStream unavailable:", e)
+      }
 
       // Terminal input -> PTY
       const onDataDisposable = term.onData((data: string) => {
