@@ -110,9 +110,12 @@ export const TerminalRenderer = React.memo(function TerminalRenderer({
       const fit = new mod.FitAddon()
       term.loadAddon(fit)
 
-      // Link detection: match `path:line[:col]` in scrollback and emit a window
-      // event when activated (Cmd/Ctrl+click). The app's editor integration can
-      // listen for `terminal-link-click` and open the file at the given line.
+      term.open(container)
+
+      // Link detection and key handler must be registered AFTER term.open() —
+      // both rely on internal subsystems (link detector, input handler) that
+      // are only created during open(). Registering earlier leaves the
+      // terminal in a broken state and the canvas never renders.
       term.registerLinkProvider({
         provideLinks(y: number, callback: (links: any[] | undefined) => void) {
           const buffer = term.buffer.active
@@ -147,13 +150,12 @@ export const TerminalRenderer = React.memo(function TerminalRenderer({
         },
       })
 
-      // Ctrl/Cmd+F opens the search overlay. Letting the default browser Find
-      // through on a WebKit/Chromium surface would match the whole window
-      // including UI chrome, which isn't what the user wants here.
+      // Cmd/Ctrl+F opens the find overlay; swallowing the event keeps the
+      // WebView's default Find dialog from popping over the terminal.
       term.attachCustomKeyEventHandler((event: KeyboardEvent) => {
         if (event.type !== "keydown") return true
-        const mod = event.metaKey || event.ctrlKey
-        if (mod && event.key.toLowerCase() === "f") {
+        const withMod = event.metaKey || event.ctrlKey
+        if (withMod && event.key.toLowerCase() === "f") {
           event.preventDefault()
           setSearchOpen(true)
           requestAnimationFrame(() => searchInputRef.current?.focus())
@@ -161,8 +163,6 @@ export const TerminalRenderer = React.memo(function TerminalRenderer({
         }
         return true
       })
-
-      term.open(container)
 
       // Fit after a frame to ensure container has dimensions
       requestAnimationFrame(() => {
