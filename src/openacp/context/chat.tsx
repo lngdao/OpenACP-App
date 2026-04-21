@@ -1125,14 +1125,17 @@ export function ChatProvider({ children, onPermissionRequest, onPermissionResolv
       }
     }
 
-    // Instant mode: interrupt current turn before sending new message.
-    // Await abort so the server has acknowledged cancellation before we send the new prompt,
-    // preventing the race where cancel arrives after the new prompt starts processing.
-    // Race against 5s so a slow server doesn't block the user from sending a new message.
+    // Instant mode: interrupt the current turn before sending. Do NOT await
+    // the server-side cancel — if `await cancelPrompt` takes longer than the
+    // new prompt's dispatch, the server can end up cancelling the NEW turn
+    // instead of the old one, which is exactly the \"agent never responds after
+    // rapid instant send\" failure. The local part of abort() (guards + UI
+    // interrupted flag) runs synchronously; turnId-based event filtering
+    // handles any out-of-order events that arrive afterwards.
     const activeBeforeSend = store.activeSession
     const activeIsStreaming = !!activeBeforeSend && store.streamingBySession[activeBeforeSend] === true
     if (activeIsStreaming && messageModeRef.current === "instant") {
-      await Promise.race([abort(activeBeforeSend), new Promise<void>(resolve => setTimeout(resolve, 5_000))])
+      void abort(activeBeforeSend)
       // Do NOT clear the abort guard here — handleMessageProcessing
       // clears it when the NEW turn's message:processing event arrives.
     }
