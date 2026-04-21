@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from "react"
+import { createPortal } from "react-dom"
 import type { PtyBackend } from "../lib/pty-backend"
 import { MagnifyingGlass, X } from "@phosphor-icons/react"
 
@@ -254,15 +255,38 @@ export const TerminalRenderer = React.memo(function TerminalRenderer({
     termRef.current?.focus()
   }, [])
 
+  // Anchor the search overlay to the container's viewport rect via a portal so
+  // we never touch the DOM tree that Ghostty's canvas renders into.
+  const [overlayPos, setOverlayPos] = useState<{ top: number; right: number } | null>(null)
+  useEffect(() => {
+    if (!searchOpen) { setOverlayPos(null); return }
+    function update() {
+      const el = containerRef.current
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      setOverlayPos({ top: r.top + 8, right: Math.max(8, window.innerWidth - r.right + 8) })
+    }
+    update()
+    window.addEventListener("resize", update)
+    window.addEventListener("scroll", update, true)
+    return () => {
+      window.removeEventListener("resize", update)
+      window.removeEventListener("scroll", update, true)
+    }
+  }, [searchOpen])
+
   return (
-    <div className={`relative h-full w-full ${className ?? ""}`}>
+    <>
       <div
         ref={containerRef}
-        className="h-full w-full overflow-hidden"
+        className={`h-full w-full overflow-hidden ${className ?? ""}`}
         style={{ backgroundColor: "#0a0a0a" }}
       />
-      {searchOpen && (
-        <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md border border-border-weak bg-bg-strong px-2 py-1 shadow-lg">
+      {searchOpen && overlayPos && createPortal(
+        <div
+          className="fixed z-50 flex items-center gap-1 rounded-md border border-border-weak bg-bg-strong px-2 py-1 shadow-lg"
+          style={{ top: overlayPos.top, right: overlayPos.right }}
+        >
           <MagnifyingGlass size={12} className="opacity-60" />
           <input
             ref={searchInputRef}
@@ -290,8 +314,9 @@ export const TerminalRenderer = React.memo(function TerminalRenderer({
           >
             <X size={10} />
           </button>
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   )
 })
