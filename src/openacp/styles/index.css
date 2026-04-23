@@ -20,6 +20,7 @@
 @import "./themes/nord-dark.css";
 @import "./themes/one-dark.css";
 @import "./themes/github-light.css";
+@import "./themes/github-dark.css";
 @import "katex/dist/katex.min.css" layer(base);
 
 /* ── Component styles (markdown, .oac-* app styles) ──────────────────────── */
