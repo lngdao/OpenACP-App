@@ -44,7 +44,7 @@ interface TerminalContextValue {
   setActiveTab: (id: string | null) => void
 
   /** Split the currently focused leaf in the active tab. */
-  splitActive: (direction: "horizontal" | "vertical") => Promise<void>
+  splitActive: (direction: "horizontal" | "vertical", cwd?: string) => Promise<void>
   /** Close a specific leaf. Collapses the parent split or removes the tab if it was the last leaf. */
   closeLeaf: (sessionId: string) => Promise<void>
   /** Focus a leaf within its tab. */
@@ -144,11 +144,10 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  const splitActive = useCallback(async (direction: "horizontal" | "vertical") => {
+  const splitActive = useCallback(async (direction: "horizontal" | "vertical", cwd?: string) => {
     const backend = backendRef.current
     // Snapshot the focus target synchronously so we can spawn the new PTY
     // before touching state (avoids flashing an empty pane).
-    let cwd: string | undefined
     let targetLeafId: string | undefined
     let targetTabId: string | undefined
     setTabs((prev) => {
@@ -156,14 +155,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       if (!tab) return prev
       targetTabId = tab.id
       targetLeafId = tab.activeLeaf
-      // Use the active tab's cwd metadata lazily — for now just inherit the
-      // first leaf's; if we wanted per-leaf cwd, we'd thread it through.
-      cwd = undefined
       return prev
     })
-    // Launch a new session using the app's default cwd (the caller can
-    // customize by opening a fresh tab via openTab). We reuse the backend
-    // and let the shell's own cwd handling take over.
     const sessionId = await backend.create({ cwd: cwd ?? "" })
     setTabs((prev) =>
       prev.map((tab) => {
