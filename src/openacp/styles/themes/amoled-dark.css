@@ -3,10 +3,10 @@
   color-scheme: dark;
 
   --bg-base:    #000000;
-  --bg-weak:    #000000;
-  --bg-weaker:  #000000;
-  --bg-weakest: #0a0a0a;
-  --bg-strong:  #050505;
+  --bg-weak:    #0a0a0a;
+  --bg-weaker:  #050505;
+  --bg-weakest: #141414;
+  --bg-strong:  #1a1a1a;
 
   --fg-base:    #ffffff;
   --fg-weak:    #b0b0b0;
