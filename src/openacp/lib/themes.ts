@@ -75,3 +75,43 @@ export function migrateLegacyTheme(
   }
   return DEFAULT_THEME_ID
 }
+
+/** Dev-only: probe computed styles to verify each theme CSS block exists.
+ *  Runs at app startup when import.meta.env.DEV is true. Logs warnings, not errors. */
+export function verifyThemeRegistry(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") return
+
+  // 1. Check every registry entry has a CSS block
+  const probe = document.createElement("div")
+  probe.style.position = "absolute"
+  probe.style.opacity = "0"
+  probe.style.pointerEvents = "none"
+  document.body.appendChild(probe)
+
+  const missing: ThemeId[] = []
+  for (const id of THEME_IDS) {
+    probe.setAttribute("data-theme", id)
+    const bg = getComputedStyle(probe).getPropertyValue("--bg-base").trim()
+    if (!bg) missing.push(id)
+  }
+  probe.remove()
+  if (missing.length > 0) {
+    console.warn(`[theme] missing CSS blocks for: ${missing.join(", ")}`)
+  }
+
+  // 2. Check pre-paint MODES table matches registry
+  const modes = (window as unknown as { __THEME_MODES__?: Record<string, ThemeMode> }).__THEME_MODES__
+  if (!modes) {
+    console.warn("[theme] __THEME_MODES__ missing from window — check pre-paint script")
+    return
+  }
+  const extraInModes = Object.keys(modes).filter((k) => !(k in THEMES))
+  const missingFromModes = THEME_IDS.filter((id) => !(id in modes))
+  const wrongMode = THEME_IDS.filter((id) => id in modes && modes[id] !== THEMES[id].mode)
+  if (extraInModes.length > 0)
+    console.warn(`[theme] MODES has unknown ids: ${extraInModes.join(", ")}`)
+  if (missingFromModes.length > 0)
+    console.warn(`[theme] MODES missing ids: ${missingFromModes.join(", ")}`)
+  if (wrongMode.length > 0)
+    console.warn(`[theme] MODES mode mismatch for: ${wrongMode.join(", ")}`)
+}
