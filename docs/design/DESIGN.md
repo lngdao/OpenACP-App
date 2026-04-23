@@ -161,9 +161,10 @@ Two HTML attributes drive styling:
 
 - `data-theme="<id>"` — selects the palette CSS block in `src/openacp/styles/themes/<id>.css`
 - `data-mode="light" | "dark"` — derived from the theme's `mode` field; drives:
-  - `color-scheme` (native widget rendering)
   - Tailwind `dark:` variant (via `@custom-variant dark ([data-mode="dark"] &)`)
   - Avatar-token fallbacks (`[data-mode="light"]` / `[data-mode="dark"]` blocks in `theme.css`)
+
+Each per-theme CSS file declares its own `color-scheme: light | dark` inside the `[data-theme="<id>"]` block — so native widget rendering follows the active palette directly rather than going through `data-mode`.
 
 ### Token coverage
 

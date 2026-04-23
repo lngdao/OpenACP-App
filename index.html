@@ -7,6 +7,8 @@
     <meta name="theme-color" content="#131010" />
     <script>
       (function () {
+        // Keep in sync with THEMES registry in src/openacp/lib/themes.ts.
+        // verifyThemeRegistry() in themes.ts warns at DEV startup on drift.
         var MODES = {
           "default-light":    "light",
           "default-dark":     "dark",
