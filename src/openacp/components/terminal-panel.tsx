@@ -81,14 +81,19 @@ function NodeRenderer({
   if (node.type === "leaf") {
     const focused = tab.activeLeaf === node.sessionId
     const isActive = activeTabId === tab.id
+    const isFocusedLeaf = focused && isActive
     return (
       <div
         className={`group relative h-full w-full ${
-          focused && isActive ? "ring-1 ring-inset ring-border-strong" : ""
+          isFocusedLeaf ? "ring-1 ring-inset ring-border-strong" : ""
         }`}
         onMouseDown={() => setActiveLeaf(node.sessionId)}
       >
-        <TerminalRenderer sessionId={node.sessionId} backend={backend} />
+        <div
+          className={`h-full w-full transition-opacity ${isFocusedLeaf ? "" : "opacity-50"}`}
+        >
+          <TerminalRenderer sessionId={node.sessionId} backend={backend} />
+        </div>
         {/* Per-leaf close button: appears on hover so single-pane tabs stay clean. */}
         <button
           type="button"
@@ -282,7 +287,7 @@ export function TerminalPanel({ open, onClose, workspacePath }: TerminalPanelPro
               <>
                 <button
                   type="button"
-                  onClick={() => void splitActive("horizontal")}
+                  onClick={() => void splitActive("horizontal", workspacePath)}
                   className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Split right"
                   aria-label="Split right"
@@ -291,7 +296,7 @@ export function TerminalPanel({ open, onClose, workspacePath }: TerminalPanelPro
                 </button>
                 <button
                   type="button"
-                  onClick={() => void splitActive("vertical")}
+                  onClick={() => void splitActive("vertical", workspacePath)}
                   className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   title="Split down"
                   aria-label="Split down"
