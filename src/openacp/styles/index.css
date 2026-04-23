@@ -14,6 +14,7 @@
 @import "./themes/default-dark.css";
 @import "./themes/amoled-dark.css";
 @import "./themes/catppuccin-latte.css";
+@import "./themes/catppuccin-mocha.css";
 @import "katex/dist/katex.min.css" layer(base);
 
 /* ── Component styles (markdown, .oac-* app styles) ──────────────────────── */
