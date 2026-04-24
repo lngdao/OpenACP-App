@@ -49,6 +49,7 @@ import {
   applyTheme,
   applyFontSize,
 } from "./lib/settings-store";
+import { verifyThemeRegistry } from "./lib/themes";
 import { Titlebar } from "./components/titlebar";
 import { FileTreePanel } from "./components/file-tree-panel";
 import { BrowserPanel } from "./components/browser-panel";
@@ -393,6 +394,12 @@ function OpenACPAppInner() {
   const [ready, setReady] = useState(false);
   const activeWs = workspaces.find((w) => w.id === active);
   const activeWsName = activeWs?.directory?.split("/").pop() || activeWs?.name;
+
+  // Dev-only: verify theme registry ↔ CSS ↔ MODES table stay in sync
+  useEffect(() => {
+    if (import.meta.env.DEV) verifyThemeRegistry();
+  }, []);
+
   // Session name lookup — populated by SessionsProvider deeper in the tree
   const sessionNamesRef = useRef<Map<string, string>>(new Map());
   useEffect(() => {
