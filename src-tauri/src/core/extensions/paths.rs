@@ -59,6 +59,40 @@ fn appdata_root() -> Result<PathBuf, PathError> {
     Ok(base.join("OpenACP"))
 }
 
+/// Joins `relative` onto `root` and proves the result stays inside `root`,
+/// resolving symlinks. Rejects absolute paths, `..` escapes, and symlinks
+/// pointing outside `root`.
+///
+/// Both `root` and the joined path are canonicalized; mismatches yield
+/// `PathError::PathEscape`. The function is async because it reads the
+/// filesystem to resolve symlinks; callers in async contexts (the URI
+/// scheme handler) should `await` it.
+pub async fn safe_join(root: &Path, relative: &str) -> Result<PathBuf, PathError> {
+    let rel = Path::new(relative);
+    if rel.is_absolute() {
+        return Err(PathError::PathEscape);
+    }
+    for comp in rel.components() {
+        if matches!(comp, std::path::Component::ParentDir) {
+            return Err(PathError::PathEscape);
+        }
+    }
+
+    let candidate = root.join(rel);
+    let root_real = tokio::fs::canonicalize(root)
+        .await
+        .map_err(|_| PathError::PathEscape)?;
+    let cand_real = tokio::fs::canonicalize(&candidate)
+        .await
+        .map_err(|_| PathError::PathEscape)?;
+
+    if cand_real.starts_with(&root_real) {
+        Ok(cand_real)
+    } else {
+        Err(PathError::PathEscape)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -99,5 +133,68 @@ mod tests {
         assert!(extensions_dir_at(&root, "../escape").is_err());
         assert!(extensions_dir_at(&root, "a/b").is_err());
         assert!(extensions_dir_at(&root, "").is_err());
+    }
+}
+
+#[cfg(test)]
+mod join_tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    fn setup() -> (TempDir, PathBuf) {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().join("extensions").join("com.acme.foo");
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("a.txt"), b"hello").unwrap();
+        fs::create_dir_all(root.join("dist")).unwrap();
+        fs::write(root.join("dist").join("main.js"), b"// js").unwrap();
+        (dir, root)
+    }
+
+    #[tokio::test]
+    async fn joins_relative_path() {
+        let (_g, root) = setup();
+        let p = safe_join(&root, "a.txt").await.unwrap();
+        assert_eq!(p, tokio::fs::canonicalize(root.join("a.txt")).await.unwrap());
+    }
+
+    #[tokio::test]
+    async fn joins_nested_path() {
+        let (_g, root) = setup();
+        let p = safe_join(&root, "dist/main.js").await.unwrap();
+        assert_eq!(
+            p,
+            tokio::fs::canonicalize(root.join("dist").join("main.js"))
+                .await
+                .unwrap()
+        );
+    }
+
+    #[tokio::test]
+    async fn rejects_dotdot_escape() {
+        let (_g, root) = setup();
+        let res = safe_join(&root, "../../../etc/passwd").await;
+        assert!(matches!(res, Err(PathError::PathEscape)));
+    }
+
+    #[tokio::test]
+    async fn rejects_absolute_path() {
+        let (_g, root) = setup();
+        let res = safe_join(&root, "/etc/passwd").await;
+        assert!(matches!(res, Err(PathError::PathEscape)));
+    }
+
+    #[tokio::test]
+    async fn rejects_symlink_escape() {
+        let (g, root) = setup();
+        let outside = g.path().join("outside.txt");
+        fs::write(&outside, b"secret").unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&outside, root.join("link")).unwrap();
+        #[cfg(windows)]
+        std::os::windows::fs::symlink_file(&outside, root.join("link")).unwrap();
+        let res = safe_join(&root, "link").await;
+        assert!(matches!(res, Err(PathError::PathEscape)));
     }
 }
