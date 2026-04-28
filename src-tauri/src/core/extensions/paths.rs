@@ -7,6 +7,8 @@ pub enum PathError {
     InvalidId(String),
     #[error("path escapes extension root")]
     PathEscape,
+    #[error("path not found")]
+    NotFound,
     #[error("appdata directory unavailable")]
     AppDataUnavailable,
 }
@@ -82,9 +84,11 @@ pub async fn safe_join(root: &Path, relative: &str) -> Result<PathBuf, PathError
     let root_real = tokio::fs::canonicalize(root)
         .await
         .map_err(|_| PathError::PathEscape)?;
-    let cand_real = tokio::fs::canonicalize(&candidate)
-        .await
-        .map_err(|_| PathError::PathEscape)?;
+    let cand_real = match tokio::fs::canonicalize(&candidate).await {
+        Ok(p) => p,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Err(PathError::NotFound),
+        Err(_) => return Err(PathError::PathEscape),
+    };
 
     if cand_real.starts_with(&root_real) {
         Ok(cand_real)
