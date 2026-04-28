@@ -69,6 +69,26 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
+        .register_asynchronous_uri_scheme_protocol(
+            "openacp-ext",
+            |_app, request, responder| {
+                let url = request.uri().to_string();
+                tauri::async_runtime::spawn(async move {
+                    let resp = core::extensions::scheme::handle_request(&url).await;
+                    let mut builder = tauri::http::Response::builder().status(resp.status);
+                    for (k, v) in &resp.headers {
+                        builder = builder.header(k, v);
+                    }
+                    let http_resp = builder.body(resp.body).unwrap_or_else(|_| {
+                        tauri::http::Response::builder()
+                            .status(500)
+                            .body(Vec::new())
+                            .unwrap()
+                    });
+                    responder.respond(http_resp);
+                });
+            },
+        )
         .invoke_handler(tauri::generate_handler![
             // Sidecar commands
             core::sidecar::commands::list_local_instances,
