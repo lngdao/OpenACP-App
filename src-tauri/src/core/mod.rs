@@ -1,4 +1,5 @@
 pub mod browser;
+pub mod extensions;
 pub mod filesystem;
 pub mod keychain;
 pub mod logging;
